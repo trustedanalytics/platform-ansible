@@ -171,7 +171,7 @@ def main():
       else:
         manager.update_license(license_a.decode('base64'))
       module.exit_json(changed=True, msg='Cluster created')
-  elif action_a in ['add_host', 'create_mgmt', 'deploy_parcel', 'deploy_hdfs_base', 'deploy_hdfs_dn', 'deploy_hdfs_ha', 'deploy_rm_ha', 'set_config', 'service', 'deploy_service', 'deploy_service_worker_nodes', 'deploy_base_roles', 'run_command', 'cluster','create_snapshot_policy']:
+  elif action_a in ['add_host', 'create_mgmt', 'deploy_parcel', 'deploy_hdfs_base', 'deploy_hdfs_httpfs', 'deploy_hdfs_dn', 'deploy_hdfs_ha', 'deploy_rm_ha', 'set_config', 'service', 'deploy_service', 'deploy_service_worker_nodes', 'deploy_base_roles', 'run_command', 'cluster','create_snapshot_policy']:
     # more complicated actions that need a created cluster go here
     cluster = api.get_cluster(cluster_name)
     host_map = dict((api.get_host(x.hostId).hostname, x.hostId) for x in cluster.list_hosts())
@@ -411,6 +411,22 @@ def main():
 
       module.exit_json(changed=changed, msg='Created HDFS service & NN roles')
 
+    # enable HttpFS for HDFS
+    # HUE require this for support HA in HDFS
+    elif action_a == 'deploy_hdfs_httpfs':
+      host_a = module.params.get('host', None)
+      
+      hdfs = cluster.get_service('HDFS')
+      hdfs_roles = [x.name for x in hdfs.get_all_roles()]
+      
+      # don't install second instance of HttpFS
+      if len([role for role in hdfs_roles if 'HDFS-HTTPFS' in role]) != 0:
+        module.exit_json(changed=False, msg='HDFS HttpFS service already exists')
+       
+      hdfs.create_role('HDFS-HTTPFS-1', 'HTTPFS', host_map[host_a]) 
+        
+      module.exit_json(changed=True, msg='HDFS HttpFS service created')
+      
     # enable HA for HDFS
     # this deletes the secondary namenode and creates a second namenode in it's place
     # also, this spawns 3 journal node and 2 failover controller roles

@@ -23,7 +23,7 @@
     - { name: 'hive_service', value: 'HIVE' }
     - { name: 'hbase_service', value: 'HBASE' }
     - { name: 'oozie_service', value: 'OOZIE' }
-    - { name: 'hue_webhdfs', value: 'HDFS-NAMENODE' }
+    - { name: 'hue_webhdfs', value: 'HDFS-HTTPFS-1' }
     - { name: 'database_host', value: "{{ groups['cdh-manager'][0] }}" }
     - { name: 'database_password', value: "{{ hive_mysql_root_password }}" }
     - { name: 'database_name', value: 'hue' }

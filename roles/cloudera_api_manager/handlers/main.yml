@@ -16,3 +16,5 @@
 - name: restart cluster
   cdh: action=cluster state=restarted
 
+- name: restart hdfs
+  cdh: action=service service=hdfs state=restarted

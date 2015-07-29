@@ -66,3 +66,8 @@
 
 - name: enable ha on hdfs 
   cdh: action=deploy_hdfs_ha sn_host={{ groups['cdh-master'][1] }} jn1_host={{ groups['cdh-master'][0] }} jn2_host={{ groups['cdh-master'][1] }} jn3_host={{ groups['cdh-master'][2] }}
+
+- name: install httpfs on hdfs
+  cdh: action=deploy_hdfs_httpfs host={{ groups['cdh-master'][1] }}
+  notify: 
+    - restart hdfs
