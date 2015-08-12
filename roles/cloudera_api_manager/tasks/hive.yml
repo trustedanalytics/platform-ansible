@@ -1,0 +1,44 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying hive
+- name: deploy hive service
+  cdh: action=deploy_service name=hive
+
+- name: set hive service properties
+  cdh: action=set_config entity=service service=hive name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hive_metastore_database_host', value: "{{ groups['cdh-manager'][0] }}" }
+    - { name: 'hive_metastore_database_password', value: "{{ hive_mysql_root_password }}" }
+    - { name: 'hive_metastore_database_name', value: 'metastore' }
+    - { name: 'hive_metastore_database_port', value: '3306' }
+    - { name: 'hive_metastore_database_type', value: 'mysql' }
+    - { name: 'mapreduce_yarn_service', value: 'YARN' }
+    - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
+
+- name: set hive metastore role properties
+  cdh: action=set_config entity=role service=hive role=metastore name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hive_metastore_java_heapsize', value: '85306784' }
+
+- name: deploy hive master components
+  cdh: action=deploy_base_roles service=hive host={{ groups['cdh-master'][0] }} 
+
+- name: deploy hive gateways
+  cdh: action=deploy_service_worker_nodes service=hive host={{ item }}
+  with_items: groups['cdh-worker']
+
+- name: start hive service
+  cdh: action=service service=hive state=started

@@ -1,0 +1,103 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#this playbook installs all of the dependencies required by cloudera nodes
+#configures the CDH agent and formats & mounts AWS ephemeral disks
+- name: format ephemeral disks
+  filesystem: fstype=ext3 dev=/dev/{{ item }}
+  with_items: "{{ ansible_local.device_info.non_root_block_devs }}"
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: create mountpoints
+  file: path=/{{ item }} state=directory 
+  with_items: "{{ ansible_local.device_info.data_mount_points }}"
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: remove ephemeral disks found by cloud-config from fstab
+  lineinfile: dest=/etc/fstab regexp="/dev/xvdb\s+/mnt\s+auto\s+defaults,nofail,comment=cloudconfig\s+0\s+2" state=absent
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: umount ephemeral disks mounted by cloud-config
+  mount: name=/mnt src=/dev/xvdb fstype=ext3 state=unmounted
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: mount ephemeral disks
+  mount: name=/{{ item.0 }} src=/dev/{{ item.1 }} fstype=ext3 state=mounted
+  with_together:
+    - "{{ ansible_local.device_info.data_mount_points }}"
+    - "{{ ansible_local.device_info.non_root_block_devs }}"
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: install mysql-connector
+  yum: pkg=mysql-connector-java state=installed
+  environment: proxy_env
+
+- name: create hive dir
+  file: path=/usr/lib/hive/lib/ state=directory
+
+- name: link java connector to hive
+  file: src=/usr/share/java/mysql-connector-java.jar dest=/usr/lib/hive/lib/mysql-connector-java.jar state=link
+
+- name: install cloudera packages
+  yum: pkg={{ item }} state=latest
+  environment: proxy_env
+  with_items:
+    - cloudera-manager-agent 
+    - cloudera-manager-daemons
+
+- set_fact:
+    manager_hostname: "{{ hostvars[groups['cdh-manager'][0]]['ansible_hostname'] }}"
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- set_fact:
+    manager_hostname: cdh-manager
+  when: ansible_env.SUDO_USER == "vagrant"
+  tags:
+  - skip_on_packer
+
+- name: replace cloudera-scm-agent config
+  replace: dest=/etc/cloudera-scm-agent/config.ini regexp='(server_host)=localhost' replace=\\1={{ manager_hostname }}
+  tags:
+  - skip_on_packer
+
+- name: add node name to cloudera-scm-agent config
+  lineinfile: dest=/etc/cloudera-scm-agent/config.ini insertbefore='listening_hostname' line="listening_hostname={{ inventory_hostname }}" state=present
+  when: use_custom_dns
+  tags:
+  - skip_on_packer
+
+- name: wait for manager port 7180 to become accessible
+  wait_for: host={{ manager_hostname }} port=7180 
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant
+
+- name: start cloudera-scm-agent
+  service: name=cloudera-scm-agent state=started enabled=yes
+  tags:
+  - skip_on_packer
+  - skip_on_vagrant

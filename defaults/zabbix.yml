@@ -1,0 +1,101 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+zabbix_server_db_host: zabbix.rds.example.com
+zabbix_server_db_name: zabbix
+zabbix_server_db_user: zabbix
+zabbix_server_db_pass: "{{ zabbix_pgsql_pass }}"
+
+zabbix_server_host: "{{ hostvars[groups['zabbix-server'][0]]['ansible_hostname'] }}"
+zabbix_server_name: "zabbix"
+zabbix_server_domain: "zabbix.example.com"
+
+zabbix_hipchat_token: "{{ zabbix_hipchat_api }}"
+zabbix_hipchat_room: 1348064
+
+zabbix_statuspage_token: "{{ zabbix_statuspage_apikey }}"
+
+zabbix_server_port: 10051
+zabbix_server_conf:
+  ListenIP: 0.0.0.0
+  ListenPort: "{{ zabbix_server_port }}"
+  LogFile: /var/log/zabbix/zabbix_server.log
+  LogFileSize: 100
+  PidFile: /var/run/zabbix/zabbix_server.pid
+  DBHost: "{{ zabbix_server_db_host }}"
+  DBName: "{{ zabbix_server_db_name }}"
+  DBUser: "{{ zabbix_server_db_user }}"
+  DBPassword: "{{ zabbix_server_db_pass }}"
+  AlertScriptsPath: /usr/lib/zabbix/alertscripts
+  ExternalScripts: /usr/lib/zabbix/externalscripts
+  FpingLocation: /usr/sbin/fping
+  Fping6Location: /usr/sbin/fping6
+  Timeout: 15
+
+zabbix_server_php_date_timezone : "Europe/Warsaw" 
+zabbix_server_php_max_input_time : 300
+zabbix_server_php_upload_max_filesize : "2M"
+zabbix_server_php_post_max_size : "16M"
+zabbix_server_php_memory_limit : "128M"
+zabbix_server_php_max_execution_time : 300
+
+zabbix_agent_conf:
+  AllowRoot: 1
+  ListenIP: "{{ ansible_eth0.ipv4.address }}"
+  PidFile: /var/run/zabbix/zabbix_agentpid
+  LogFile: "/var/log/zabbix/zabbix_agentd.log"
+  LogFileSize: 100 
+  DebugLevel: 3 
+  EnableRemoteCommands: 0 
+  LogRemoteCommands: 0 
+  Server: "{{ hostvars[groups[zabbix_server_group][0]]['ansible_hostname'] }}"
+  ServerActive: "{{ hostvars[groups[zabbix_server_group][0]]['ansible_hostname'] }}"
+  ListenPort: 10050
+  StartAgents: 3
+  Hostname: "{{ inventory_hostname }}"
+  HostMetadata: "{{ group_names }}"
+
+zabbix_agent_conf_vagrant:
+  AllowRoot: 1
+  ListenIP: "{{ ansible_eth0.ipv4.address }}"
+  PidFile: /var/run/zabbix/zabbix_agentpid
+  LogFile: "/var/log/zabbix/zabbix_agentd.log"
+  LogFileSize: 100 
+  DebugLevel: 3 
+  EnableRemoteCommands: 0 
+  LogRemoteCommands: 0 
+  Server: "{{ hostvars['zabbix-server']['ansible_hostname'] }}"
+  ServerActive: "{{ hostvars['zabbix-server']['ansible_hostname'] }}"
+  ListenPort: 10050
+  StartAgents: 3
+  Hostname: "{{ inventory_hostname }}"
+  HostMetadata: "{{ group_names }}"
+
+zabbix_agent_Include:
+  - /etc/zabbix/zabbix_agentd.d/
+
+zabbix_proxy_conf:
+  Server: 0.0.0.0
+  ServerPort: 10443
+  Hostname: CDHTEST
+  LogFile: /var/log/zabbix/zabbix_proxy.log
+  LogFileSize: 100
+  PidFile: /var/run/zabbix/zabbix_proxy.pid
+  DBName: /var/lib/zabbix/zabbix_proxy.db
+  ProxyLocalBuffer: 24
+  ProxyOfflineBuffer: 24
+  HeartbeatFrequency: 15
+  ConfigFrequency: 180
+  DataSenderFrequency: 1

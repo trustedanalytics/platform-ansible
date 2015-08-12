@@ -1,0 +1,97 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: set KDC management options
+  cdh: action=set_config entity=service service=cm name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'KDC_HOST', value: "{{ groups['cdh-manager'][0] }}" }
+    - { name: 'SECURITY_REALM', value: 'CLOUDERA' }
+
+- name: enable security on HDFS
+  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hadoop_security_authentication', value: 'kerberos' }
+    - { name: 'hadoop_security_authorization', value: 'true' }
+
+- name: enable security on HBase
+  cdh: action=set_config entity=service service=hbase name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hbase_security_authentication', value: 'kerberos' }
+    - { name: 'hbase_security_authorization', value: 'true' }
+
+- name: enable security on Zookeeper
+  cdh: action=set_config entity=service service=zookeeper name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'enableSecurity', value: 'true' }
+
+- name: set hdfs role properties for security
+  cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'dfs_datanode_http_port', value: '1006' }
+    - { name: 'dfs_datanode_port', value: '1004' }
+    - { name: 'dfs_datanode_data_dir_perm', value: '700' }
+
+#import configuration
+- name: check to see if configuration imported
+  stat: path=/etc/krb_config_imported
+  register: krb_config
+
+- name: import kerberos configuration
+  cdh: >
+    action=run_command 
+    service=cm
+    name=importAdminCredentials 
+    params="{username: cloudera-scm/admin@CLOUDERA, password: {{ kadmin_pass }} }"
+  register: krb_config_cmd
+  when: krb_config.stat.exists == false
+
+- name: create a file after succesful import
+  file: path=/etc/krb_config_imported state=touch
+  when: krb_config_cmd|success and krb_config.stat.exists == false
+
+#generate credentials
+- name: check to see if creds generated
+  stat: path=/etc/krb_creds_generated
+  register: krb_creds
+
+- name: generate kerberos credentials
+  cdh: action=run_command service=cm name=generateCredentials
+  register: krb_creds_cmd
+  when: krb_creds.stat.exists == false
+
+- name: create a file after succesful generation
+  file: path=/etc/krb_creds_generated state=touch
+  when: krb_creds_cmd|success and krb_creds.stat.exists == false
+
+- name: deploy hue kt master components
+  cdh: action=deploy_base_roles service=hue-kt host={{ groups['cdh-master'][0] }} 
+
+#deploy changes and restart cluster
+- name: check to see if creds generated
+  stat: path=/etc/krb_first_restart
+  register: krb_restart
+
+- name: restart cm service after enabling kerberos
+  cdh: action=service service=cm state=restarted
+  when: krb_restart.stat.exists == false
+
+- name: restart cluster after enabling kerberos 
+  cdh: action=cluster state=restarted
+  register: krb_cluster_restart
+  when: krb_restart.stat.exists == false
+
+- name: create a file after succesful restart
+  file: path=/etc/krb_first_restart state=touch
+  when: krb_cluster_restart|success and krb_restart.stat.exists == false

@@ -1,0 +1,53 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: init kerberos if enabled
+  ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
+  when: kerberos_enabled
+  with_items:
+    - { usr: 'hbase', pass: '{{ kadmin_pass }}' }
+    - { usr: 'hdfs', pass: '{{ kadmin_pass }}' }
+
+- name: create dirs on hadoop
+  hdfs: dir={{ item.dir }} owner={{ item.owner }} mode={{ item.mode }} group={{ item.group }}
+  with_items:
+    - { dir: '/org', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org/intel', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org/intel/hdfsbroker', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/hdfsbroker/userspace', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/hdfsbroker/metadata', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/users', owner: 'cf', group: 'intel', mode: '775' }
+    - { dir: '/org/intel/tmp', owner: 'cf', group: 'intel', mode: '777' }
+
+- name: modify folder privileges for mapreduce
+  hdfs: dir={{ item.dir }} mode={{ item.mode }}
+  with_items:
+    - { dir: '/user', mode: '771' }
+
+- name: creating metadata zookeeper znode for brokers
+  znode: dir=/org/intel/{{ item }}/metadata
+  with_items:
+    - 'zookeeperbroker'
+    - 'gearpumpbroker'
+    - 'yarnbroker'
+    - 'hbasebroker'
+
+- name: creating userspace zookeeper znode for brokers
+  znode: dir=/org/intel/{{ item }}/userspace
+  with_items:
+    - 'zookeeperbroker'
+
+- name: creating namespace MyTest on hbase
+  edhbase: type='namespace' name='MyTest' state='create'

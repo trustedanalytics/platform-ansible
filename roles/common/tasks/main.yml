@@ -1,0 +1,33 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Configure Yum repositories
+  template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
+  with_dict: "{{ yum_repos }}"
+
+- name: Install 'epel-release'
+  yum: name=epel-release state=installed
+  environment: proxy_env
+
+- name: Install 'zabbix-release'
+  yum: name=zabbix-release state=installed
+  environment: proxy_env
+
+- include: ntp.yml
+
+- include: iptables.yml
+
+- include: selinux.yml

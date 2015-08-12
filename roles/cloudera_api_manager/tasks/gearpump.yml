@@ -1,0 +1,45 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying gearpump
+- name: deploy the gearpump parcel to all hosts
+  cdh: action=deploy_parcel name=gearpump version={{ gearpump_parcel_version }}
+  register: gearpump_deployed
+
+- name: restart cloudera manager server
+  service: name=cloudera-scm-server state=restarted
+  when: gearpump_deployed.changed
+
+- name: wait for port 7180 (cloudera manager) to become accessible
+  wait_for: port=7180
+  when: gearpump_deployed.changed
+
+- name: restart CM service
+  cdh: action=service service=cm state=restarted
+  when: gearpump_deployed.changed
+
+- name: wait for the CM checks to pass after restart
+  pause: seconds=30
+  when: gearpump_deployed.changed
+
+- name: deploy gearpump to master hosts
+  cdh: action=deploy_service_worker_nodes service=gearpump host={{ item }}
+  with_items: groups['cdh-worker']
+
+- name: deploy gearpump master components
+  cdh: action=deploy_base_roles service=gearpump host={{ groups['cdh-master'][0] }}
+
+- name: start gearpump service
+  cdh: action=service service=gearpump state=started

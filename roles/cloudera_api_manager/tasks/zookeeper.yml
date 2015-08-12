@@ -1,0 +1,36 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#depoying zookeeper
+- name: deploy zookeeper to master hosts
+  cdh: action=deploy_service_worker_nodes service=zookeeper host={{ item }}
+  with_items: groups['cdh-master']
+
+- name: set zookeeper service properties
+  cdh: action=set_config entity=service service=zookeeper name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'zookeeper_datadir_autocreate', value: 'true' }
+
+- name: set zookeeper role properties
+  cdh: action=set_config entity=role service=zookeeper role=zookeeper name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'quorumPort', value: 2888 }
+    - { name: 'electionPort', value: 3888 }
+    - { name: 'dataLogDir', value: '/var/lib/zookeeper' }
+    - { name: 'dataDir', value: '/var/lib/zookeeper' }
+    - { name: 'maxClientCnxns', value: '1024' }
+
+- name: start zookeeper service
+  cdh: action=service service=zookeeper state=started

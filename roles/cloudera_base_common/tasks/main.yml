@@ -1,0 +1,62 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#this playbook installs all of the dependencies required by both the cloudera manager and it's nodes
+- name: calculate root partition size for AWS
+  set_fact: ansible_root_size={{ ansible_devices.xvda.partitions.xvda1.sectors|int * ansible_devices.xvda.partitions.xvda1.sectorsize|int }}
+  when: ansible_virtualization_type == 'xen'
+  tags:
+   - skip_on_vagrant
+
+- name: calculate root partition size for Openstack
+  set_fact: ansible_root_size={{ ansible_devices.vda.partitions.vda1.sectors|int * ansible_devices.vda.partitions.vda1.sectorsize|int }}
+  when: ansible_virtualization_type == 'NA'
+  tags:
+   - skip_on_vagrant
+
+- name: check root disk size
+  fail: msg="The root partition has less than 20GB, ansible cannot continue"
+  when: "{{ ansible_root_size|int < 21474836480 }}"
+  tags:
+    - skip_on_packer
+    - skip_on_vagrant
+
+- name: ensure custom facts directory exists
+  file: path=/etc/ansible/facts.d recurse=yes state=directory
+
+- name: distribute device info fact
+  copy: src=device_info.fact dest=/etc/ansible/facts.d/device_info.fact mode=0755
+
+- name: reload ansible_local facts
+  setup: filter=ansible_local
+
+- name: install krb rpms
+  yum: pkg={{ item }} state=installed
+  environment: proxy_env
+  with_items:
+    - krb5-workstation
+    - openssl-devel
+
+- name: Install the Oracle JDK
+  yum: name=oracle-j2sdk1.7 state=installed
+  environment: proxy_env
+
+- name: create group on each worker machine
+  group: name={{ item.name }} gid={{ item.gid }} system=yes
+  with_items: cdh_work_groups
+
+- name: create user on each machine
+  user: name={{ item.name }} group={{ item.group }} uid={{ item.uid }} system=yes
+  with_items: cdh_work_users

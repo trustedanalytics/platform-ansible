@@ -1,0 +1,175 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+- hosts: all
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/yum_repos.yml
+    - defaults/proxy.yml
+  roles:
+    - common
+
+#install consul agent on the master machines
+- hosts: consul-master
+  vars_files:
+    - defaults/consul.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - { role: hostnames_common, when: use_custom_dns }
+    - consul_base_agent
+    - consul_base_server
+
+#change hostnames to ones that are like the inv-names
+- hosts: all
+  vars_files:
+    - defaults/consul.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles: 
+    - { role: hostnames_common, when: use_custom_dns }
+    - { role: resolv_common, when: use_custom_dns }
+
+#install consul agents on all hosts
+- hosts: all
+  vars_files:
+    - defaults/consul.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - { role: consul_base_agent, when: use_custom_dns }
+
+#install zabbix repos
+- hosts: all
+  vars_files:
+    - defaults/zabbix.yml
+    - defaults/proxy.yml
+  pre_tasks:
+    - name: set server to zabbix proxy if proxy exists
+      set_fact: 
+        zabbix_server_group: zabbix-proxy
+      when: groups.has_key('zabbix-proxy')
+    - name: set server to zabbix server if proxy doesnt exist
+      set_fact: 
+        zabbix_server_group: zabbix-server
+      when: not groups.has_key('zabbix-proxy')
+    - name: set agent config to a simpler vagrant one
+      set_fact: 
+        zabbix_agent_conf: "{{ zabbix_agent_conf_vagrant }}"
+      when: ansible_env.SUDO_USER == "vagrant"
+  roles:
+    #disabled on Openstack
+    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' }
+
+#install all base packages needed on cloudera machines
+- hosts: cdh-all
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+  roles:
+    - cloudera_base_common
+
+#install the CDH manager server files
+- hosts: cdh-manager
+  vars_files:
+    - defaults/proxy.yml
+    - defaults/cdh.yml
+    - defaults/env.yml
+  roles:
+    - cloudera_base_manager
+
+#install CDH agents on all hosts
+- hosts: cdh-all-nodes
+  vars_files:
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - cloudera_base_node
+
+#install KRB5 common files
+- hosts: cdh-all
+  vars_files:
+    - defaults/proxy.yml
+    - defaults/cdh.yml
+  roles:
+    - { role: kerberos_base_common, when: kerberos_enabled }
+
+#install KRB5 server
+- hosts: cdh-manager
+  vars_files:
+    - defaults/proxy.yml
+    - defaults/cdh.yml
+  roles:
+    - { role: kerberos_base_server, when: kerberos_enabled }
+
+#install ATK client on all hosts
+- hosts: cdh-all-nodes
+  vars_files:
+    - defaults/proxy.yml
+  roles:
+    - cloudera_atk_client
+
+#install and configure the cloudera cluster
+- hosts: cdh-manager
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+    - defaults/cloudera_parcels.yml
+  roles:
+    - { role: cloudera_api_manager, tags: skip_on_vagrant }
+ 
+- hosts: cdh-manager
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - { role: cloudera_backups, when: configure_backup, tags: skip_on_vagrant }
+
+- hosts: consul-server
+  vars_files:
+    - defaults/consul.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - consul_base_agent
+    - consul_base_server
+
+#configuring service instances on namenode
+- hosts: cdh-master[0]
+  vars_files:
+    - defaults/cdh.yml
+  roles:
+    - cloudera_api_namenode
+
+- hosts: zabbix-server
+  vars_files:
+    - defaults/zabbix.yml
+  roles:
+    - zabbix_base_server
+
+- hosts: zabbix-web
+  vars_files:
+    - defaults/zabbix.yml
+  roles:
+    - zabbix_base_web
+
+- hosts: zabbix-proxy
+  vars_files:
+    - defaults/zabbix.yml
+  roles:
+    - zabbix_base_proxy

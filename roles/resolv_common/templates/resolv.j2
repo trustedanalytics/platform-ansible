@@ -1,0 +1,4 @@
+search node.{{ env_name }}.consul
+nameserver {{ hostvars[groups['consul-master'][0]]['ansible_eth0']['ipv4']['address'] }}
+nameserver {{ hostvars[groups['consul-master'][1]]['ansible_eth0']['ipv4']['address'] }}
+nameserver {{ hostvars[groups['consul-master'][2]]['ansible_eth0']['ipv4']['address'] }}

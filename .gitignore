@@ -1,0 +1,3 @@
+.vagrant
+user.json
+roles/kerberos_base_common/files/UnlimitedJCEPolicy

@@ -1,0 +1,51 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying a cluster
+- name: create an empty cluster
+  cdh: action=create_cluster version={{ cdh_packages_version }} license={{ cdh_license }}
+
+- name: add all hosts to the cluster
+  cdh: action=add_host host={{ item }}
+  with_items: groups['cdh-all']
+
+- name: add a cloudera management service
+  cdh: action=create_mgmt host={{ item }}
+  with_items: groups['cdh-manager']
+
+- name: set parcel distribution rate
+  cdh: action=set_config entity=service service=cm name={{ item.name }} value={{ item.value }}
+  with_items:
+  - { name: 'PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND', value: '409600' }
+
+- name: set proxy service properties
+  cdh: action=set_config entity=service service=cm name={{ item.name }} value={{ item.value }}
+  with_items:
+  - { name: 'PARCEL_PROXY_SERVER', value: "{{ cdh_proxy_server }}" }
+  - { name: 'PARCEL_PROXY_PORT', value: "{{ cdh_proxy_port }}" }
+  when: cdh_proxy_server|length > 1 and cdh_proxy_port|length > 1
+
+- name: set parcel mirrors
+  cdh: action=set_config entity=service service=cm name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'REMOTE_PARCEL_REPO_URLS', value: '{{ cloudera_parcels | join(",") }}' }
+  register: parcels_deployed
+
+- name: wait for the parcels to refresh
+  pause: seconds=20
+  when: parcels_deployed.changed
+
+- name: deploy the CDH parcel to all hosts
+  cdh: action=deploy_parcel name=CDH version={{ cdh_parcel_version }}

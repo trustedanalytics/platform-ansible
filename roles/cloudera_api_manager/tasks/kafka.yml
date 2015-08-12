@@ -1,0 +1,41 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying kafka
+- name: deploy the kafka parcel to all hosts
+  cdh: action=deploy_parcel name=KAFKA version={{ kafka_parcel_version }}
+
+- name: deploy kafka to master hosts
+  cdh: action=deploy_service_worker_nodes service=kafka host={{ item }}
+  with_items: groups['cdh-master']
+
+- name: set kafka service properties
+  cdh: action=set_config entity=service service=kafka name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
+    - { name: 'zookeeper.chroot', value: '/kafka' }
+    - { name: 'num.partitions', value: '3' }
+    - { name: 'default.replication.factor', value: '2' }
+
+- name: set kafka role properties
+  cdh: action=set_config entity=role service=kafka role=kafka name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'log.dirs', value: "{{ hostvars[groups['cdh-master'][0]]['ansible_local'].device_info.kafka_log_dirs }}" }
+    - { name: 'log.roll.hours', value: '12' }
+    - { name: 'log.retention.hours', value: '1' }
+    - { name: 'log.retention.bytes', value: '36507222016' }
+
+- name: start kafka service
+  cdh: action=service service=kafka state=started

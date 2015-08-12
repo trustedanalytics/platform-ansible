@@ -1,0 +1,43 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+
+  "builders": [{
+    "type": "openstack",
+    "username": "wkielas",
+    "password": "wkielas1",
+    "ssh_username": "centos",
+    "image_name": "Test image",
+    "source_image": "23afdecb-67a1-4ac2-93df-19e3b7b4ce8e",
+    "region": "RegionOne",
+    "flavor": "4"
+    }],
+
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sleep 5",
+      "sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm",
+      "sudo yum install ansible tmux -y"
+    ]
+  },
+  {
+    "type": "ansible-local",
+    "playbook_file": "local.yml",
+    "command": "sudo ansible-playbook",
+    "playbook_dir": ".",
+    "extra_arguments": "--skip-tags skip_on_packer --vault-password-file=Vault"
+  },
+  {
+    "type": "shell",
+    "inline": [
+      "sudo yum install yum-plugin-downloadonly -y",
+      "sudo yum update -y",
+      "sudo chkconfig cloudera-scm-agent off",
+      "sudo yum install --downloadonly cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2 -y; exit 0"
+    ]
+  }
+  ]
+}

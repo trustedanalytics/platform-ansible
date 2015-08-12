@@ -1,0 +1,29 @@
+#this is a placeholder example, on a real deployment there's a generated file
+#with real IPs
+
+[cdh-worker]
+ip-10-10-10-171.eu-west-1.compute.internal ansible_ssh_host=10.10.10.171
+ip-10-10-10-77.eu-west-1.compute.internal ansible_ssh_host=10.10.10.77
+ip-10-10-10-240.eu-west-1.compute.internal ansible_ssh_host=10.10.10.240
+ip-10-10-10-188.eu-west-1.compute.internal ansible_ssh_host=10.10.10.188
+ip-10-10-10-130.eu-west-1.compute.internal ansible_ssh_host=10.10.10.130
+ip-10-10-10-69.eu-west-1.compute.internal ansible_ssh_host=10.10.10.69
+ip-10-10-10-68.eu-west-1.compute.internal ansible_ssh_host=10.10.10.68
+ip-10-10-10-71.eu-west-1.compute.internal ansible_ssh_host=10.10.10.71
+ip-10-10-10-70.eu-west-1.compute.internal ansible_ssh_host=10.10.10.70
+
+[cdh-manager]
+ip-10-10-10-109.eu-west-1.compute.internal ansible_ssh_host=10.10.10.109
+
+[cdh-master]
+ip-10-10-10-28.eu-west-1.compute.internal ansible_ssh_host=10.10.10.28
+ip-10-10-10-87.eu-west-1.compute.internal ansible_ssh_host=10.10.10.87
+ip-10-10-10-172.eu-west-1.compute.internal ansible_ssh_host=10.10.10.172
+
+[cdh-all-nodes:children]
+cdh-master
+cdh-worker
+
+[cdh-all:children]
+cdh-all-nodes
+cdh-manager

@@ -1,0 +1,68 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying hdfs
+#this is the right order, first we have to add DNs, since we need them for NN format later on
+- name: deploy hdfs dn
+  cdh: action=deploy_service_worker_nodes service=hdfs host={{ item }}
+  with_items: groups['cdh-worker']
+
+- name: set hdfs service properties
+  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'dfs_replication', value: 3 }
+    - { name: 'dfs_permissions', value: 'false' }
+    - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
+    - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
+
+- name: set namenode role properties
+  cdh: action=set_config entity=role service=hdfs role=namenode name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'dfs_name_dir_list', value: "{{ hostvars[groups['cdh-master'][0]]['ansible_local'].device_info.name_dirs }}" }
+    - { name: 'dfs_namenode_handler_count', value: 30 }
+
+- name: set secondary namenode role properties
+  cdh: action=set_config entity=role service=hdfs role=secondarynamenode name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'fs_checkpoint_dir_list', value: "{{ hostvars[groups['cdh-master'][0]]['ansible_local'].device_info.secondary_dirs }}" }
+
+- name: set hdfs role properties
+  cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'dfs_data_dir_list', value: "{{ hostvars[groups['cdh-worker'][0]]['ansible_local'].device_info.data_dirs }}" }
+    - { name: 'dfs_datanode_handler_count', value: 30 }
+    - { name: 'dfs_datanode_du_reserved', value: 1073741821 }
+    - { name: 'dfs_datanode_failed_volumes_tolerated', value: 0 }
+
+- name: set hdfs role if kerberos is disabled
+  cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
+  when: not kerberos_enabled
+  with_items:
+    - { name: 'dfs_datanode_data_dir_perm', value: 755 }
+
+- name: set hdfs role if kerberos is enabled
+  cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
+  when: kerberos_enabled
+  with_items:
+    - { name: 'dfs_datanode_data_dir_perm', value: 700 }
+
+- name: deploy hdfs namenode and secondary namenode
+  cdh: action=deploy_hdfs_base nn_host={{ groups['cdh-master'][0] }} sn_host={{ groups['cdh-master'][1] }} 
+
+- name: start hdfs service
+  cdh: action=service service=hdfs state=started
+
+- name: enable ha on hdfs 
+  cdh: action=deploy_hdfs_ha sn_host={{ groups['cdh-master'][1] }} jn1_host={{ groups['cdh-master'][0] }} jn2_host={{ groups['cdh-master'][1] }} jn3_host={{ groups['cdh-master'][2] }}

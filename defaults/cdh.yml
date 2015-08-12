@@ -1,0 +1,47 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#cdh parcel versions
+#http://archive.cloudera.com/cdh5/parcels/5.4/manifest.json
+#http://archive.cloudera.com/cdh5/parcels/5.3/manifest.json
+#for 5.4:
+cdh_parcel_version: 5.4.2-latest
+cdh_packages_version: 5.4.3
+#cdh_parcel_version is the version of the CDH parcel and associated Hadoop components
+#this variable is the main way to modify the CDH cluster version!
+#cdh_parcel_version: 5.3-latest
+#cdh_packages_version only affects the underlying CDH agents
+#cdh_packages_version: 5.3.4
+#kafka parcel versions
+#http://archive.cloudera.com/kafka/parcels/latest/manifest.json
+kafka_parcel_version: latest
+#same for gearpump
+gearpump_parcel_version: latest
+#default password for cf account
+cf_password: cf1
+#define if kerberos will be enabled, do not change it after first script start
+kerberos_enabled: true
+#groups created on each machine
+cdh_work_groups:
+  - { name: 'intel', gid: '1001' }
+  - { name: 'orggroup', gid: '1002' }
+#users created on each machine
+cdh_work_users:
+  - { name: 'cf', uid: '1001', group: 'intel' }
+  - { name: 'hdfsbroker', uid: '1002', group: 'orggroup' }
+configure_backup: false
+#hbase_snapshot_s3_access_key_id: ENTER YOUR S3 KEY FOR BACKUPS HERE
+#hbase_snapshot_s3_secret_access_key: ENTER YOUR S3 SECRET FOR BACKUPS HERE
+#hbase_snapshot_s3_path: ENTER UNIQUE PATH FOR BACKUPS HERE

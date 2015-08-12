@@ -1,0 +1,3 @@
+#!/bin/bash 
+
+echo -e "$3" | /usr/local/bin/hipchat_room_message -t {{ zabbix_hipchat_token }} -r {{ zabbix_hipchat_room }} -f Zabbix

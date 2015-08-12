@@ -1,0 +1,4 @@
+[{{ item.key }}]
+{% for option, value in item.value.iteritems() %}
+{{ option }}={{ value }}
+{% endfor %}

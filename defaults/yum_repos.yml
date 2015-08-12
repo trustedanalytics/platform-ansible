@@ -1,0 +1,43 @@
+---
+yum_repos:
+  epel:
+    name: Extra Packages for Enterprise Linux 6 - $basearch
+    enabled: 1
+    failovermethod: priority
+    gpgcheck: 1
+    gpgkey: http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
+    mirrorlist: http://mirrors.fedoraproject.org/mirrorlist?repo=epel-6&arch=$basearch
+    sslverify: true
+  epel-testing:
+    name: Extra Packages for Enterprise Linux 6 - Testing - $basearch
+    enabled: 1
+    failovermethod: priority
+    gpgcheck: 1
+    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
+    mirrorlist: http://mirrors.fedoraproject.org/metalink?repo=testing-epel6&arch=$basearch
+    sslverify: true
+  zabbix:
+    name: Zabbix Official Repository - $basearch
+    baseurl: http://repo.zabbix.com/zabbix/2.2/rhel/6/$basearch/
+    enabled: 1
+    gpgcheck: 1
+    gpgkey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
+  zabbix-non-supported:
+    name: Zabbix Official Repository non-supported - $basearch
+    baseurl: http://repo.zabbix.com/non-supported/rhel/6/$basearch/
+    enabled: 1
+    gpgkey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
+    gpgcheck: 1
+  cloudera-manager:
+    name: Cloudera Manager
+    baseurl: http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/{{ cdh_packages_version }}/
+    gpgkey: http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/RPM-GPG-KEY-cloudera
+    gpgcheck: 1
+  intel-analytics-deps:
+    name: intel-analytics-deps
+    baseurl: https://intel-analytics-dependencies.s3-us-west-2.amazonaws.com/yum
+    gpgcheck: 0
+    priority: 1
+    enabled: 1
+
+# Add the location of the remote trustedanalytics client repository here.

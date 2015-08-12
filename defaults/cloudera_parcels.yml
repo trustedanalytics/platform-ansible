@@ -1,0 +1,18 @@
+---
+cloudera_parcels:
+  - http://archive.cloudera.com/cdh5/parcels/latest/
+  - http://archive.cloudera.com/cdh5/parcels/5.4.2/
+  - http://archive.cloudera.com/cdh4/parcels/latest/
+  - http://archive.cloudera.com/impala/parcels/latest/
+  - http://archive.cloudera.com/search/parcels/latest/
+  - http://archive.cloudera.com/kafka/parcels/latest/
+  - http://archive.cloudera.com/spark/parcels/latest/
+  - http://archive.cloudera.com/navigator-keytrustee5/parcels/latest/
+  - http://archive.cloudera.com/sqoop-connectors/parcels/latest/
+  - http://archive.cloudera.com/accumulo/parcels/1.4/
+  - http://archive.cloudera.com/accumulo-c5/parcels/latest/
+
+# Add the location of the remote Gearpump repository here.
+#
+# More details about how to build a Gearpump parcel:
+# https://github.com/gearpump/gearpump_cm_integration

@@ -1,0 +1,43 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: ensure custom facts directory exists
+  file: path=/etc/ansible/facts.d recurse=yes state=directory
+
+- name: distribute resolv info fact
+  copy: src=resolv.fact dest=/etc/ansible/facts.d/resolv.fact mode=0755
+
+- name: reload ansible_local facts
+  setup: filter=ansible_local
+
+- name: copy dns.json
+  template: src=dns.j2 dest=/etc/consul.d/dns.json
+
+- name: copy server.json
+  template: src=server.j2 dest=/etc/consul.d/server.json
+  register: server
+
+- name: start the consul service
+  service: name=consul state=started enabled=yes
+
+- name: wait for consul port 8301 to become accessible
+  wait_for: host=localhost port=8301 timeout=10 
+
+- name: wait for consul port 8500 to become accessible and check cluster state
+  uri: url=http://localhost:8500/v1/catalog/nodes
+  register: cluster_state
+  until: cluster_state|success
+  retries: 6
+  delay: 10

@@ -1,0 +1,15 @@
+---
+zabbix_pgsql_pass: password-for-zabbix-database
+zabbix_hipchat_api: 
+zabbix_statuspage_apikey: 
+hive_mysql_root_password: hivemetastore
+aws_access_key_id: 
+aws_secret_access_key: 
+aws_default_region: 
+master_krb_pass: kerberos_masterpw
+kadmin_pass: kadmin_masterpw
+cdh_license: 
+cloud_foundry_enviornments:
+  example:
+    user: admin
+    pass: admin

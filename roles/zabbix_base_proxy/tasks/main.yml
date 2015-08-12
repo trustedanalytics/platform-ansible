@@ -1,0 +1,53 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: install zabbix-proxy and stunnel
+  yum: pkg={{ item }} state=installed
+  with_items:
+    - zabbix-proxy-sqlite3
+    - stunnel
+
+- name: copy stunnel initscript
+  copy: src=stunnel dest=/etc/init.d/stunnel mode=755
+
+- name: copy stunnel config
+  template: src=stunnel.conf dest=/etc/stunnel mode=755
+
+- name: start the stunnel service
+  service: name=stunnel state=started enabled=yes
+
+- name: create zabbix db directory
+  file: dest=/var/lib/zabbix owner=zabbix group=zabbix state=directory
+
+- name: zabbix_server proxy conf file
+  template:
+    src=zabbix_proxy.conf.j2
+    dest=/etc/zabbix/zabbix_proxy.conf
+    owner=zabbix
+    group=zabbix
+    mode=600
+  notify: restart zabbix_proxy
+
+- name: create share zabbix dir
+  file: dest=/usr/share/zabbix owner=zabbix group=zabbix state=directory
+  
+- name: create share zabbix externalscripts dir
+  file: dest=/usr/share/zabbix/externalscripts owner=zabbix group=zabbix state=directory
+  
+- name: copy health check script
+  copy: src=healthCheck.py dest=/usr/share/zabbix/externalscripts owner=zabbix group=zabbix mode=777
+
+- name: start the zabbix_proxy service
+  service: name=zabbix-proxy state=started enabled=yes

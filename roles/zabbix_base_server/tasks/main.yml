@@ -1,0 +1,135 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: install zabbix-server
+  yum: pkg={{ item }} state=installed
+  with_items:
+    - zabbix-server-pgsql
+
+- name: zabbix_server server conf file
+  template:
+    src=zabbix_server.conf.j2
+    dest=/etc/zabbix/zabbix_server.conf
+    owner=zabbix
+    group=zabbix
+    mode=600
+  notify: restart zabbix_server
+
+#do not start the server on vagrant - this could result in DB corruption when two instances work with the same DB
+- name: start the zabbix_server service
+  service: name=zabbix-server state=started enabled=yes
+  tags:
+  - skip_on_vagrant
+
+- name: copy hipchat script
+  copy: src=hipchat_room_message dest=/usr/local/bin mode=777
+
+- name: zabbix_server alertscript for hipchat
+  template:
+    src=hipchat_alert.j2
+    dest=/usr/lib/zabbix/alertscripts/hipchat_alert
+    owner=zabbix
+    group=zabbix
+    mode=770
+
+- name: zabbix_server create log directory
+  file:
+    path=/usr/lib/zabbix/alertscripts/statuspage
+    state=directory
+    owner=zabbix
+    group=zabbix
+    mode=600
+    recurse=yes
+
+- name: zabbix_server create log file
+  file:
+    path=/usr/lib/zabbix/alertscripts/statuspage/statuspage.log
+    state=touch
+    owner=zabbix
+    group=zabbix
+    mode=600
+
+- name: zabbix_server alertscript for statuspage
+  template:
+    src=statuspage_alert.j2
+    dest=/usr/lib/zabbix/alertscripts/environment_status
+    owner=zabbix
+    group=zabbix
+    mode=600
+
+- name: Install cf-cli
+  yum: pkg={{ item }} state=installed
+  with_items:
+    - cf-cli
+
+- name: Create main folder
+  file: path=/.cf state=directory owner=zabbix group=zabbix
+
+- name: Create configuration for each item
+  script: ConfigOrg.sh "{{ item.key }}" "{{ item.value.user }}" "{{ item.value.pass }}" creates=/.cf/{{ item.key }}/.DefaultPass
+  with_dict: cloud_foundry_enviornments
+
+- name: Copy OrgChecker script
+  copy: src=OrgChecker.py dest=/usr/lib/zabbix/externalscripts owner=zabbix group=zabbix mode=770
+
+- name: Copy OrgList script
+  copy: src=OrgList.py dest=/usr/lib/zabbix/externalscripts owner=zabbix group=zabbix mode=770
+
+- name: Copy aws script
+  copy: src=CloudWatch.py dest=/usr/lib/zabbix/externalscripts owner=zabbix group=zabbix mode=770
+
+- name: Creates zabbix user directory
+  file: path=/var/lib/zabbix state=directory owner=zabbix group=zabbix
+
+- name: Install pip
+  yum: pkg=python-pip state=installed
+
+- name: Install AWS
+  pip: name={{ item }}
+  with_items:
+    - awscli
+
+- name: Configure aws
+  script: ConfigureAWS.sh "{{ aws_access_key_id }}" "{{ aws_secret_access_key }}" "{{ aws_default_region }}" creates=/etc/aws_configure_complete
+
+- name: create config directory for each env
+  file: dest=/.cf/"{{item.key}}" owner=zabbix group=zabbix state=directory
+  with_dict: cloud_foundry_enviornments
+
+- name: create credentials file for each env
+  shell: printf "{{item.value.user}}\n{{item.value.pass}}\n" > "/.cf/{{item.key}}/.DefaultPass"
+  with_dict: cloud_foundry_enviornments
+
+- name: copy Cloud Foundry monitoring script
+  copy: src=CFMonitor.sh dest=/usr/lib/zabbix/externalscripts mode=777
+
+- name: create Cloud Foundry monitoring script main config directory
+  file: dest=/.cf/cfm owner=zabbix group=zabbix state=directory
+
+- name: create Cloud Foundry monitoring script config directory for each env
+  file: dest=/.cf/cfm/"{{item.key}}" owner=zabbix group=zabbix state=directory
+  with_dict: monitored_cf_environments
+
+- name: create monitored orgs list for each env
+  template: src=orgs.j2 dest="/.cf/cfm/{{item.key}}/orgs" owner=zabbix group=zabbix mode=644
+  with_dict: monitored_cf_environments
+
+- name: create monitored spaces list for each env
+  template: src=spaces.j2 dest="/.cf/cfm/{{item.key}}/spaces" owner=zabbix group=zabbix mode=644
+  with_dict: monitored_cf_environments
+
+- name: create monitored apps list for each env
+  template: src=apps.j2 dest="/.cf/cfm/{{item.key}}/apps" owner=zabbix group=zabbix mode=644
+  with_dict: monitored_cf_environments

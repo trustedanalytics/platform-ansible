@@ -1,0 +1,135 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#this playbook installs the cloudera manager on a given host
+- name: install mysql & pip
+  yum: pkg={{ item }} state=installed
+  environment: proxy_env
+  with_items:
+    - mysql-server
+    - expect
+    - python-pip
+    - MySQL-python
+
+- name: install the CM python api
+  pip: name=cm_api
+  environment: proxy_env
+
+- name: copy hive metastore schemas
+  copy: src={{ item }} dest=/tmp
+  with_items:
+    - hive-schema-0.13.0.mysql.sql 
+    - hive-schema-1.1.0.mysql.sql 
+    - hive-txn-schema-0.13.0.mysql.sql 
+
+- name: start mysqld
+  service: name=mysqld state=started enabled=yes
+
+- name: Check if root password is set
+  mysql_user: user=root password={{ hive_mysql_root_password }} login_user=root login_password={{ hive_mysql_root_password }}
+  register: RootPasswordSet
+  ignore_errors: yes
+
+- name: Change default password for root
+  mysql_user: user=root password={{ hive_mysql_root_password }}
+  when: RootPasswordSet|failed
+
+- name: Delete anonymous users
+  mysql_user: user="" state=absent  login_user=root login_password={{ hive_mysql_root_password }}
+
+- name: Delete test table
+  mysql_db: name=test state=absent login_user=root login_password={{ hive_mysql_root_password }}
+
+- name: Create DB metastore
+  mysql_db: name=metastore state=present login_user=root login_password={{ hive_mysql_root_password }}
+  register: MetastoreCreationStatus
+
+- name: restore hive database for 5.3
+  mysql_db: name=metastore target=/tmp/hive-schema-0.13.0.mysql.sql state=import
+    login_user=root login_password={{ hive_mysql_root_password }}
+  when: "MetastoreCreationStatus.changed == True and '5.3' in cdh_packages_version"
+
+- name: restore hive database for 5.4
+  mysql_db: name=metastore target=/tmp/{{ item }} state=import
+    login_user=root login_password={{ hive_mysql_root_password }}
+  with_items:
+    - hive-schema-1.1.0.mysql.sql 
+    - hive-txn-schema-0.13.0.mysql.sql 
+  when: "MetastoreCreationStatus.changed == True and '5.4' in cdh_packages_version"
+
+- name: Grant privileges to hive
+  mysql_user: name='hive' host='{{ groups['cdh-master'][0] }}' password={{ hive_mysql_root_password }}
+    priv=metastore.*:ALL append_privs=no login_user=root login_password={{ hive_mysql_root_password }}
+  notify: Flush MySQL
+
+- name: Create other dbs
+  mysql_db: name={{ item }}  login_user=root login_password={{ hive_mysql_root_password }}
+  with_items:
+    - oozie
+    - hue
+
+- name: Create other oozie users
+  mysql_user: name='oozie' host='{{ item }}' password={{ hive_mysql_root_password }}
+    priv=oozie.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
+  with_items:
+    - '%'
+    - "{{ groups['cdh-master'][0] }}"
+  notify: Flush MySQL
+
+- name: Create other hue users
+  mysql_user: name='hue' host='{{ item }}' password={{ hive_mysql_root_password }}
+    priv=hue.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
+  with_items:
+    - '%'
+    - "{{ groups['cdh-master'][0] }}"
+  notify: Flush MySQL
+
+- name: install cloudera packages
+  yum: pkg={{ item }} state=latest
+  with_items:
+    - cloudera-manager-agent 
+    - cloudera-manager-daemons 
+    - cloudera-manager-server
+    - cloudera-manager-server-db-2
+
+- name: replace the manager host in the cloudera manager config
+  replace: dest=/etc/cloudera-scm-agent/config.ini regexp='(server_host)=localhost' replace=\\1={{ ansible_hostname }}
+
+- name: add node name to cloudera-scm-agent config
+  lineinfile: dest=/etc/cloudera-scm-agent/config.ini insertbefore='listening_hostname' line="listening_hostname={{ inventory_hostname }}" state=present
+  when: use_custom_dns
+  tags:
+  - skip_on_packer
+
+- name: copy kafka csd jar
+  copy: src=KAFKA-1.2.0.jar dest=/opt/cloudera/csd
+
+- name: copy gearpump csd jar
+  copy: src=GEARPUMP-1.0.jar dest=/opt/cloudera/csd
+
+- name: start cloudera manager db
+  service: name=cloudera-scm-server-db state=started pattern='/usr/bin/postgres -D /var/lib/cloudera-scm-server-db/data'
+
+- name: wait for port 7432 (cloudera postgres) to become accessible
+  wait_for: port=7432
+
+- name: start cloudera manager server
+  service: name=cloudera-scm-server state=started
+
+- name: wait for port 7180 (cloudera manager) to become accessible
+  wait_for: port=7180 
+
+- name: start cloudera agent
+  service: name=cloudera-scm-agent state=started

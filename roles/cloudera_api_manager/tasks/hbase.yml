@@ -1,0 +1,40 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#deploying hbase
+- name: deploy hbase rs
+  cdh: action=deploy_service_worker_nodes service=hbase host={{ item }}
+  with_items: groups['cdh-worker']
+
+- name: set hbase service properties
+  cdh: action=set_config entity=service service=hbase name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hdfs_service', value: 'HDFS' }
+    - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
+    - { name: 'hbase_superuser', value: 'cf' }
+
+- name: set hbase rs role properties
+  cdh: action=set_config entity=role service=hbase role=regionserver name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'hbase_hregion_memstore_flush_size', value: '1024000000' }
+    - { name: 'hbase_regionserver_handler_count', value: '10' }
+    - { name: 'hbase_regionserver_java_heapsize', value: '2048000000' }
+    - { name: 'hbase_regionserver_java_opts', value: '' }
+
+- name: deploy hbase master components
+  cdh: action=deploy_base_roles service=hbase host={{ groups['cdh-master'][0] }} 
+
+- name: start hbase service
+  cdh: action=service service=hbase state=started
