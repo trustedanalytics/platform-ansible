@@ -32,3 +32,6 @@
 
 - name: start hue service
   cdh: action=service service=hue state=started
+
+- name: create hue first user
+  script: create_hue_superuser.py {{ groups['cdh-master'][0] }} {{ cf_password }} && touch /var/hue_user_created creates=/var/hue_user_created
