@@ -31,10 +31,10 @@
     - { dir: '/org/intel/users', owner: 'cf', group: 'intel', mode: '775' }
     - { dir: '/org/intel/tmp', owner: 'cf', group: 'intel', mode: '777' }
 
-- name: modify folder privileges for mapreduce
+- name: change folder privileges
   hdfs: dir={{ item.dir }} mode={{ item.mode }}
   with_items:
-    - { dir: '/user', mode: '771' }
+    - { dir: '/user', mode: '755' }
 
 - name: creating metadata zookeeper znode for brokers
   znode: dir=/org/intel/{{ item }}/metadata

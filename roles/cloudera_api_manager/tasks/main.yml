@@ -47,8 +47,8 @@
 - name: include kafka role creation
   include: kafka.yml
 
-- name: include gearpump role creation
-  include: gearpump.yml
+#- name: include gearpump role creation
+#  include: gearpump.yml
 
 - name: include kerberos configuration
   include: kerberos.yml

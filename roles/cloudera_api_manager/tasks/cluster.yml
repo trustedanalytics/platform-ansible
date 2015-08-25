@@ -15,7 +15,7 @@
 
 #deploying a cluster
 - name: create an empty cluster
-  cdh: action=create_cluster version={{ cdh_packages_version }} license={{ cdh_license }}
+  cdh: action=create_cluster version={{ cdh_packages_version }} 
 
 - name: add all hosts to the cluster
   cdh: action=add_host host={{ item }}
