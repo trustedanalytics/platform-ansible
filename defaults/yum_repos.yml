@@ -33,9 +33,9 @@ yum_repos:
     baseurl: http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/{{ cdh_packages_version }}/
     gpgkey: http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/RPM-GPG-KEY-cloudera
     gpgcheck: 1
-  intel-analytics-deps:
-    name: intel-analytics-deps
-    baseurl: https://intel-analytics-dependencies.s3-us-west-2.amazonaws.com/yum
+  trustedanalytics:
+    name: trustedanalytics
+    baseurl: https://s3-us-west-2.amazonaws.com/analytics-tool-kit/public/yum/redhat/6/x86_64/latest/
     gpgcheck: 0
     priority: 1
     enabled: 1

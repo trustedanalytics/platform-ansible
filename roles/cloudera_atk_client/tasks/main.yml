@@ -14,10 +14,6 @@
 #
 
 #this playbook installs the atk client packages
-- name: install yum-s3 to access the main repo
-  yum: pkg=yum-s3 state=installed
-  environment: proxy_env
-
 - name: install the ATK client libraries
   yum: pkg={{ item }} state=installed
   environment: proxy_env
