@@ -63,11 +63,3 @@
 
 - name: set java home
   copy: src=java_env.sh dest=/etc/profile.d/java_env.sh owner=root group=root mode=0755
-
-- name: create group on each worker machine
-  group: name={{ item.name }} gid={{ item.gid }} system=yes
-  with_items: cdh_work_groups
-
-- name: create user on each machine
-  user: name={{ item.name }} group={{ item.group }} uid={{ item.uid }} system=yes
-  with_items: cdh_work_users

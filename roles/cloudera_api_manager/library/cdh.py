@@ -56,6 +56,7 @@ SERVICE_MAP = {
     'cm': '',
     'kms': 'KMS',
     'sentry': 'SENTRY',
+    'hadoopgroupsmapping': 'HADOOPGROUPSMAPPING',
 }
 
 # similar to SERVICE_MAP, but for roles
@@ -80,6 +81,7 @@ ROLE_MAP = {
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',
     'hue-kt': 'HUE-KT_RENEWER-BASE',
     'sentry': 'SENTRY-SENTRY_SERVER',
+    'hadoopgroupsmapping_rest': "HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER-BASE",
 }
 
 # when creating worker node roles, this map is used to determine the worker role
@@ -92,7 +94,8 @@ SERVICE_WORKER_MAP = {
     'kafka': {'name': 'KAFKA_BROKER', 'formatstring': 'KAFKA_BROKER-{0}'},
     'hdfs': {'name': 'DATANODE', 'formatstring': 'HDFS-DATANODE-{0}'},
     'hive': {'name': 'GATEWAY', 'formatstring': 'HIVE-GATEWAY-{0}'},
-    'gearpump': {'name': 'GEARPUMP_WORKER', 'formatstring': 'GEARPUMP-GEARPUMP_WORKER-{0}'}
+    'gearpump': {'name': 'GEARPUMP_WORKER', 'formatstring': 'GEARPUMP-GEARPUMP_WORKER-{0}'},
+    'hadoopgroupsmapping': {'name': 'GATEWAY', 'formatstring': 'HADOOPGROUPSMAPPING-GATEWAY-{0}'},
 }
 
 # when creating base roles, this map is used to determine what initilization
@@ -149,6 +152,9 @@ BASE_SERVICE_ROLE_MAP = {
     'sentry': {
         'SENTRY-SENTRY_SERVER': 'SENTRY_SERVER'
     },
+    'hadoopgroupsmapping': {
+        'HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER': 'HADOOPGROUPSMAPPING_RESTSERVER'
+    },
 }
 
 # arguments that the module gets in various actions
@@ -179,7 +185,7 @@ def main():
       else:
         manager.update_license(license_a.decode('base64'))
       module.exit_json(changed=True, msg='Cluster created')
-  elif action_a in ['add_host', 'create_mgmt', 'deploy_parcel', 'deploy_hdfs_base', 'deploy_hdfs_httpfs', 'deploy_hdfs_dn', 'deploy_hdfs_ha', 'deploy_rm_ha', 'set_config', 'service', 'deploy_service', 'deploy_service_worker_nodes', 'deploy_base_roles', 'run_command', 'cluster','create_snapshot_policy']:
+  elif action_a in ['add_host', 'create_mgmt', 'deploy_parcel', 'deploy_hdfs_base', 'deploy_hdfs_httpfs', 'deploy_hdfs_dn', 'deploy_hdfs_ha', 'deploy_rm_ha', 'set_config', 'service', 'deploy_service', 'deploy_service_worker_nodes', 'deploy_base_roles', 'run_command', 'cluster', 'create_snapshot_policy', 'deploy_configuration']:
     # more complicated actions that need a created cluster go here
     cluster = api.get_cluster(cluster_name)
     host_map = dict((api.get_host(x.hostId).hostname, x.hostId) for x in cluster.list_hosts())
@@ -522,6 +528,18 @@ def main():
       else:
         module.exit_json(changed=False, msg='{0} base roles already exist'.format(service_name))
 
+    # deploy configuration - it always return changed
+    elif action_a == 'deploy_configuration':
+      service_a = module.params.get('service', None)
+      service_name = SERVICE_MAP[service_a]
+      service = cluster.get_service(service_name)
+
+      # deploying client configuration
+      command = service.deploy_client_config()
+      if command.wait().success == False:
+        module.fail_json(msg='Deploying client config failed with {0}'.format(command.resultMessage))
+      module.exit_json(changed=True, msg='Configuration deployed')
+        
     # set config values for a given service/role
     elif action_a == 'set_config':
       entity_a = module.params.get('entity', None)

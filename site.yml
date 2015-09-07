@@ -136,6 +136,7 @@
     - defaults/proxy.yml
     - defaults/env.yml
     - defaults/cloudera_parcels.yml
+    - defaults/hgm.yml
   roles:
     - { role: cloudera_api_manager, tags: skip_on_vagrant }
  

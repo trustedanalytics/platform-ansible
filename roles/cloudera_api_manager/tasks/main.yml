@@ -23,6 +23,9 @@
 - name: include hdfs role creation
   include: hdfs.yml
 
+- name: include hadoop groups mapping role creation
+  include: hadoopgroupsmapping.yml
+
 - name: include hbase role creation
   include: hbase.yml
 

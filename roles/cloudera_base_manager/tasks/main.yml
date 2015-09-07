@@ -133,6 +133,9 @@
 - name: copy gearpump csd jar
   copy: src=GEARPUMP-1.0.jar dest=/opt/cloudera/csd
 
+- name: copy hadoopgroupsmapping csd jar
+  copy: src=HADOOPGROUPSMAPPING-1.0.jar dest=/opt/cloudera/csd
+
 - name: start cloudera manager db
   service: name=cloudera-scm-server-db state=started pattern='/usr/bin/postgres -D /var/lib/cloudera-scm-server-db/data'
 

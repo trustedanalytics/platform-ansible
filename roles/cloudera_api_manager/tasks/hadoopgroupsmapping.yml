@@ -1,0 +1,97 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# deploying HadoopGroupsMapping
+- name: deploy the hadoopgroupsmapping parcel to all hosts
+  cdh: action=deploy_parcel name=HADOOPGROUPSMAPPING version=1.0
+
+- name: deploy hadoopgroupsmapping service
+  cdh: action=deploy_service name=hadoopgroupsmapping
+  notify:
+   - restart cluster
+   
+- name: set hadoopgroupsmapping properties
+  cdh: action=set_config entity=service service=hadoopgroupsmapping name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
+    - { name: 'zookeeper_node', value: '/user-management' }
+
+- name: set hadoopgroupsmapping rest server properties
+  cdh: action=set_config entity=role service=hadoopgroupsmapping role=hadoopgroupsmapping_rest name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'zookeeper_user', value: '{{ hgm_zookeeper_user }}' }
+    - { name: 'zookeeper_pass', value: '{{ hgm_zookeeper_pass }}' }
+    - { name: 'basic_auth_user', value: '{{ hgm_basic_user }}' }
+    - { name: 'basic_auth_pass', value: '{{ hgm_basic_pass }}' }
+    - { name: 'kerberos_client_principal', value: 'hgm/sys@CLOUDERA' }
+    - { name: 'rest_port', value: '8433' }
+    - { name: 'ssl_enabled', value: 'true' }
+    - { name: 'ssl_server_keystore_location', value: '/root/HGM_Key.jks' }
+    - { name: 'ssl_server_keystore_keypassword', value: '{{ hgm_basic_pass }}' }
+    - { name: 'ssl_server_keystore_password', value: '{{ hgm_basic_pass }}' }
+
+- name: generate key for hadoopgroupsmapping rest server
+  shell: echo -e "\n\n\n\n\n\nyes" | /usr/java/jdk1.8.0_40/bin/keytool -genkey -alias CLOUDERA 
+           -keyalg RSA -keypass {{ hgm_basic_pass }} -storepass {{ hgm_basic_pass }} -keystore /root/HGM_Key.jks creates=/root/HGM_Key.jks
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+
+- name: install pip
+  yum: pkg=python-pip state=installed
+  environment: proxy_env
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+  
+- name: install kazoo
+  pip: name=kazoo
+  environment: proxy_env
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+ 
+- name: deploy hadoopgroupsmapping gateways
+  cdh: action=deploy_service_worker_nodes service=hadoopgroupsmapping host={{ item }}
+  with_items: groups['cdh-all']
+  notify: 
+    - restart cluster
+
+- name: deploy hadoopgroupsmapping base components
+  cdh: action=deploy_base_roles service=hadoopgroupsmapping host={{ groups['cdh-master'][-1] }}
+  notify:
+    - restart cluster
+  register: hgm_deployed
+
+- name: deploy hadoopgroupsmapping configuration
+  cdh: action=deploy_configuration service=hadoopgroupsmapping
+  when: hgm_deployed.changed
+  
+- name: deploy hadoopgroupsmapping scripts
+  cdh: action=run_command service=hadoopgroupsmapping name=deploy_scripts
+  when: hgm_deployed.changed
+
+- name: create hadoopgroupsmapping base groups
+  cdh: action=run_command service=hadoopgroupsmapping name=create_base_groups
+  when: hgm_deployed.changed
+
+- name: set hdfs service properties if hadoopgroupsmapping is included
+  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.group.mapping</name><value>org.trustedanalytics.zookeeper.mapping.ZookeeperMapping</value></property>' }
+  notify:
+    - restart cluster
+
+- meta: flush_handlers
+
+- name: create users in hadoopgroupsmapping
+  znode: dir=/user-management/{{ item.user }}/{{ item.group }} type='create_r' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}' 
+    acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181'
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+  with_items:
+    - { user: 'cf', group: 'intel' }
