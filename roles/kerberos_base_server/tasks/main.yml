@@ -69,19 +69,17 @@
 - name: create users
   kadduser: name='{{ item.name }}' password='{{ item.pass }}' params='{{ item.params }}'
   with_items:
-    - { name: 'hdfs', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'hdfs/sys', pass: '', params: '-nokey -requires_preauth' }
-    - { name: 'hbase/sys', pass: '', params: '-nokey -requires_preauth' }
-    - { name: 'hive/sys', pass: '', params: '-nokey -requires_preauth' }
-    - { name: 'authgateway/sys', pass: '', params: '-nokey -requires_preauth' }
-    - { name: 'hgm/sys', pass: '', params: '-nokey -requires_preauth' }
-    - { name: 'hive', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'cf', pass: '{{ cf_password }}', params: '-requires_preauth' }
-    - { name: 'vcap', pass: '{{ cf_password }}', params: '-requires_preauth' }
-    - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'default_jwt', pass: '', params: '-nokey +requires_preauth' }
-    - { name: 'WELLKNOWN/ANONYMOUS', pass: '', params: '-nokey +requires_preauth' }
+    - { name: 'hdfs', pass: '{{ kadmin_pass }}' }
+    - { name: 'hdfs/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hbase/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hive/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'authgateway/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hgm/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hive', pass: '{{ kadmin_pass }}' }
+    - { name: 'cf', pass: '{{ cf_password }}' }
+    - { name: 'vcap', pass: '{{ cf_password }}' }
+    - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}' }
+    - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}' }
 
 - name: start kerberos services
   service: name={{ item }} state=started enabled=yes
