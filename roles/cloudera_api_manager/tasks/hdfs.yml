@@ -27,6 +27,11 @@
     - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
     - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
 
+- name: override replication for one node install
+  cdh: action=set_config entity=service service=hdfs name=dfs_replication value=1
+  tags:
+    - one_node_install_only
+
 - name: set namenode role properties
   cdh: action=set_config entity=role service=hdfs role=namenode name={{ item.name }} value={{ item.value }}
   with_items:
@@ -60,17 +65,35 @@
 
 - name: deploy hdfs namenode and secondary namenode
   cdh: action=deploy_hdfs_base nn_host={{ groups['cdh-master'][0] }} sn_host={{ groups['cdh-master'][1] }} 
+  tags: 
+    - skip_on_one_node_install
+
+- name: deploy hdfs namenode and secondary namenode
+  cdh: action=deploy_hdfs_base nn_host={{ groups['cdh-master'][0] }} sn_host={{ groups['cdh-master'][0] }}
+  tags: 
+    - one_node_install_only
 
 - name: start hdfs service
   cdh: action=service service=hdfs state=started
 
 - name: enable ha on hdfs 
   cdh: action=deploy_hdfs_ha sn_host={{ groups['cdh-master'][1] }} jn1_host={{ groups['cdh-master'][0] }} jn2_host={{ groups['cdh-master'][1] }} jn3_host={{ groups['cdh-master'][2] }}
+  tags:
+    - skip_on_one_node_install
 
 - name: install httpfs on hdfs
   cdh: action=deploy_hdfs_httpfs host={{ groups['cdh-master'][1] }}
   notify: 
     - restart hdfs
+  tags:
+    - skip_on_one_node_install
+
+- name: install httpfs on hdfs
+  cdh: action=deploy_hdfs_httpfs host={{ groups['cdh-master'][0] }}
+  notify: 
+    - restart hdfs
+  tags: 
+    - one_node_install_only
 
 - name: init kerberos if enabled
   ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'

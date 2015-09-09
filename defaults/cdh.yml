@@ -48,3 +48,8 @@ configure_backup: false
 #hbase_snapshot_s3_access_key_id: ENTER YOUR S3 KEY FOR BACKUPS HERE
 #hbase_snapshot_s3_secret_access_key: ENTER YOUR S3 SECRET FOR BACKUPS HERE
 #hbase_snapshot_s3_path: ENTER UNIQUE PATH FOR BACKUPS HERE
+
+cdh_storage_paths: []
+
+## ONLY FOR ONE NODE  / BARE-METAL INSTALL
+# cdh_storage_paths:  ['data0','data1']

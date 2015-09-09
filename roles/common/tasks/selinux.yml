@@ -24,3 +24,4 @@
   when: ansible_selinux['status'] == 'enabled' and ansible_selinux['mode'] == 'enforcing'
   tags:
     - skip_on_vagrant
+  ignore_errors: yes

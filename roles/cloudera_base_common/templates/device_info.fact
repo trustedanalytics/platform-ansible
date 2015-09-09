@@ -17,8 +17,12 @@ def filter_devs(item):
 
 output = {}
 block_devices = sorted([x for x in listdir('/dev') if filter_devs(x)])
-mount_points = ['data{0}'.format(i) for i, _ in enumerate(block_devices)]
 
+if not block_devices:
+  mount_points = {{cdh_storage_paths}}
+else:
+  mount_points = ['data{0}'.format(i) for i, _ in enumerate(block_devices)]
+    
 #cloudera specific
 kafka_log = ['/{0}/kafka'.format(x) for x in mount_points]
 data_dir = ['/{0}/hadoop/datanode'.format(x) for x in mount_points]

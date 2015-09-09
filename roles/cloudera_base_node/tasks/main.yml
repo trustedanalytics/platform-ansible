@@ -21,6 +21,8 @@
   tags:
   - skip_on_packer
   - skip_on_vagrant
+  - skip_on_one_node_install
+  - skip_on_bare_metal
 
 - name: create mountpoints
   file: path=/{{ item }} state=directory 
@@ -28,18 +30,24 @@
   tags:
   - skip_on_packer
   - skip_on_vagrant
+  - skip_on_one_node_install
+  - skip_on_bare_metal
 
 - name: remove ephemeral disks found by cloud-config from fstab
   lineinfile: dest=/etc/fstab regexp="/dev/xvdb\s+/mnt\s+auto\s+defaults,nofail,comment=cloudconfig\s+0\s+2" state=absent
   tags:
   - skip_on_packer
   - skip_on_vagrant
+  - skip_on_one_node_install
+  - skip_on_bare_metal
 
 - name: umount ephemeral disks mounted by cloud-config
   mount: name=/mnt src=/dev/xvdb fstype=ext3 state=unmounted
   tags:
   - skip_on_packer
   - skip_on_vagrant
+  - skip_on_one_node_install
+  - skip_on_bare_metal
 
 - name: mount ephemeral disks
   mount: name=/{{ item.0 }} src=/dev/{{ item.1 }} fstype=ext3 state=mounted
@@ -49,6 +57,8 @@
   tags:
   - skip_on_packer
   - skip_on_vagrant
+  - skip_on_one_node_install
+  - skip_on_bare_metal
 
 - name: install mysql-connector
   yum: pkg=mysql-connector-java state=installed

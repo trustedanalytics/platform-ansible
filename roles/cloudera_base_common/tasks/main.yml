@@ -19,12 +19,16 @@
   when: ansible_virtualization_type == 'xen'
   tags:
    - skip_on_vagrant
+   - skip_on_one_node_install
+   - skip_on_bare_metal
 
 - name: calculate root partition size for Openstack
   set_fact: ansible_root_size={{ ansible_devices.vda.partitions.vda1.sectors|int * ansible_devices.vda.partitions.vda1.sectorsize|int }}
   when: ansible_virtualization_type == 'NA'
   tags:
    - skip_on_vagrant
+   - skip_on_one_node_install
+   - skip_on_bare_metal
 
 - name: check root disk size
   fail: msg="The root partition has less than 20GB, ansible cannot continue"
@@ -32,12 +36,14 @@
   tags:
     - skip_on_packer
     - skip_on_vagrant
+    - skip_on_one_node_install
+    - skip_on_bare_metal
 
 - name: ensure custom facts directory exists
   file: path=/etc/ansible/facts.d recurse=yes state=directory
 
 - name: distribute device info fact
-  copy: src=device_info.fact dest=/etc/ansible/facts.d/device_info.fact mode=0755
+  template: src=device_info.fact dest=/etc/ansible/facts.d/device_info.fact mode=0755
 
 - name: reload ansible_local facts
   setup: filter=ansible_local

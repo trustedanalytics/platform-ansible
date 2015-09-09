@@ -37,8 +37,8 @@
     - defaults/env.yml
   roles:
     - { role: hostnames_common, when: use_custom_dns }
-    - consul_base_agent
-    - consul_base_server
+    - { role: consul_base_agent, tags: skip_on_one_node_install }
+    - { role: consul_base_server, tags: skip_on_one_node_install }
 
 #change hostnames to ones that are like the inv-names
 - hosts: all
@@ -146,8 +146,8 @@
     - defaults/proxy.yml
     - defaults/env.yml
   roles:
-    - consul_base_agent
-    - consul_base_server
+    - { role: consul_base_agent, tags: skip_on_one_node_install }
+    - { role: consul_base_server, tags: skip_on_one_node_install }
 
 - hosts: cdh-manager
   vars_files:
@@ -169,19 +169,19 @@
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - zabbix_base_server
+    - { role: zabbix_base_server, tags: skip_on_one_node_install }
 
 - hosts: zabbix-web
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - zabbix_base_web
+    - { role: zabbix_base_web, tags: skip_on_one_node_install }
 
 - hosts: consul-master[-1]
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - zabbix_base_proxy
+    - { role: zabbix_base_proxy, tags: skip_on_one_node_install }
 
 - include: db-lb.yml
 - include: mysql-cluster.yml

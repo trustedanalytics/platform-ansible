@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # Copyright (c) 2015 Intel Corporation
 #
@@ -15,6 +15,10 @@
 # limitations under the License.
 
 cd $(dirname $0)/..
+echo -e "\n\nYou are trying to install whole Cloudera Cluster on this host. Make sure you have sufficient amount of RAM and disk space.\n\n
+Read README-CUSTOM_INSTALL.txt first!
+\n\nPress Ctrl-C to abort in 30s.\n\n"
+sleep 30;
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-exec ansible-playbook site.yml -v -i inventory/cdh -s --skip-tags=one_node_install_only
+exec ansible-playbook site.yml -v -i inventory/cdh -f 20 -s --skip-tags=skip_on_one_node_install -v

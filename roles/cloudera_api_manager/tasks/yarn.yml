@@ -41,6 +41,8 @@
 
 - name: enable ha on yarn
   cdh: action=deploy_rm_ha sn_host={{ groups['cdh-master'][1] }}
+  tags:
+    - skip_on_one_node_install
 
 - name: start yarn service
   cdh: action=service service=yarn state=started
