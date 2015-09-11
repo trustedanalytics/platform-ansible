@@ -13,3 +13,4 @@ cloud_foundry_enviornments:
   example:
     user: admin
     pass: admin
+consul_proxy_pass: examplepass
