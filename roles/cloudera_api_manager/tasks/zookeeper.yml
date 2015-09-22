@@ -36,3 +36,16 @@
 
 - name: start zookeeper service
   cdh: action=service service=zookeeper state=started
+
+- name: creating metadata zookeeper znode for brokers
+  znode: dir=/org/intel/{{ item }}/metadata type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
+  with_items:
+    - 'zookeeperbroker'
+    - 'gearpumpbroker'
+    - 'yarnbroker'
+    - 'hbasebroker'
+
+- name: creating userspace zookeeper znode for brokers
+  znode: dir=/org/intel/{{ item }}/userspace type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
+  with_items:
+    - 'zookeeperbroker'

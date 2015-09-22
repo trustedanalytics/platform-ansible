@@ -23,7 +23,7 @@
   cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'dfs_replication', value: 3 }
-    - { name: 'dfs_permissions', value: 'false' }
+    - { name: 'dfs_permissions', value: 'true' }
     - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
     - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
 
@@ -71,3 +71,25 @@
   cdh: action=deploy_hdfs_httpfs host={{ groups['cdh-master'][1] }}
   notify: 
     - restart hdfs
+
+- name: init kerberos if enabled
+  ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
+  delegate_to: '{{ groups["cdh-master"][0] }}'
+  when: kerberos_enabled
+  with_items:
+    - { usr: 'hdfs', pass: '{{ kadmin_pass }}' }
+
+- name: create dirs on hadoop
+  hdfs: dir={{ item.dir }} owner={{ item.owner }} mode={{ item.mode }} group={{ item.group }}
+  delegate_to: '{{ groups["cdh-master"][0] }}'
+  with_items:
+    - { dir: '/org', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org/intel', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org/intel/hdfsbroker', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/hdfsbroker/userspace', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/hdfsbroker/metadata', owner: 'cf', group: 'intel', mode: '771' }
+    - { dir: '/org/intel/users', owner: 'cf', group: 'intel', mode: '775' }
+    - { dir: '/org/intel/tmp', owner: 'cf', group: 'intel', mode: '777' }
+    - { dir: '/user', owner: 'mapred', group: 'supergroup', mode: '755' }
+    - { dir: '/user/cf', owner: 'cf', group: 'cf', mode: '755' }
+    - { dir: '/user/history', owner: 'mapred', group: 'supergroup', mode: '770' }

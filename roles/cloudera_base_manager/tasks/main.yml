@@ -23,12 +23,13 @@
     - python-pip
     - MySQL-python
 
-- name: install the CM python api and httplib2
+- name: install the CM python api, kazoo and httplib2
   pip: name={{ item }}
   environment: proxy_env
   with_items:
     - cm_api
     - httplib2
+    - kazoo
 
 - name: copy hive metastore schemas
   copy: src={{ item }} dest=/tmp

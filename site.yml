@@ -149,13 +149,6 @@
     - consul_base_agent
     - consul_base_server
 
-#configuring service instances on namenode
-- hosts: cdh-master[0]
-  vars_files:
-    - defaults/cdh.yml
-  roles:
-    - cloudera_api_namenode
-
 - hosts: cdh-manager
   vars_files:
     - defaults/cdh.yml
