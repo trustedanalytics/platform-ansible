@@ -23,9 +23,12 @@
     - python-pip
     - MySQL-python
 
-- name: install the CM python api
-  pip: name=cm_api
+- name: install the CM python api and httplib2
+  pip: name={{ item }}
   environment: proxy_env
+  with_items:
+    - cm_api
+    - httplib2
 
 - name: copy hive metastore schemas
   copy: src={{ item }} dest=/tmp
