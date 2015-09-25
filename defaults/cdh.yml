@@ -32,7 +32,7 @@ gearpump_parcel_version: latest
 #default password for cf account
 cf_password: cf1
 #define if kerberos will be enabled, do not change it after first script start
-kerberos_enabled: true
+kerberos_enabled: false
 #groups created on each machine
 cdh_work_groups:
   - { name: 'intel', gid: '1001' }
