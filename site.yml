@@ -168,7 +168,7 @@
   roles:
     - zabbix_base_web
 
-- hosts: zabbix-proxy
+- hosts: consul-master[-1]
   vars_files:
     - defaults/zabbix.yml
   roles:
