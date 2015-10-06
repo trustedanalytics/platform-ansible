@@ -32,5 +32,7 @@
     - { name: 'dataDir', value: '/var/lib/zookeeper' }
     - { name: 'maxClientCnxns', value: '1024' }
 
+- pause: seconds=30
+
 - name: start zookeeper service
   cdh: action=service service=zookeeper state=started
