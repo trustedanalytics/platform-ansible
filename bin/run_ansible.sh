@@ -17,4 +17,4 @@
 cd $(dirname $0)/..
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-exec ansible-playbook site.yml -v -i inventory/cdh -f 20 -s
+exec ansible-playbook site.yml -v -i inventory/cdh -s
