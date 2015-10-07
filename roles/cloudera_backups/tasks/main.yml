@@ -23,11 +23,6 @@
 - name: create snapshot policy 
   cdh: action=create_snapshot_policy service=hbase name="HBASE-S3-ansible" value={{ lookup('file','snapshot_policy.json') | to_json }} 
 
-- name: setup hdfs create dir
-  hdfs: dir={{ item.dir }} owner={{ item.owner }} mode={{ item.mode }} group={{ item.group }}
-  with_items:
-    - { dir: '/user/hbase', owner: 'hbase', group: 'hbase', mode: '755' }
-
 - name: set yarn nm role properties
   cdh: action=set_config entity=role service=yarn role=nodemanager name={{ item.name }} value={{ item.value }}
   with_items:

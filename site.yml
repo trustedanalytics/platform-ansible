@@ -132,13 +132,6 @@
   roles:
     - { role: cloudera_api_manager, tags: skip_on_vagrant }
  
-- hosts: cdh-manager
-  vars_files:
-    - defaults/cdh.yml
-    - defaults/proxy.yml
-    - defaults/env.yml
-  roles:
-    - { role: cloudera_backups, when: configure_backup, tags: skip_on_vagrant }
 
 - hosts: consul-server
   vars_files:
@@ -155,6 +148,22 @@
     - defaults/cdh.yml
   roles:
     - cloudera_api_namenode
+
+- hosts: cdh-manager
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - { role: cloudera_backups, when: configure_backup, tags: skip_on_vagrant }
+
+- hosts: cdh-master-[0]
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+    - defaults/env.yml
+  roles:
+    - { role: cloudera_backups_hdfs, when: configure_backup, tags: skip_on_vagrant }
 
 - hosts: zabbix-server
   vars_files:
