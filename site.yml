@@ -65,14 +65,14 @@
     - defaults/zabbix.yml
     - defaults/proxy.yml
   pre_tasks:
-    - name: set server to zabbix proxy if proxy exists
+    - name: set server to zabbix proxy on consul node if any exists
       set_fact: 
-        zabbix_server_group: zabbix-proxy
-      when: groups.has_key('zabbix-proxy')
-    - name: set server to zabbix server if proxy doesnt exist
+        zabbix_server_group: consul-master
+      when: groups.has_key('consul-master')
+    - name: set server to zabbix server if consul does not exist
       set_fact: 
         zabbix_server_group: zabbix-server
-      when: not groups.has_key('zabbix-proxy')
+      when: not groups.has_key('consul-master')
     - name: set agent config to a simpler vagrant one
       set_fact: 
         zabbix_agent_conf: "{{ zabbix_agent_conf_vagrant }}"

@@ -60,8 +60,8 @@ zabbix_agent_conf:
   DebugLevel: 3 
   EnableRemoteCommands: 0 
   LogRemoteCommands: 0 
-  Server: "{{ hostvars[groups[zabbix_server_group][0]]['ansible_hostname'] }}"
-  ServerActive: "{{ hostvars[groups[zabbix_server_group][0]]['ansible_hostname'] }}"
+  Server: "{{ hostvars[groups[zabbix_server_group][-1]]['ansible_hostname'] }}"
+  ServerActive: "{{ hostvars[groups[zabbix_server_group][-1]]['ansible_hostname'] }}"
   ListenPort: 10050
   StartAgents: 3
   Hostname: "{{ inventory_hostname }}"
