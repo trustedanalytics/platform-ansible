@@ -14,13 +14,5 @@
 
 ---
 
-- name: Install the NTP daemon
-  yum: name=ntp state=installed
-  environment: proxy_env
-
-- name: Enable the NTP daemon service
-  service: name=ntpd state=started enabled=yes
-
-- template: src=ntp.conf.j2 dest=/etc/ntp.conf
-  notify:
-    - restart ntpd
+- name: restart ntpd
+  service: name=ntpd state=restarted
