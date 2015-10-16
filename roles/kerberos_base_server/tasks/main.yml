@@ -14,21 +14,51 @@
 #
 
 #this playbook installs all of the components of the krb5 server
-- name: install KRB5 base
+- name: install KRB5 base dependencies
   yum: pkg={{ item }} state=installed
   environment: proxy_env
   with_items:
-    - krb5-server
+    - openssl-devel
     - openldap-clients
 
+- name: create kerberos directory
+  file: path=/var/krb5kdc state=directory mode=0755
+
 - name: copy kadm5.acl
-  copy: src=kadm5.acl dest=/var/kerberos/krb5kdc/kadm5.acl
- 
+  copy: src=kadm5.acl dest=/var/krb5kdc/kadm5.acl
+
+- name: copy extensions.kdc
+  copy: src=extensions.kdc dest=/var/krb5kdc/extensions.kdc
+
 - name: copy kdc.conf
-  template: src=kdc.j2 dest=/var/kerberos/krb5kdc/kdc.conf
+  template: src=kdc.j2 dest=/var/krb5kdc/kdc.conf
+
+- name: Generate certs
+  script: generate_cert.sh CLOUDERA creates=/var/krb5kdc/PKINIT_SUCCESS
+
+# Install KRB5 base
+- name: Install KRB5 base with jwt support
+  yum: pkg='{{ item }}' state=installed
+  environment: proxy_env
+  with_items:
+    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-lib-1.12.4-0.x86_64.rpm
+    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-client-1.12.4-0.x86_64.rpm
+    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-server-1.12.4-0.x86_64.rpm
+
+- name: move ktutil to ktutil2
+  shell: mv /bin/ktutil /bin/ktutil_old creates=/bin/ktutil_old
+
+- name: copy ktutil fix
+  copy: src=ktutil dest=/bin/ktutil mode=0755
+
+- name: deploy kerberos daemon scripts
+  copy: src={{ item }}.d dest=/etc/rc.d/init.d/{{ item }} mode=0700
+  with_items:
+    - krb5kdc
+    - kadmin
 
 - name: create the initial kerberos database
-  shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/kerberos/db_created creates=/var/kerberos/db_created
+  shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/krb5kdc/db_created creates=/var/krb5kdc/db_created
 
 #- name: create an admin for the administering the kerberos database
 #  shell: echo -e "{{ kadmin_pass }}\n{{ kadmin_pass }}" | kadmin.local -q "addprinc kadmin/admin" && touch /var/kerberos/admin_created creates=/var/kerberos/admin_created
@@ -37,19 +67,21 @@
 #  shell: echo -e "{{ kadmin_pass }}\n{{ kadmin_pass }}" | kadmin.local -q "addprinc cloudera-scm/admin" && touch /var/kerberos/cdh_admin_created creates=/var/kerberos/cdh_admin_created
 
 - name: create users
-  kadduser: name='{{ item.name }}' password='{{ item.pass }}'
+  kadduser: name='{{ item.name }}' password='{{ item.pass }}' params='{{ item.params }}'
   with_items:
-    - { name: 'hdfs', pass: '{{ kadmin_pass }}' }
-    - { name: 'hgm/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hdfs/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hbase/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hive/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'authgateway/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hive', pass: '{{ kadmin_pass }}' }
-    - { name: 'cf', pass: '{{ cf_password }}' }
-    - { name: 'vcap', pass: '{{ cf_password }}' }
-    - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}' }
-    - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}' }
+    - { name: 'hdfs', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
+    - { name: 'hdfs/sys', pass: '', params: '-nokey -requires_preauth' }
+    - { name: 'hbase/sys', pass: '', params: '-nokey -requires_preauth' }
+    - { name: 'hive/sys', pass: '', params: '-nokey -requires_preauth' }
+    - { name: 'authgateway/sys', pass: '', params: '-nokey -requires_preauth' }
+    - { name: 'hgm/sys', pass: '', params: '-nokey -requires_preauth' }
+    - { name: 'hive', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
+    - { name: 'cf', pass: '{{ cf_password }}', params: '-requires_preauth' }
+    - { name: 'vcap', pass: '{{ cf_password }}', params: '-requires_preauth' }
+    - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
+    - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
+    - { name: 'default_jwt', pass: '', params: '-nokey +requires_preauth' }
+    - { name: 'WELLKNOWN/ANONYMOUS', pass: '', params: '-nokey +requires_preauth' }
 
 - name: start kerberos services
   service: name={{ item }} state=started enabled=yes
