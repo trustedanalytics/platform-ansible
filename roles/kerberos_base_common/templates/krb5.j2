@@ -13,6 +13,7 @@ forwardable = true
 
 [realms]
 CLOUDERA = {
+  pkinit_anchors = FILE:/var/krb5kdc/cacert.pem
   kdc = {{ krb_server }}
   admin_server = {{ krb_server }}
 }
