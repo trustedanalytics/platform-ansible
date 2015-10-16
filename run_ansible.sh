@@ -16,5 +16,6 @@
 
 cd $(dirname $0)
 
-sh bin/download_jce.sh
+sh bin/download_jce.sh $@
+sh bin/download_jdk.sh $@
 sh bin/run_ansible.sh

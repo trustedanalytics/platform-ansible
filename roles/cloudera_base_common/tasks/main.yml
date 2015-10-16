@@ -49,9 +49,14 @@
     - krb5-workstation
     - openssl-devel
 
-- name: Install the Oracle JDK
-  yum: name=oracle-j2sdk1.7 state=installed
-  environment: proxy_env
+- name: Copy the Oracle JDK 8
+  copy: src=java-jdk-1.8.0_40.rpm dest=/root/java-jdk-1.8.0_40.rpm
+
+- name: Install the Oracle JDK 8
+  yum: name=/root/java-jdk-1.8.0_40.rpm state=present
+
+- name: set java home
+  copy: src=java_env.sh dest=/etc/profile.d/java_env.sh owner=root group=root mode=0755
 
 - name: create group on each worker machine
   group: name={{ item.name }} gid={{ item.gid }} system=yes

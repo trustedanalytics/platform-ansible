@@ -1,3 +1,4 @@
 .vagrant
 user.json
-roles/kerberos_base_common/files/UnlimitedJCEPolicy
+roles/kerberos_base_common/files/UnlimitedJCEPolicyJDK8
+roles/cloudera_base_common/files/java-jdk-1.8.0_40.rpm
