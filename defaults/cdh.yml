@@ -33,6 +33,9 @@ gearpump_parcel_version: latest
 cf_password: cf1
 #define if kerberos will be enabled, do not change it after first script start
 kerberos_enabled: false
+#kerberos ticket life and renew time limits
+kerberos_ticket_lifetime: 30d
+kerberos_ticket_renewtime: 60d
 #groups created on each machine
 cdh_work_groups:
   - { name: 'intel', gid: '1001' }

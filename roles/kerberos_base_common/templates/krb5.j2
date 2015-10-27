@@ -7,8 +7,8 @@ admin_server = FILE:/var/log/kadmind.log
 default_realm = CLOUDERA
 dns_lookup_realm = false
 dns_lookup_kdc = false
-ticket_lifetime = 24h
-renew_lifetime = 7d
+ticket_lifetime = {{ kerberos_ticket_lifetime }}
+renew_lifetime = {{ kerberos_ticket_renewtime }}
 forwardable = true
 
 [realms]

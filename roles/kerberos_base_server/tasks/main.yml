@@ -25,7 +25,7 @@
   copy: src=kadm5.acl dest=/var/kerberos/krb5kdc/kadm5.acl
  
 - name: copy kdc.conf
-  copy: src=kdc.conf dest=/var/kerberos/krb5kdc/kdc.conf
+  template: src=kdc.j2 dest=/var/kerberos/krb5kdc/kdc.conf
 
 - name: create the initial kerberos database
   shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/kerberos/db_created creates=/var/kerberos/db_created
