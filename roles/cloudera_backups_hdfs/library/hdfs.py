@@ -1,1 +1,1 @@
-../../cloudera_api_namenode/library/hdfs.py
+../../cloudera_api_manager/library/hdfs.py
