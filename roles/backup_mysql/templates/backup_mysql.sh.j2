@@ -1,0 +1,122 @@
+#!/bin/bash
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+DATE="$(date +%Y%m%d%H%M%S)"
+DB_HOST="127.0.0.1"
+DB_PORT="{{ backup_mysql_port }}"
+HOST_NAME="$(hostname --fqdn)"
+BACKUP_USER="{{ backup_mysql_data_user }}"
+BACKUP_PASS="{{ backup_mysql_data_pass }}"
+FAILURE=0
+GRANT_USER="{{ backup_mysql_grants_user }}"
+GRANT_PASS="{{ backup_mysql_grants_pass }}"
+LIBRARY="/usr/local/bin/bash_functions_custom"
+SERVICE_NAME="{{ backup_mysql_service_name }}"
+SYSLOG_FACILITY="{{ backup_mysql_syslog_facility }}"
+SYSLOG_TAG="$(basename $0)"
+{% if backup_mysql_local == 'disabled' and backup_mysql_remote == 'enabled' -%}
+BACKUP_DIR="{{ backup_mysql_tmp_dir }}/{{ backup_mysql_service_name }}"
+{% else  %}
+BACKUP_DIR="{{ backup_mysql_local_dir }}/{{ backup_mysql_service_name }}"
+{% endif %}
+{% if backup_mysql_local == 'enabled' -%}
+BACKUPS_LEFT_LOCAL={{ backup_mysql_local_backups_to_keep }}
+{% endif %}
+{% if backup_mysql_remote == 'enabled' %}
+BACKUPS_LEFT_REMOTE={{ backup_mysql_remote_backups_to_keep }}
+  {%- if backup_mysql_remote_provider == 'aws_s3' %}
+
+S3_BUCKET="{{ backup_mysql_aws_s3_bucket }}"
+S3_PATH="${S3_BUCKET}/{{ env_name }}/${SERVICE_NAME}"
+  {% endif %}
+{% endif %}
+
+BACKUP_DIR_HOST="${BACKUP_DIR}/${HOST_NAME}"
+BACKUP_DIR_DATE="${BACKUP_DIR_HOST}/${DATE}"
+
+if [ -r $LIBRARY ] ;then
+  source $LIBRARY
+  EXITCODE="$?"
+  if [ $EXITCODE -eq 0 ]; then
+    echo "source $LIBRARY OK" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".INFO
+  else
+    echo "source $LIBRARY FAILED EXITCODE: $EXITCODE" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".ERROR
+    echo "exit $EXITCODE" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".ERROR
+    exit $EXITCODE
+  fi
+else
+  echo "$LIBRARY file is not readable" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".ERROR
+  exit 1
+fi
+
+f_start
+f_execute_command "mkdir -p $BACKUP_DIR_DATE" "ERROR" "EXITFATAL"
+{% if backup_mysql_remote == 'enabled' -%}
+  {% if backup_mysql_remote_provider == 'aws_s3' -%}
+f_exitcode "aws s3 ls s3://${S3_BUCKET}"
+if [ $EXITCODE -eq 255 ]; then
+  if [[ $RESULT =~ 'The specified bucket does not exist' ]]; then
+    f_execute_command "aws s3 mb s3://${S3_BUCKET}" "ERROR" "EXITFATAL"
+  else
+    f_log "ERROR" "S3 bucket ${S3_BUCKET} is not available"
+    f_stop "$EXITCODE"
+  fi
+fi
+  {% endif %}
+{% endif %}
+
+f_execute_command "/usr/bin/pt-show-grants --drop --flush --host $DB_HOST --port $DB_PORT --user $GRANT_USER --password=${GRANT_PASS} > ${BACKUP_DIR_DATE}/grants" "ERROR" "LOGFATAL"
+f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} -B --skip-column-names --host=${DB_HOST} --port=${DB_PORT} -e 'show databases' 2>/dev/null | egrep -v 'information_schema|performance_schema' | tr '\n' ' '" "ERROR" "EXITFATAL" "DATABASES"
+for DB in $DATABASES; do
+  if [ "${DB}" != "mysql" ]; then
+    f_execute_command "/usr/bin/mysqldump --user=${BACKUP_USER} --password=${BACKUP_PASS} --opt --skip-quick --lock-tables=0 --single-transaction --routines --host=${DB_HOST} --port=${DB_PORT} $DB > ${BACKUP_DIR_DATE}/${DB}.dump 2>/dev/null" "ERROR" "LOGFATAL"
+  else
+    f_execute_command "/usr/bin/mysqldump --user=${BACKUP_USER} --password=${BACKUP_PASS} --opt --skip-quick --lock-tables=0 --events --host=${DB_HOST} --port=${DB_PORT} $DB > ${BACKUP_DIR_DATE}/${DB}.dump 2>/dev/null" "ERROR" "LOGFATAL"
+  fi
+  f_execute_command "/bin/gzip -f ${BACKUP_DIR_DATE}/${DB}.dump" "ERROR" "LOGFATAL"
+done
+
+if [ $FAILURE -eq 0 ]; then
+  f_execute_command "echo 'OK' > ${BACKUP_DIR_DATE}/STATUS" "ERROR" "LOGFATAL"
+else
+  f_execute_command "echo 'FAIL' > ${BACKUP_DIR_DATE}/STATUS" "ERROR" "LOGFATAL"
+fi
+
+{% if backup_mysql_remote == 'enabled' -%}
+  {% if backup_mysql_remote_provider == 'aws_s3' -%}
+f_execute_command "aws s3 cp --recursive ${BACKUP_DIR_DATE} s3://${S3_PATH}/${HOST_NAME}/${DATE}/" "ERROR" "EXITFATAL"
+  {% endif %}
+{% endif %}
+
+{% if backup_mysql_local == 'disabled' and backup_mysql_remote == 'enabled' -%}
+f_execute_command "rm -rf ${BACKUP_DIR}" "ERROR" "LOGFATAL"
+{% endif %}
+
+{% if backup_mysql_local == 'enabled' -%}
+f_execute_command "ls -trd ${BACKUP_DIR_HOST}/201??????????? | head -n -${BACKUPS_LEFT_LOCAL} | xargs" "ERROR" "LOGFATAL" "BACKUPS_TO_REMOVE_LOCAL"
+if [ -n "$BACKUPS_TO_REMOVE_LOCAL" ]; then
+  f_execute_command "rm -rf $BACKUPS_TO_REMOVE_LOCAL" "ERROR" "LOGFATAL"
+fi
+{% endif %}
+
+{% if backup_mysql_remote == 'enabled' %}
+f_execute_command "aws s3 ls s3://${S3_PATH}/${HOST_NAME}/ | awk '{print \$2}' | head -n -${BACKUPS_LEFT_REMOTE} | xargs" "ERROR" "LOGFATAL" "BACKUPS_TO_REMOVE_REMOTE"
+for dir in ${BACKUPS_TO_REMOVE_REMOTE}; do
+  f_execute_command "aws s3 rm --recursive s3://${S3_PATH}/${HOST_NAME}/${dir}" "ERROR" "LOGFATAL"
+done
+{% endif %}
+
+f_stop

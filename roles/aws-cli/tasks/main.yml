@@ -11,26 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
----
+- name: install awscli prerequisite packages
+  yum: pkg=python-pip
 
-- name: Configure Yum repositories
-  template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
-  with_dict: "{{ yum_repos }}"
+- name: install pip modules for awscli
+  pip: name={{ item }}
+  with_items:
+    - awscli
+    - boto
 
-- name: Install 'epel-release'
-  yum: name=epel-release state=installed
-  environment: proxy_env
+- name: create awscli configuration directory
+  file: dest=~/.aws mode=0750 state=directory
 
-- name: Install 'zabbix-release'
-  yum: name=zabbix-release state=installed
-  environment: proxy_env
+- name: create awscli credentials file
+  template: dest=~/.aws/credentials mode=0640 src=credentials.j2
 
-- name: upload bash functions file
-  copy: src=bash_functions_custom dest=/usr/local/bin/
-
-- include: ntp.yml
-
-- include: iptables.yml
-
-- include: selinux.yml
+- name: create awscli config file
+  template: dest=~/.aws/config mode=0640 src=config.j2

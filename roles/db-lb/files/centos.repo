@@ -1,0 +1,16 @@
+[centos-base]
+name=CentOS-6 - Base
+mirrorlist=http://mirrorlist.centos.org/?release=6&arch=$basearch&repo=os&infra=$infra
+#baseurl=http://mirror.centos.org/centos/6/os/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+
+#released updates
+[centos-updates]
+name=CentOS-6 - Updates
+mirrorlist=http://mirrorlist.centos.org/?release=6&arch=$basearch&repo=updates&infra=$infra
+#baseurl=http://mirror.centos.org/centos/6/updates/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6

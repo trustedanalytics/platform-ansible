@@ -1,0 +1,42 @@
+global
+  chroot /var/lib/haproxy
+  daemon
+  group nobody
+  log 127.0.0.1 local2
+  maxconn 2048
+  node {{ ansible_hostname }}
+  pidfile /var/run/haproxy.pid
+  stats socket /var/lib/haproxy/stats mode 600 level admin
+  user nobody
+
+defaults
+  log global
+  maxconn 2048
+  mode tcp
+  option dontlognull
+  option tcp-smart-accept
+  option tcp-smart-connect
+  option redispatch
+  retries 4
+  timeout check   1000ms
+  timeout client  10000ms
+  timeout connect 1000ms
+  timeout queue   2000ms
+  timeout server  10000ms
+
+frontend mysql-cluster
+  bind *:3306
+  default_backend mysql-cluster
+  mode tcp
+  option tcplog
+
+backend mysql-cluster
+  balance leastconn
+  mode tcp
+  option mysql-check user haproxy
+  option tcplog
+  {% set count = 1 %}
+  {% for node in groups['mysql-cluster_db'] %}
+  server db{{ count }} {{ node }}:3306 check fall 3 inter 2000 rise 3
+  {% set count = count + 1 %}
+  {% endfor %}

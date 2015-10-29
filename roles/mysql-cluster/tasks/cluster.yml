@@ -1,0 +1,60 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: upload cluster my.cnf
+  template: src=my_cluster.cnf.j2 dest=/etc/my.cnf
+  when: "'mysql-cluster_db' in group_names"
+
+- name: bootstrap xtradb cluster on first db node
+  shell: /etc/init.d/mysql bootstrap-pxc creates=/etc/mysql_cluster_initialized
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: check if root password is set for localhost
+  mysql_user: user=root password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+  register: mysql_root_pass_status
+  ignore_errors: yes
+
+- name: set default password for mysql root user for localhost
+  mysql_user: user=root password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0] and mysql_root_pass_status|failed
+
+- name: set default password for mysql root user for all
+  mysql_user: user=root host='%' password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: delete mysql anonymous users
+  mysql_user: name='' state='absent' login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: delete mysql test database
+  mysql_db: db=test state=absent login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: add mysql replication user
+  mysql_user: host='%' name='{{ mysql_cluster_slave_user }}' password='{{ mysql_cluster_slave_pass }}' priv=*.*:"replication slave" login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: add mysql sst user
+  mysql_user: host='localhost' name='{{ mysql_cluster_sst_user }}' password='{{ mysql_cluster_sst_pass }}' priv=*.*:"lock tables,reload,replication client" login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: add mysql haproxy (check) user
+  mysql_user: host='%' name='haproxy' password='' login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: inventory_hostname == groups['mysql-cluster_db'][0]
+
+- name: assure that mysql service is started and enabled
+  service: name=mysql enabled=yes state=started
+  when: "'mysql-cluster_db' in group_names"

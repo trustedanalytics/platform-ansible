@@ -11,26 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 ---
-
-- name: Configure Yum repositories
-  template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
-  with_dict: "{{ yum_repos }}"
-
-- name: Install 'epel-release'
-  yum: name=epel-release state=installed
-  environment: proxy_env
-
-- name: Install 'zabbix-release'
-  yum: name=zabbix-release state=installed
-  environment: proxy_env
-
-- name: upload bash functions file
-  copy: src=bash_functions_custom dest=/usr/local/bin/
-
-- include: ntp.yml
-
-- include: iptables.yml
-
-- include: selinux.yml
+- hosts: mysql-cluster_db_all
+  vars_files:
+    - defaults/env.yml
+    - defaults/mysql-cluster.yml
+  roles:
+    - { role: mysql-cluster, tags: "mysql-cluster" }
+    - { role: backup_mysql, backup_mysql_cron_file_name: backup_mysql-cluster, backup_mysql_data_pass: "{{ mysql_cluster_backup_data_pass }}", backup_mysql_grants_pass: "{{ mysql_cluster_backup_grants_pass }}", backup_mysql_root_pass: "{{ mysql_cluster_root_pass }}", backup_mysql_service_name: mysql-cluster, when: "'mysql-cluster_backup' in group_names", tags: "mysql-cluster-backup_mysql" }

@@ -1,0 +1,55 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: upload backup my.cnf
+  template: src=my_backup.cnf.j2 dest=/etc/my.cnf
+  when: "'mysql-cluster_backup' in group_names"
+
+- name: assure that mysql service is started and enabled
+  service: name=mysql enabled=yes state=started
+  when: "'mysql-cluster_backup' in group_names"
+
+- name: check if root password is set
+  mysql_user: user=root password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  when: "'mysql-cluster_backup' in group_names"
+  register: mysql_root_pass_status
+  ignore_errors: yes
+
+- name: set default password for mysql root user
+  mysql_user: user=root password={{ mysql_cluster_root_pass }}
+  when: "'mysql-cluster_backup' in group_names and mysql_root_pass_status|failed"
+
+- name: check if replication is configured on slave
+  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'show slave status \G'
+  when: "'mysql-cluster_backup' in group_names"
+  register: slave_replication_config
+
+- name: configure replication on slave
+  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e "CHANGE MASTER TO MASTER_HOST = '{{ groups['mysql-cluster_db'][0] }}', MASTER_PORT = 3306, MASTER_USER = '{{ mysql_cluster_slave_user }}', MASTER_PASSWORD = '{{ mysql_cluster_slave_pass }}', MASTER_AUTO_POSITION = 1"
+  when: "'mysql-cluster_backup' in group_names and slave_replication_config.stdout == ''"
+
+- name: wait until replication starts
+  pause: minutes=1
+  when: "'mysql-cluster_backup' in group_names and slave_replication_config.stdout == ''"
+
+- name: check if replication is running on slave
+  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'show slave status \G' | egrep 'Slave_IO_Running:|Slave_SQL_Running:' | grep -c Yes
+  when: "'mysql-cluster_backup' in group_names"
+  register: slave_replication_status
+  ignore_errors: true
+
+- name: start replication on slave
+  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'start slave'
+  when: "'mysql-cluster_backup' in group_names and slave_replication_status.stdout != '2'"

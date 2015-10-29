@@ -11,26 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
----
+- name: install ansible prerequisite packages
+  yum: pkg={{item}} state=present enablerepo=percona-release-arch,percona-release-noarch
+  with_items:
+    - python-pip
+    - MySQL-python
 
-- name: Configure Yum repositories
-  template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
-  with_dict: "{{ yum_repos }}"
+- name: install xtradb packages
+  yum: pkg={{item}} state=present enablerepo=percona-release-arch,percona-release-noarch
+  with_items:
+    - percona-toolkit
+    - percona-xtrabackup
+    - Percona-XtraDB-Cluster-56
 
-- name: Install 'epel-release'
-  yum: name=epel-release state=installed
-  environment: proxy_env
-
-- name: Install 'zabbix-release'
-  yum: name=zabbix-release state=installed
-  environment: proxy_env
-
-- name: upload bash functions file
-  copy: src=bash_functions_custom dest=/usr/local/bin/
-
-- include: ntp.yml
-
-- include: iptables.yml
-
-- include: selinux.yml
+- include: cluster.yml tags=mysql-cluster-cluster_conf
+- include: backup.yml tags=mysql-cluster-backup_conf

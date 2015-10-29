@@ -1,0 +1,42 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+#parameters with defaults
+backup_mysql_cron_day: "*"
+backup_mysql_cron_file_name: backup_mysql
+backup_mysql_cron_hour: 0
+backup_mysql_cron_name: backup mysql
+backup_mysql_cron_minute: 0
+backup_mysql_cron_month: "*"
+backup_mysql_cron_weekday: "*"
+backup_mysql_data_user: backupdata
+backup_mysql_grants_user: backupgrants
+backup_mysql_local: enabled
+backup_mysql_local_backups_to_keep: 7
+backup_mysql_local_dir: /backup
+backup_mysql_port: 3306
+backup_mysql_remote: disabled
+backup_mysql_remote_backups_to_keep: 7
+backup_mysql_remote_provider: aws_s3
+backup_mysql_service_name: mysql
+backup_mysql_syslog_facility: local0
+backup_mysql_tmp_dir: /tmp
+
+#parameters without defaults
+#backup_mysql_aws_s3_bucket:
+#backup_mysql_data_pass:
+#backup_mysql_grants_pass:
+#backup_mysql_root_pass:

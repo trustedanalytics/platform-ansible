@@ -1,0 +1,109 @@
+#!/bin/bash
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#executes a shell command passed as 1st parameter
+#in case of:
+#- success: logs status of execution to syslog with info severity
+#- failure: logs status of execution to syslog with severity passed as 2nd argument
+#if 3rd parameter is set to:
+#- "LOGFATAL": continues script run in case of failure
+#- "EXITFATAL": ends script run in case of failure
+#if 4th parameter is set puts stdout of command into this variable
+f_execute_command() {
+  if [[ "$#" -ne 3 && "$#" -ne 4 ]]; then
+    echo "Usage: $FUNCNAME command error_severity LOGFATAL|EXITFATAL [stdout_variable]"
+  else
+    local _COMMAND="$1"
+    local _ERRORLEVEL="$2"
+    local _ISFATAL="$3"
+    local _RESULT_VARIABLE="$4"
+    local _RESULT
+    _RESULT=$(eval "$_COMMAND" 2>&1)
+    local _EXITCODE="${PIPESTATUS[0]}"
+    if [ "$_EXITCODE" -eq 0 ]; then
+      f_log "INFO" "$_COMMAND OK"
+      if [ -n "$_RESULT" ]; then
+        echo "$_RESULT" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".INFO
+      fi
+      if [ -n "$_RESULT_VARIABLE" ]; then
+        eval "$_RESULT_VARIABLE"="'$_RESULT'"
+      fi
+    else
+      f_log "$_ERRORLEVEL" "$_COMMAND FAILED EXITCODE: $_EXITCODE"
+      if [ -n "$_RESULT" ]; then
+        echo "$_RESULT" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}".INFO
+      fi
+      if [ -n "$_RESULT_VARIABLE" ]; then
+        eval "$_RESULT_VARIABLE"="'$_RESULT'"
+      fi
+      if [ "$_ISFATAL" = "LOGFATAL" ]; then
+        FAILURE=1
+      elif [ "$_ISFATAL" = "EXITFATAL" ]; then
+        FAILURE=1
+        f_stop "$_EXITCODE"
+      fi
+    fi
+  fi
+}
+
+#executes a shell command passed as 1st parameter
+#logs exitcode of the command to syslog
+#puts exitcode of the command in variable provided as 2nd parameter or in EXITCODE variable otherwise
+#if 3rd parameter is set puts stdout of command into the variable or in RESULT variable otherwise
+f_exitcode() {
+  if [[ "$#" -ne 1 && "$#" -ne 2 && "$#" -ne 3 ]]; then
+    echo "Usage: $FUNCNAME command [exitcode_variable] [stdout_variable]"
+  else
+    local _COMMAND="$1"
+    local _EXIT_VARIABLE="$2"
+    local _RESULT_VARIABLE="$3"
+    local _RESULT
+    RESULT=$(eval "$_COMMAND" 2>&1)
+    local _EXITCODE="${PIPESTATUS[0]}"
+    f_log "INFO" "$_COMMAND EXITCODE: $_EXITCODE"
+    if [ -n "$_EXIT_VARIABLE" ]; then
+      eval "$_EXIT_VARIABLE"="'$_EXITCODE'"
+    else
+      EXITCODE="$_EXITCODE"
+    fi
+    if [ -n "$_RESULT_VARIABLE" ]; then
+      eval "$_RESULT_VARIABLE"="'$_RESULT'"
+    else
+      RESULT="$_RESULT"
+    fi
+  fi
+}
+
+#logs to syslog a message with priority given as 1st parameter and message given as 2nd parameter
+f_log() {
+  local _ERRORLEVEL="$1"
+  local _MESSAGE="$2"
+  echo "${_MESSAGE}" | logger -t "$SYSLOG_TAG" -p "${SYSLOG_FACILITY}"."${_ERRORLEVEL}"
+}
+
+#provides a start prompt
+f_start() {
+  f_log "INFO" "==="
+  f_log "INFO" "Start: $SYSLOG_TAG $HOST"
+}
+
+#provides a stop prompt
+f_stop() {
+  local _EXITCODE="$1"
+  f_log "INFO" "Stop: $SYSLOG_TAG $HOST"
+  f_log "INFO" "==="
+  exit $_EXITCODE
+}

@@ -11,26 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
----
-
-- name: Configure Yum repositories
-  template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
-  with_dict: "{{ yum_repos }}"
-
-- name: Install 'epel-release'
-  yum: name=epel-release state=installed
-  environment: proxy_env
-
-- name: Install 'zabbix-release'
-  yum: name=zabbix-release state=installed
-  environment: proxy_env
-
-- name: upload bash functions file
-  copy: src=bash_functions_custom dest=/usr/local/bin/
-
-- include: ntp.yml
-
-- include: iptables.yml
-
-- include: selinux.yml
+[default]
+region={{ aws_default_region }}
+output=json
