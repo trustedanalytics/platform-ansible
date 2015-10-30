@@ -77,21 +77,3 @@
 
 - name: deploy hue kt master components
   cdh: action=deploy_base_roles service=hue-kt host={{ groups['cdh-master'][0] }} 
-
-#deploy changes and restart cluster
-- name: check to see if creds generated
-  stat: path=/etc/krb_first_restart
-  register: krb_restart
-
-- name: restart cm service after enabling kerberos
-  cdh: action=service service=cm state=restarted
-  when: krb_restart.stat.exists == false
-
-- name: restart cluster after enabling kerberos 
-  cdh: action=cluster state=restarted
-  register: krb_cluster_restart
-  when: krb_restart.stat.exists == false
-
-- name: create a file after succesful restart
-  file: path=/etc/krb_first_restart state=touch
-  when: krb_cluster_restart|success and krb_restart.stat.exists == false

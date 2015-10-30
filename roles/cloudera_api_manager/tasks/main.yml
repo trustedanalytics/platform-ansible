@@ -56,3 +56,6 @@
 
 - name: include kms role creation
   include: kms.yml
+
+- name: restart cluster after a successful install
+  include: final_restart.yml
