@@ -18,6 +18,7 @@
   with_items:
     - { name: 'KDC_HOST', value: "{{ groups['cdh-manager'][0] }}" }
     - { name: 'SECURITY_REALM', value: 'CLOUDERA' }
+    - { name: 'MAX_RENEW_LIFE', value: '5184000' }
 
 - name: enable security on HDFS
   cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
@@ -77,3 +78,8 @@
 
 - name: deploy hue kt master components
   cdh: action=deploy_base_roles service=hue-kt host={{ groups['cdh-master'][0] }} 
+
+- name: set hue role properties for security
+  cdh: action=set_config entity=role service=hue role=hue-kt name={{ item.name }} value={{ item.value }}
+  with_items:
+    - { name: 'keytab_reinit_frequency', value: '604800' }

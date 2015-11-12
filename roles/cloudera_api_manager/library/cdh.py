@@ -75,6 +75,7 @@ ROLE_MAP = {
     'oozieserver': 'OOZIE-OOZIE_SERVER-BASE',
     'kafka': 'KAFKA-KAFKA_BROKER-BASE',
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',
+    'hue-kt': 'HUE-KT_RENEWER-BASE',
 }
 
 # when creating worker node roles, this map is used to determine the worker role
