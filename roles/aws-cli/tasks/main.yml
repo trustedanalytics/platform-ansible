@@ -23,10 +23,10 @@
     - boto
 
 - name: create awscli configuration directory
-  file: dest=~/.aws mode=0750 state=directory
+  file: dest={{ ansible_env['HOME'] }}/.aws mode=0750 state=directory
 
 - name: create awscli credentials file
-  template: dest=~/.aws/credentials mode=0640 src=credentials.j2
+  template: dest={{ ansible_env['HOME'] }}/.aws/credentials mode=0640 src=credentials.j2
 
 - name: create awscli config file
-  template: dest=~/.aws/config mode=0640 src=config.j2
+  template: dest={{ ansible_env['HOME'] }}/.aws/config mode=0640 src=config.j2

@@ -29,4 +29,14 @@
   file: path=/usr/local/bin/backup_mysql.sh mode=0755 owner=root group=root
 
 - name: cron entry for mysql backup script
-  cron: cron_file="{{ backup_mysql_cron_file_name }}" day={{ backup_mysql_cron_day }} hour={{ backup_mysql_cron_hour }} job="/usr/local/bin/backup_mysql.sh" minute={{ backup_mysql_cron_minute }} month={{ backup_mysql_cron_month }} weekday={{ backup_mysql_cron_weekday }} name="{{ backup_mysql_cron_name }}" state=present user=root
+  cron: >
+    cron_file="{{ backup_mysql_cron_file_name }}"
+    day={{ backup_mysql_cron_day }}
+    hour={{ backup_mysql_cron_hour }}
+    job="/usr/local/bin/backup_mysql.sh"
+    minute={{ backup_mysql_cron_minute }}
+    month={{ backup_mysql_cron_month }}
+    weekday={{ backup_mysql_cron_weekday }}
+    name="{{ backup_mysql_cron_name }}"
+    state=present
+    user=root

@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+#note: http://docs.ansible.com/ansible/mysql_replication_module.html is usable with GTID based replication in ansible 2.0+
+
 - name: upload backup my.cnf
   template: src=my_backup.cnf.j2 dest=/etc/my.cnf
   when: "'mysql-cluster_backup' in group_names"
@@ -22,22 +24,36 @@
   when: "'mysql-cluster_backup' in group_names"
 
 - name: check if root password is set
-  mysql_user: user=root password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    user=root
+    password={{ mysql_cluster_root_pass }}
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: "'mysql-cluster_backup' in group_names"
   register: mysql_root_pass_status
   ignore_errors: yes
 
 - name: set default password for mysql root user
-  mysql_user: user=root password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    user=root
+    password={{ mysql_cluster_root_pass }}
   when: "'mysql-cluster_backup' in group_names and mysql_root_pass_status|failed"
 
 - name: check if replication is configured on slave
-  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'show slave status \G'
+  shell:
+    /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }}
+    -e 'show slave status \G'
   when: "'mysql-cluster_backup' in group_names"
   register: slave_replication_config
 
 - name: configure replication on slave
-  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e "CHANGE MASTER TO MASTER_HOST = '{{ groups['mysql-cluster_db'][0] }}', MASTER_PORT = 3306, MASTER_USER = '{{ mysql_cluster_slave_user }}', MASTER_PASSWORD = '{{ mysql_cluster_slave_pass }}', MASTER_AUTO_POSITION = 1"
+  shell: >
+    /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e "
+    CHANGE MASTER TO MASTER_HOST = '{{ groups['mysql-cluster_db'][0] }}',
+    MASTER_PORT = 3306,
+    MASTER_USER = '{{ mysql_cluster_slave_user }}',
+    MASTER_PASSWORD = '{{ mysql_cluster_slave_pass }}',
+    MASTER_AUTO_POSITION = 1"
   when: "'mysql-cluster_backup' in group_names and slave_replication_config.stdout == ''"
 
 - name: wait until replication starts
@@ -45,11 +61,17 @@
   when: "'mysql-cluster_backup' in group_names and slave_replication_config.stdout == ''"
 
 - name: check if replication is running on slave
-  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'show slave status \G' | egrep 'Slave_IO_Running:|Slave_SQL_Running:' | grep -c Yes
+  shell: >
+    /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }}
+    -e 'show slave status \G'
+    | egrep 'Slave_IO_Running:|Slave_SQL_Running:'
+    | grep -c Yes
   when: "'mysql-cluster_backup' in group_names"
   register: slave_replication_status
   ignore_errors: true
 
 - name: start replication on slave
-  shell: /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }} -e 'start slave'
+  shell: >
+    /usr/bin/mysql -u root -p{{ mysql_cluster_root_pass }}
+    -e 'start slave'
   when: "'mysql-cluster_backup' in group_names and slave_replication_status.stdout != '2'"

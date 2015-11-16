@@ -7,10 +7,10 @@ socket=/var/lib/mysql/mysql.sock
 user=mysql
 
 wsrep_provider=/usr/lib64/libgalera_smm.so
-wsrep_cluster_address=gcomm://{% for host in groups['mysql-cluster_db'] %}{{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}{% if not loop.last %},{% endif %}{% endfor %}
+wsrep_cluster_address=gcomm://{% for host in groups['mysql-cluster_db'] %}{{ ansible_ssh_host }}{% if not loop.last %},{% endif %}{% endfor %}
 
 wsrep_cluster_name={{ mysql_cluster_cluster_name }}
-wsrep_node_address={{ ansible_eth0['ipv4']['address'] }}
+wsrep_node_address={{ ansible_ssh_host }}
 wsrep_sst_auth="{{ mysql_cluster_sst_user }}:{{ mysql_cluster_sst_pass }}"
 wsrep_sst_method=xtrabackup-v2
 

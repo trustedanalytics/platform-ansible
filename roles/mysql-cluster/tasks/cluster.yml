@@ -22,37 +22,73 @@
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: check if root password is set for localhost
-  mysql_user: user=root password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    user=root
+    password={{ mysql_cluster_root_pass }}
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
   register: mysql_root_pass_status
   ignore_errors: yes
 
 - name: set default password for mysql root user for localhost
-  mysql_user: user=root password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    user=root
+    password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0] and mysql_root_pass_status|failed
 
 - name: set default password for mysql root user for all
-  mysql_user: user=root host='%' password={{ mysql_cluster_root_pass }} login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    user=root
+    host='%'
+    password={{ mysql_cluster_root_pass }}
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: delete mysql anonymous users
-  mysql_user: name='' state='absent' login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    name=''
+    state='absent'
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: delete mysql test database
-  mysql_db: db=test state=absent login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_db: >
+    db=test
+    state=absent
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: add mysql replication user
-  mysql_user: host='%' name='{{ mysql_cluster_slave_user }}' password='{{ mysql_cluster_slave_pass }}' priv=*.*:"replication slave" login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    host='%'
+    name='{{ mysql_cluster_slave_user }}'
+    password='{{ mysql_cluster_slave_pass }}'
+    priv=*.*:"replication slave"
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: add mysql sst user
-  mysql_user: host='localhost' name='{{ mysql_cluster_sst_user }}' password='{{ mysql_cluster_sst_pass }}' priv=*.*:"lock tables,reload,replication client" login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    host='localhost'
+    name='{{ mysql_cluster_sst_user }}'
+    password='{{ mysql_cluster_sst_pass }}'
+    priv=*.*:"lock tables,reload,replication client"
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: add mysql haproxy (check) user
-  mysql_user: host='%' name='haproxy' password='' login_user=root login_password={{ mysql_cluster_root_pass }}
+  mysql_user: >
+    host='%'
+    name='haproxy'
+    password=''
+    login_user=root
+    login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: assure that mysql service is started and enabled

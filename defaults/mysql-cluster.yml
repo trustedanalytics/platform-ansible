@@ -14,11 +14,11 @@
 #
 
 mysql_cluster_cluster_name: mysql_cluster
-mysql_cluster_backup_data_pass:
+mysql_cluster_backup_data_pass: EXAMPLE_BDP
 mysql_cluster_backup_grants_pass:
 mysql_cluster_expire_logs_days: 7
-mysql_cluster_root_pass:
-mysql_cluster_slave_pass:
+mysql_cluster_root_pass: EXAMPLE_RP
+mysql_cluster_slave_pass: EXAMPLE_SP
 mysql_cluster_slave_user: slave
-mysql_cluster_sst_pass:
+mysql_cluster_sst_pass: EXAMPLE_SP
 mysql_cluster_sst_user: sst

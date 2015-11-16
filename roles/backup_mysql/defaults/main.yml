@@ -40,3 +40,4 @@ backup_mysql_tmp_dir: /tmp
 #backup_mysql_data_pass:
 #backup_mysql_grants_pass:
 #backup_mysql_root_pass:
+#backup_mysql_sst_pass:
