@@ -25,6 +25,7 @@
         backup_mysql_cron_file_name: backup_mysql-cluster,
         backup_mysql_data_pass: "{{ mysql_cluster_backup_data_pass }}",
         backup_mysql_grants_pass: "{{ mysql_cluster_backup_grants_pass }}",
+        backup_mysql_replication: enabled,
         backup_mysql_root_pass: "{{ mysql_cluster_root_pass }}",
         backup_mysql_service_name: mysql-cluster,
         when: "'mysql-cluster_backup' in group_names", tags: "mysql-cluster-backup_mysql"

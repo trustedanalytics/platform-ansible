@@ -89,8 +89,13 @@ for DB in $DATABASES; do
   f_execute_command "/bin/gzip -f ${BACKUP_DIR_DATE}/${DB}.dump" "ERROR" "LOGFATAL"
 done
 
+{% if backup_mysql_replication == 'enabled' -%}
+f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} --host=${DB_HOST} --port=${DB_PORT} -e 'show slave status\G'" "ERROR" "LOGFATAL" "SLAVE_STATUS"
+f_execute_command "echo ${SLAVE_STATUS} > ${BACKUP_DIR_DATE}/SLAVE_STATUS"
+{% endif %}
+
 if [ $FAILURE -eq 0 ]; then
-  f_execute_command "echo 'OK' > ${BACKUP_DIR_DATE}/STATUS" "ERROR" "LOGFATAL"
+  f_execute_command "echo 'OK' > ${BACKUP_DIR_DATE}/BACKUP_STATUS" "ERROR" "LOGFATAL"
 else
   f_execute_command "echo 'FAIL' > ${BACKUP_DIR_DATE}/STATUS" "ERROR" "LOGFATAL"
 fi

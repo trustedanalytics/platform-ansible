@@ -31,6 +31,7 @@ backup_mysql_port: 3306
 backup_mysql_remote: disabled
 backup_mysql_remote_backups_to_keep: 7
 backup_mysql_remote_provider: aws_s3
+backup_mysql_replication: disabled
 backup_mysql_service_name: mysql
 backup_mysql_syslog_facility: local0
 backup_mysql_tmp_dir: /tmp
