@@ -13,6 +13,23 @@
 # limitations under the License.
 #
 
+- name: ensure custom facts directory exists
+  file: path=/etc/ansible/facts.d recurse=yes state=directory
+
+- name: distribute device info fact
+  copy: src=device_info.fact dest=/etc/ansible/facts.d/device_info.fact mode=0755
+
+- name: format database disk volume
+  filesystem: fstype=ext5 dev={{ ansible_local.device_info.non_root_block_dev }} opts="-E lazy_itable_init=0,lazy_journal_init=0"
+
+- name: mount formatted volume for backup
+  mount: fstype=ext4 name=/backup opts=noatime src={{ ansible_local.device_info.non_root_block_dev }} state=mounted
+  when: "'mysql-cluster_backup' in group_names"
+
+- name: mount formatted volume for db
+  mount: fstype=ext4 name=/var/lib/mysql opts=noatime src={{ ansible_local.device_info.non_root_block_dev }} state=mounted
+  when: "'mysql-cluster_db' in group_names"
+
 - name: install ansible prerequisite packages
   yum: pkg={{item}} state=present enablerepo=percona-release-arch,percona-release-noarch
   with_items:
