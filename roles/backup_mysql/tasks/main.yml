@@ -17,10 +17,19 @@
   yum: pkg=percona-toolkit state=present enablerepo=percona-release-arch,percona-release-noarch
 
 - name: add mysql data backup user
-  mysql_user: name='{{ backup_mysql_data_user }}' password='{{ backup_mysql_data_pass }}' priv=*.*:"event,lock tables,reload,select,show view,trigger" login_user=root login_password={{ backup_mysql_root_pass }}
+  mysql_user: >
+    name='{{ backup_mysql_data_user }}'
+    password='{{ backup_mysql_data_pass }}'
+    priv=*.*:"event,lock tables,reload,replication client,select,show view,super,trigger"
+    login_user=root
+    login_password={{ backup_mysql_root_pass }}
 
 - name: add mysql grants backup user
-  mysql_user: name='{{ backup_mysql_grants_user }}' password='{{ backup_mysql_grants_pass }}' priv=mysql.*:"select" login_user=root login_password={{ backup_mysql_root_pass }}
+  mysql_user: >
+    name='{{ backup_mysql_grants_user }}'
+    password='{{ backup_mysql_grants_pass }}'
+    priv=mysql.*:"select" login_user=root
+    login_password={{ backup_mysql_root_pass }}
 
 - name: upload mysql backup script
   template: src=backup_mysql.sh.j2 dest=/usr/local/bin/backup_mysql.sh

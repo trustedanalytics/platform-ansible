@@ -78,6 +78,10 @@ fi
   {% endif %}
 {% endif %}
 
+{% if backup_mysql_replication == 'enabled' -%}
+f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} --host=${DB_HOST} --port=${DB_PORT} -e 'stop slave'" "ERROR" "LOGFATAL"
+{% endif %}
+
 f_execute_command "/usr/bin/pt-show-grants --drop --flush --host $DB_HOST --port $DB_PORT --user $GRANT_USER --password=${GRANT_PASS} > ${BACKUP_DIR_DATE}/grants" "ERROR" "LOGFATAL"
 f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} -B --skip-column-names --host=${DB_HOST} --port=${DB_PORT} -e 'show databases' 2>/dev/null | egrep -v 'information_schema|performance_schema' | tr '\n' ' '" "ERROR" "EXITFATAL" "DATABASES"
 for DB in $DATABASES; do
@@ -91,13 +95,15 @@ done
 
 {% if backup_mysql_replication == 'enabled' -%}
 f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} --host=${DB_HOST} --port=${DB_PORT} -e 'show slave status\G'" "ERROR" "LOGFATAL" "SLAVE_STATUS"
-f_execute_command "echo ${SLAVE_STATUS} > ${BACKUP_DIR_DATE}/SLAVE_STATUS"
+f_execute_command "echo \"${SLAVE_STATUS}\" > ${BACKUP_DIR_DATE}/SLAVE_STATUS" "ERROR" "LOGFATAL"
+f_execute_command "mysql --password=${BACKUP_PASS} --user=${BACKUP_USER} --host=${DB_HOST} --port=${DB_PORT} -e 'start slave'" "ERROR" "LOGFATAL"
 {% endif %}
+
 
 if [ $FAILURE -eq 0 ]; then
   f_execute_command "echo 'OK' > ${BACKUP_DIR_DATE}/BACKUP_STATUS" "ERROR" "LOGFATAL"
 else
-  f_execute_command "echo 'FAIL' > ${BACKUP_DIR_DATE}/STATUS" "ERROR" "LOGFATAL"
+  f_execute_command "echo 'FAIL' > ${BACKUP_DIR_DATE}/BACKUP_STATUS" "ERROR" "LOGFATAL"
 fi
 
 {% if backup_mysql_remote == 'enabled' -%}

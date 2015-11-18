@@ -1,10 +1,10 @@
 #!/bin/bash
 
-for dev in /dev/[s,v,vx]d? ; do
-  if [[ "${dev}" != '^/dev/*a' -a -b "${dev}" ]]
+for dev in $(ls /dev/{s,v,xv}d? 2>/dev/null); do
+  if [[ ! ${dev} =~ ^/dev/[a-z]{1,2}da$ ]]; then
     block_device=${dev}
+    break
   fi
 done
 
-echo "[device_info]"
-echo "non_root_block_dev=${block_device}"
+echo "{\"non_root_block_dev\": \"${block_device}\"}"

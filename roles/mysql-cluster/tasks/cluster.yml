@@ -18,7 +18,9 @@
   when: "'mysql-cluster_db' in group_names"
 
 - name: bootstrap xtradb cluster on first db node
-  shell: /etc/init.d/mysql bootstrap-pxc creates=/etc/mysql_cluster_initialized
+  shell: /etc/init.d/mysql bootstrap-pxc
+  args:
+    creates: /etc/mysql_cluster_initialized
   when: inventory_hostname == groups['mysql-cluster_db'][0]
 
 - name: check if root password is set for localhost
