@@ -4,9 +4,10 @@
     "disable_update_check": true,
     "node_name": "{{ ansible_hostname }}",
     "retry_join": [
-      "{{ hostvars[groups['consul-master'][0]]['ansible_eth0']['ipv4']['address'] }}",
-      "{{ hostvars[groups['consul-master'][1]]['ansible_eth0']['ipv4']['address'] }}",
-      "{{ hostvars[groups['consul-master'][2]]['ansible_eth0']['ipv4']['address'] }}"
-    ]
+      "{{ hostvars[groups['consul-master'][0]]['ansible_ssh_host'] }}",
+      "{{ hostvars[groups['consul-master'][1]]['ansible_ssh_host'] }}",
+      "{{ hostvars[groups['consul-master'][2]]['ansible_ssh_host'] }}"
+    ],
+    "advertise_addr": "{{ ansible_ssh_host }}"
 }
 
