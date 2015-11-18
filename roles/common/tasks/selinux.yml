@@ -14,12 +14,13 @@
 
 ---
 
-- name: Permanently change SELinux to permissive mode
-  replace: dest=/etc/selinux/config regexp='^(SELINUX)=enforcing$' replace='\1=permissive'
-  tags:
-    - skip_on_vagrant
+- name: Install dependency
+  yum: name=libselinux-python state=installed
+  environment: proxy_env
 
-- name: Change SELinux to permissive mode
-  command: /usr/sbin/setenforce 0
+- name: Permanently change SELinux to permissive mode when enforced
+  selinux: state=permissive policy=targeted
+  become: yes
+  when: ansible_selinux['status'] == 'enabled' and ansible_selinux['mode'] == 'enforcing'
   tags:
     - skip_on_vagrant
