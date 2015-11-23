@@ -235,7 +235,7 @@ def main():
           'headlamp_database_password': reports_passwd,
           'headlamp_database_type': 'postgresql',
           'headlamp_database_name': 'rman',
-          'headlamp_heapsize': '215964392',
+          'headlamp_heapsize': '268435456',
       }
 
       roles = ['ACTIVITYMONITOR', 'ALERTPUBLISHER', 'EVENTSERVER', 'HOSTMONITOR', 'SERVICEMONITOR', 'REPORTSMANAGER']

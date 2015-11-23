@@ -18,16 +18,10 @@ yum_repos:
     sslverify: true
   zabbix:
     name: Zabbix Official Repository - $basearch
-    baseurl: http://repo.zabbix.com/zabbix/2.2/rhel/6/$basearch/
+    baseurl: http://repo.zabbix.com/zabbix/2.4/rhel/6/$basearch/
     enabled: 1
     gpgcheck: 1
     gpgkey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
-  zabbix-non-supported:
-    name: Zabbix Official Repository non-supported - $basearch
-    baseurl: http://repo.zabbix.com/non-supported/rhel/6/$basearch/
-    enabled: 1
-    gpgkey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
-    gpgcheck: 1
   cloudera-manager:
     name: Cloudera Manager
     baseurl: http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/{{ cdh_packages_version }}/

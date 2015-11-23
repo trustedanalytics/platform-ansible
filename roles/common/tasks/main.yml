@@ -22,10 +22,6 @@
   yum: name=epel-release state=installed
   environment: proxy_env
 
-- name: Install 'zabbix-release'
-  yum: name=zabbix-release state=installed
-  environment: proxy_env
-
 - name: upload bash functions file
   copy: src=bash_functions_custom dest=/usr/local/bin/
 

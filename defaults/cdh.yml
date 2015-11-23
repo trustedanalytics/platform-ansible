@@ -16,9 +16,9 @@
 #cdh parcel versions
 #http://archive.cloudera.com/cdh5/parcels/5.4/manifest.json
 #http://archive.cloudera.com/cdh5/parcels/5.3/manifest.json
-#for 5.4:
-cdh_parcel_version: 5.4.2-latest
-cdh_packages_version: 5.4.3
+#for 5.5:
+cdh_parcel_version: 5.5.0-latest
+cdh_packages_version: 5.5.0
 #cdh_parcel_version is the version of the CDH parcel and associated Hadoop components
 #this variable is the main way to modify the CDH cluster version!
 #cdh_parcel_version: 5.3-latest
