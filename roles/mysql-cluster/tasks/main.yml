@@ -19,6 +19,9 @@
 - name: distribute device info fact
   copy: src=device_info.fact dest=/etc/ansible/facts.d/device_info.fact mode=0755
 
+- name: reload ansible_local facts
+  setup: filter=ansible_local
+
 - name: format database disk volume
   filesystem: fstype=ext4 dev={{ ansible_local.device_info.non_root_block_dev }} opts="-E lazy_itable_init=0"
 
