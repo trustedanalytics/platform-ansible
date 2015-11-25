@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # Copyright (c) 2015 Intel Corporation
 #
@@ -13,10 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-cd $(dirname $0)
+echo -e "Installing unzip...\n"
 
-sh bin/install_unzip.sh
-sh bin/download_jce.sh $@
-sh bin/download_jdk.sh $@
-sh bin/run_ansible.sh
+if [[ -f '/etc/redhat-release' ]]; then
+  exec sudo yum -y install unzip
+fi
+
+if [[ -f '/etc/lsb-release' ]]; then
+  exec sudo apt-get -y install unzip
+fi
