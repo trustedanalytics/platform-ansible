@@ -55,4 +55,4 @@
   htpasswd: path=/etc/nginx/conf.d/htpasswd name=consuluser password={{ consul_proxy_pass }}
 
 - name: start nginx
-  service: name:nginx state=started enabled=yes
+  service: name=nginx state=started enabled=yes
