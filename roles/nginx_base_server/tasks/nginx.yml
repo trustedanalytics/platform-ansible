@@ -60,6 +60,7 @@
   with_items:
     - http-cf
     - http-cfapi
+    - http-cfauth
   notify: restart nginx
 
 - meta: flush_handlers
