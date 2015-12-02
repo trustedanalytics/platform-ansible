@@ -17,6 +17,7 @@ wsrep_sst_method=xtrabackup-v2
 gtid_mode=ON
 log_bin=binlog
 log_slave_updates=1
+innodb_rollback_on_timeout=ON
 enforce_gtid_consistency
 expire_logs_days={{ mysql_cluster_expire_logs_days }}
 server_id={{ groups['mysql-cluster_db'].index(inventory_hostname) }}
