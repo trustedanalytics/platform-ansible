@@ -47,7 +47,7 @@ yum_repos:
     gpgkey: https://www.percona.com/downloads/percona-release/RPM-GPG-KEY-percona
   nginx:
     name: nginx
-    baseurl: http://nginx.org/packages/centos/6/$basearch/
+    baseurl: http://nginx.org/packages/mainline/centos/6/$basearch/
     gpgcheck: 0
     enabled: 0
   arcadia-base:

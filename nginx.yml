@@ -13,13 +13,12 @@
 # limitations under the License.
 #
 
-#environment name, used in the internal domain name
-env_name: envname
-#decide if all hosts should change their hostnames to inventory names
-#and in addition to that use consul as the DNS provider
-use_custom_dns: true
-#use a self-signed certificate
-#you need to have a cert.key and cert.crt file in the nginx_base_server/files dir
-self_signed_cert: yes
-#use a xip.io domain by default
-cf_domain: XIP
+---
+
+- hosts: nginx-master
+  vars_files:
+    - defaults/env.yml
+    - defaults/consul.yml
+    - defaults/proxy.yml
+  roles:
+    - nginx_base_server

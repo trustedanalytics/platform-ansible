@@ -59,6 +59,9 @@
   roles:
     - { role: consul_base_agent, when: use_custom_dns }
 
+#install a LB for CF
+- include: nginx.yml
+
 #install zabbix repos
 - hosts: all
   vars_files:

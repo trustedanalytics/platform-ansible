@@ -1,0 +1,51 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: install unzip and httplib2
+  yum: pkg={{ item }} state=installed
+  with_items:
+    - unzip
+    - python-httplib2.noarch
+
+- name: download consul template
+  get_url: url={{ consul_template_url }} dest=/tmp/consul-template.zip validate_certs=no
+  environment: proxy_env
+  register: downloaded
+
+- name: copy consul initscript
+  template: src=upstart.conf.j2 dest=/etc/init/consul-template.conf
+
+- name: unpack binaries
+  unarchive: src=/tmp/consul-template.zip dest=/usr/local/bin copy=no
+  when: downloaded|changed
+
+- name: create consul-template config dirs
+  file: path=/etc/{{ item }} state=directory
+  with_items:
+    - consul-template.d
+    - consul-template-files
+
+- name: copy consul-template config
+  copy: src=consul-template.conf dest=/etc/consul-template.d/
+  notify: restart consul-template
+
+- name: copy stream-mosquitto
+  copy: src=stream-mosquitto.conf dest=/etc/consul-template-files/
+  notify: restart consul-template
+
+- name: start the consul service
+  service: name=consul-template state=started enabled=yes
+
+- meta: flush_handlers

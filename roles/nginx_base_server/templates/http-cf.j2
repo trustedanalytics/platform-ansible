@@ -1,0 +1,37 @@
+upstream api {
+  #XXX: add openstack support
+  server 10.10.3.7:80;
+}
+
+server {
+        client_max_body_size 2G;
+        listen 80 default_server;
+        location / {
+            proxy_set_header Host            $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_pass http://api;
+        }
+}
+
+server {
+        client_max_body_size 2G;
+        listen 443;
+        server_name *.{{ cf_domain }};
+
+        root html;
+        index index.html index.htm;
+
+        ssl on;
+
+        location / {
+            proxy_set_header Host            $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_pass http://api;
+        }
+}
