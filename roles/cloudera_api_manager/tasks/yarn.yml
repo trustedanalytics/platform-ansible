@@ -26,7 +26,7 @@
 - name: set yarn nm role properties
   cdh: action=set_config entity=role service=yarn role=nodemanager name={{ item.name }} value={{ item.value }}
   with_items:
-    - { name: 'yarn_nodemanager_local_dirs', value: '/data1/hadoop/yarn/nm' }
+    - { name: 'yarn_nodemanager_local_dirs', value: "{{ hostvars[groups['cdh-master'][0]]['ansible_local'].device_info.yarn_nm_dir }}" }
 
 - name: deploy yarn master components
   cdh: action=deploy_base_roles service=yarn host={{ groups['cdh-master'][0] }} 

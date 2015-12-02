@@ -151,7 +151,7 @@ BASE_SERVICE_ROLE_MAP = {
 }
 
 # arguments that the module gets in various actions
-MODULE_ARGUMENTS = ['action', 'host', 'name', 'nn_host', 'jn1_host', 'jn2_host', 'jn3_host', 'role', 'entity', 'state', 'service', 'sn_host', 'value', 'version', 'license', 'params']
+MODULE_ARGUMENTS = ['action', 'host', 'name', 'nn_host', 'jn1_host', 'jn2_host', 'jn3_host', 'role', 'entity', 'state', 'service', 'sn_host', 'value', 'version', 'license', 'params', 'jn_dir']
 
 
 def main():
@@ -439,6 +439,7 @@ def main():
     # also, this spawns 3 journal node and 2 failover controller roles
     elif action_a == 'deploy_hdfs_ha':
       sn_host_a = module.params.get('sn_host', None)
+      jn_dir_a = module.params.get('jn_dir', None)
       jn_names_a = [module.params.get('jn1_host', None), module.params.get('jn2_host', None), module.params.get('jn3_host', None)]
 
       hdfs = cluster.get_service('HDFS')
@@ -447,7 +448,7 @@ def main():
       if not 'HDFS-NAMENODE-2' in [x.name for x in hdfs.get_all_roles()]:
         # this is bad and I should feel bad
         # jns is a list of dictionaries, each dict passes the required journalnode parameters
-        jns = [{'jnHostId': host_map[jn_name], 'jnEditsDir': '/data0/hadoop/journal', 'jnName': 'HDFS-JOURNALNODE-{0}'.format(i + 1)} for i, jn_name in enumerate(jn_names_a)]
+        jns = [{'jnHostId': host_map[jn_name], 'jnEditsDir': jn_dir_a, 'jnName': 'HDFS-JOURNALNODE-{0}'.format(i + 1)} for i, jn_name in enumerate(jn_names_a)]
 
         # this call is so long because we set some predictable names for the sevices
         command = hdfs.enable_nn_ha('HDFS-NAMENODE', host_map[sn_host_a], 'nameservice1', jns, zk_service_name='ZOOKEEPER',

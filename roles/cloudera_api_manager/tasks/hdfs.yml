@@ -77,7 +77,7 @@
   cdh: action=service service=hdfs state=started
 
 - name: enable ha on hdfs 
-  cdh: action=deploy_hdfs_ha sn_host={{ groups['cdh-master'][1] }} jn1_host={{ groups['cdh-master'][0] }} jn2_host={{ groups['cdh-master'][1] }} jn3_host={{ groups['cdh-master'][2] }}
+  cdh: action=deploy_hdfs_ha sn_host={{ groups['cdh-master'][1] }} jn1_host={{ groups['cdh-master'][0] }} jn2_host={{ groups['cdh-master'][1] }} jn3_host={{ groups['cdh-master'][2] }} jn_dir={{ hostvars[groups['cdh-master'][0]]['ansible_local'].device_info.journal_dir }}
   tags:
     - skip_on_one_node_install
 
