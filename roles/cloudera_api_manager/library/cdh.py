@@ -55,6 +55,7 @@ SERVICE_MAP = {
     'management': '',
     'cm': '',
     'kms': 'KMS',
+    'sentry': 'SENTRY',
 }
 
 # similar to SERVICE_MAP, but for roles
@@ -72,10 +73,12 @@ ROLE_MAP = {
     'regionserver': 'HBASE-REGIONSERVER-BASE',
     'nodemanager': 'YARN-NODEMANAGER-BASE',
     'metastore': 'HIVE-HIVEMETASTORE-BASE',
+    'hiveserver2': 'HIVE-HIVESERVER2-BASE',
     'oozieserver': 'OOZIE-OOZIE_SERVER-BASE',
     'kafka': 'KAFKA-KAFKA_BROKER-BASE',
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',
     'hue-kt': 'HUE-KT_RENEWER-BASE',
+    'sentry': 'SENTRY-SENTRY_SERVER',
 }
 
 # when creating worker node roles, this map is used to determine the worker role
@@ -141,7 +144,10 @@ BASE_SERVICE_ROLE_MAP = {
     },
     'kms': {
         'KMS-KEY_MANAGEMENT_SERVER': 'KMS'
-    }
+    },
+    'sentry': {
+        'SENTRY-SENTRY_SERVER': 'SENTRY_SERVER'
+    },
 }
 
 # arguments that the module gets in various actions

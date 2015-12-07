@@ -57,5 +57,9 @@
 - name: include kms role creation
   include: kms.yml
 
+- name: include sentry role creation
+  include: sentry.yml
+  when: kerberos_enabled
+
 - name: restart cluster after a successful install
   include: final_restart.yml

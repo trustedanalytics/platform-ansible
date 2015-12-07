@@ -43,6 +43,7 @@
     - { name: 'hdfs/sys', pass: '{{ kadmin_pass }}' }
     - { name: 'hbase/sys', pass: '{{ kadmin_pass }}' }
     - { name: 'hive/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hive', pass: '{{ kadmin_pass }}' }
     - { name: 'cf', pass: '{{ cf_password }}' }
     - { name: 'vcap', pass: '{{ cf_password }}' }
     - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}' }
