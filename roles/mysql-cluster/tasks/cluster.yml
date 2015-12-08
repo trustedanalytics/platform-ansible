@@ -44,6 +44,7 @@
     user=root
     host='%'
     password={{ mysql_cluster_root_pass }}
+    priv=*.*:ALL,GRANT
     login_user=root
     login_password={{ mysql_cluster_root_pass }}
   when: inventory_hostname == groups['mysql-cluster_db'][0]
