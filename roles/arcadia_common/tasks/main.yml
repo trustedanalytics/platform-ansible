@@ -1,0 +1,123 @@
+# Copyright (c) 2015 Intel Corporation
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+- 
+  name: "discover default jdk installed"
+  stat: 
+    path: "/usr/java/default/bin"
+  register: "default_jdk"
+- 
+  name: "discover latest jdk installed"
+  shell: "ls /usr/java | grep jdk1.7 | tail -n1"
+  register: "latest_jdk"
+  changed_when: "False"
+  when: "not default_jdk.stat.exists"
+- 
+  name: "attempt to link default jdk home"
+  file: 
+    src: "/usr/java/{{ latest_jdk.stdout }}"
+    path: "/usr/java/default"
+    state: "link"
+    force: "yes"
+  when: "not default_jdk.stat.exists"
+-
+  name: "manage arcadia required OS packages"
+  yum:
+    name: "{{ item }}"
+    state: "latest"
+    update_cache: "yes"
+    enablerepo: "arcadia-base"
+  with_items: "{{ arcadia.yum_packages.common }}"
+-
+  name: "install arcadia required Python packages"
+  pip:
+    name: "{{ item }}"
+    state: "present"
+  with_items: "{{ arcadia.pip_packages.common }}"
+  environment: "proxy_env"
+-
+  name: "create arcadia user account, generate ssh keys"
+  user:
+    name: "{{ arcadia.sysuser.name }}"
+    shell: "{{ arcadia.sysuser.shell }}"
+    comment: "{{ arcadia.sysuser.desc }}"
+    groups: "{{ arcadia.sysuser.groups.common }}"
+    append: "yes"
+    system: "yes"
+    generate_ssh_key: "yes"
+    ssh_key_type: "{{ arcadia.sysuser.key_type }}"
+    ssh_key_bits: "{{ arcadia.sysuser.key_size }}"
+  register: "arcadia_user"
+- 
+  name: "set JAVA_HOME"
+  lineinfile:
+    dest: "{{ arcadia_user.home }}/.bash_profile"
+    line: "export JAVA_HOME=/usr/java/default"
+    state: "present"
+  sudo: "yes"
+  sudo_user: "{{ arcadia.sysuser.name }}"
+-
+  name: "enable phraseless key ssh access for arcadia user"
+  authorized_key:
+    key: "{{ hostvars[item].arcadia_user.ssh_public_key }}"
+    state: "present"
+    user: "{{ arcadia.sysuser.name }}"
+  with_items: "{{ groups[arcadia.nodes.common] }}"
+-
+  name: "enable phraseless sudo access for arcadia user"
+  lineinfile:
+    dest: "/etc/sudoers"
+    regexp: "^{{ arcadia.sysuser.name }} ALL"
+    line: "{{ arcadia.sysuser.name }} ALL=(ALL) NOPASSWD: ALL"
+    state: "present"
+- 
+  name: "download CDH Hive config"
+  get_url: 
+    url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ hostvars[groups[arcadia.nodes.cdhsetupnode][0]].cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/services/{{ arcadia.cdh.hiveName }}/clientConfig"
+    url_username: "{{ arcadia.cdh.managerUser }}"
+    url_password: "{{ arcadia.cdh.managerPass }}"
+    dest: "{{ arcadia_user.home }}/config.zip"
+- 
+  name: "check acli environment presence"
+  stat: 
+    path: "{{ arcadia_user.home }}/.acli/conf/clusters"
+  register: "acli_env"
+- 
+  name: "initiate acli environment"
+  shell: "/usr/bin/acli >/dev/null"
+  sudo: "yes"
+  sudo_user: "{{ arcadia.sysuser.name }}"
+  when: "not acli_env.stat.exists"
+- 
+  name: "deliver generated Arcadia keytabs"
+  copy: 
+    src: "/tmp/{{ inventory_hostname }}.keytab"
+    dest: "{{ arcadia_user.home }}/{{ arcadia.kerberos.client_keytabfile }}"
+    mode: "0600"
+    force: "yes"
+    owner: "{{ arcadia.sysuser.name }}"
+  with_items: "{{ groups[arcadia.nodes.common] }}"
+  when: kerberos_enabled
+- 
+  name: "check for obsoleted software package files"
+  shell: "ls {{ arcadia_user.home }}/arcadia/pkgs/*.rpm /tmp/arc*rpm; true"
+  register: "obsoleted_rpms"
+#  ignore_errors: "True"
+  changed_when: "False"
+-
+  name: "clean up obsoleted software package files"
+  file: 
+    path: "{{ item }}"
+    state: "absent"
+  with_items: "{{ obsoleted_rpms.stdout_lines }}"

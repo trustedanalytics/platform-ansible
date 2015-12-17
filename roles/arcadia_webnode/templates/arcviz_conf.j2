@@ -1,0 +1,59 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+server {
+# uncomment to enforce https
+# if ($http_x_forwarded_proto != "https") {
+#      rewrite ^(.*)$ https://$http_host$1 permanent;
+# }
+listen {{ arcadia.webinterface.http_port }};
+# uncomment for ssl
+ listen {{ arcadia.webinterface.https_port }} ssl;
+ ssl_certificate /etc/nginx/ssl/server.crt;
+ ssl_certificate_key /etc/nginx/ssl/server.key;
+root /usr/share/nginx/www;
+index index.html index.htm;
+# Make site accessible from http://localhost/
+# server_name localhost;
+location / {
+ rewrite ^ /arc;
+}
+location /arc {
+ proxy_pass http://127.0.0.1:7777/;
+ proxy_connect_timeout 1800;
+ proxy_send_timeout 1800;
+ proxy_read_timeout 1800;
+ send_timeout 1800;
+ proxy_set_header Host $http_host;
+ proxy_set_header X-Real-IP $remote_addr;
+ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+# proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+ proxy_set_header X-Forwarded-Proto $scheme;
+}
+#location /arc/static/admin {
+# alias {{ arcadia_user.home }}/static_files/admin/;
+#}
+#location /arc/static {
+# alias {{ arcadia_user.home }}/static_files/;
+#}
+#Uncomment the lines below and comment the lines above if ngnix is running on the same nodes as gunicorn
+ location /arc/static {
+  alias /opt/arcadia/tools/arcviz/static/;
+ }
+ location /arc/static/admin {
+  alias /usr/lib/python2.6/site-packages/django/contrib/admin/static/admin/;
+ }
+}
+

@@ -50,5 +50,9 @@ yum_repos:
     baseurl: http://nginx.org/packages/centos/6/$basearch/
     gpgcheck: 0
     enabled: 0
-
-# Add the location of the remote trustedanalytics client repository here.
+  arcadiadata.repo:
+    name: "arcadia-base"
+    baseurl: "ARCADIA REPOSITORY URL GOES HERE"
+    gpgcheck: 0
+    priority: 1
+    enabled: 0

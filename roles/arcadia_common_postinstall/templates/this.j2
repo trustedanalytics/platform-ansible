@@ -1,0 +1,8 @@
+# login = {{ arcadia.sysuser.name }}
+# hadoopdistro = cdh5
+# linuxdistro = centos
+{{ hostvars[groups[arcadia.nodes.masternode][0]].ansible_ssh_host }} master,arcengine
+{{ hostvars[groups[arcadia.nodes.webnode][0]].ansible_ssh_host }} arcengine,gunicorn
+{% for nodeid in range(1,groups[arcadia.nodes.webnode]|count) %}
+{{ hostvars[groups[arcadia.nodes.webnode][nodeid]].ansible_ssh_host }} arcengine
+{% endfor %}

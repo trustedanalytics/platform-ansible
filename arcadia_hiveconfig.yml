@@ -1,0 +1,46 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+- 
+  name: "populate hive client config"
+  sudo: "yes"
+  vars_files: 
+    - "defaults/arcadia.yml"
+  hosts: "{{ arcadia.nodes.common }}"
+  tasks: 
+    -
+      name: "obtain CDH API version"
+      uri:
+        url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/version"
+        user: "{{ arcadia.cdh.managerUser }}"
+        password: "{{ arcadia.cdh.managerPass }}"
+        return_content: "yes"
+      register: "cdh_api_version"
+    - 
+      name: "download CDH Hive config"
+      get_url:
+        url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ hostvars[groups[arcadia.nodes.cdhsetupnode][0]].cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/services/{{ arcadia.cdh.hiveName }}/clientConfig"
+        url_username: "{{ arcadia.cdh.managerUser }}"
+        url_password: "{{ arcadia.cdh.managerPass }}"
+        dest: "/home/arcadia-user/config.zip"
+    - 
+      name: "install CDH Hive config"
+      unarchive: 
+        copy: "no"
+        src: "/home/arcadia-user/config.zip"
+        dest: "/home/arcadia-user"
+      sudo: "yes"
+      sudo_user: "{{ arcadia.sysuser.name }}"

@@ -1,0 +1,155 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+-
+  name: "manage arcadia webnode required OS packages"
+  yum: 
+    name: "{{ item }}"
+    state: "latest"
+    enablerepo: "arcadia-base"
+  with_items: "{{ arcadia.yum_packages.webnode }}"
+-
+  name: "install arcadia webnode required Python packages"
+  pip: 
+    name: "{{ item }}"
+    state: "present"
+  with_items: "{{ arcadia.pip_packages.webnode }}"
+  environment: "proxy_env"
+-
+  name: "create django_local_wsgi.py"
+  template: 
+    src: "django_local_wsgi_py.j2"
+    dest: "/opt/arcadia/tools/arcviz/django_local_wsgi.py"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+-
+  name: "create settings_local.py"
+  template: 
+    src: "settings_local_py.j2"
+    dest: "/opt/arcadia/tools/arcviz/arcweb/settings_local.py"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+-
+  name: "kerberos hack #1 for web node"
+  lineinfile:
+    dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
+    line: "KERBEROS_PRINCIPAL = '{{ arcadia.kerberos.user }}@{{ arcadia.kerberos.realm }}'"
+  when: kerberos_enabled
+-
+  name: "kerberos hack #2 for web node"
+  lineinfile:
+    dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
+    line: "KERBEROS_KEYTAB = '{{ arcadia_user.home }}/{{ arcadia.kerberos.client_keytabfile }}'"
+  when: kerberos_enabled
+-
+  name: "kerberos hack #3 for web node"
+  lineinfile:
+    dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
+    line: "KERBEROS_RENEW_SECONDS = '43200'"
+  when: kerberos_enabled
+-
+  name: "set up proper SQL endpoint"
+  lineinfile:
+    dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
+    regexp: 'ARCSQL_SERVER\s'
+    line: "ARCSQL_SERVER = 'localhost:31050'"
+- 
+  name: "clean up nginx service configuration"
+  shell: "for file in /etc/nginx/conf.d/*.conf; do mv -f ${file} ${file/.conf/.conf.bak}; done"
+  changed_when: "False"
+- 
+  name: "prepare webserver ssl location"
+  file: 
+    path: "/etc/nginx/ssl"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+- 
+  name: "generate ssl certificate"
+  shell: "{{ item }}"
+  args: 
+    chdir: "/etc/nginx/ssl"
+  sudo: "yes"
+  with_items: 
+    - "env PASSPHRASE=arcadia openssl genrsa -des3 -out server.key.pass -passout env:PASSPHRASE 2048"
+    - "env PASSPHRASE=arcadia openssl req -new -batch -subj '/C=US/ST=CA/O=Intel Corp./localityName=Santa Clara/commonName=arcadia.internal' -key server.key.pass -out server.csr -passin env:PASSPHRASE"
+    - "env PASSPHRASE=arcadia openssl rsa -in server.key.pass -out server.key -passin env:PASSPHRASE"
+    - "openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt"
+- 
+  name: "configure nginx service"
+  template: 
+    src: "arcviz_conf.j2"
+    dest: "/etc/nginx/conf.d/arcviz.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+- 
+  name: "prepare webserver_data location"
+  file: 
+    path: "{{ arcadia_user.home }}/webserver_data"
+    state: "directory"
+    owner: "{{ arcadia.sysuser.name }}"
+- 
+  name: "prepare media upload location"
+  file: 
+    path: "{{ arcadia_user.home }}/.arc/media"
+    state: "directory"
+    owner: "{{ arcadia.sysuser.name }}"
+- 
+  name: "initialize arcadia database"
+  shell: "export DJANGO_SETTINGS_MODULE=arcweb.settings_local; python manage.pyc syncdb --noinput; python manage.pyc migrate datasets; python manage.pyc migrate reports; python manage.pyc createsuperuser --noinput --username={{ arcadia.adminuser.name }} --email={{ arcadia.adminuser.email }}; echo \"from django.contrib.auth.models import User;u=User.objects.get(username='{{ arcadia.adminuser.name }}');u.set_password('{{ arcadia.adminuser.password }}');u.save()\" | python manage.pyc shell"
+  args: 
+    chdir: "/opt/arcadia/tools/arcviz"
+  sudo: "yes"
+  sudo_user: "{{ arcadia.sysuser.name }}"
+- 
+  name: "branding image delivery"
+  copy: 
+    src: "logo-tap.png"
+    dest: "/opt/arcadia/tools/arcviz/static/img/logo-arcadia.png"
+    backup: "yes"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+- 
+  name: "branding css delivery"
+  copy: 
+    src: "arcadia.css"
+    dest: "/opt/arcadia/tools/arcviz/static/css/arc/arcadia.css"
+    backup: "yes"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+- 
+  name: "create default data connections sql file"
+  template: 
+    src: "dataconnections.sql.j2"
+    dest: "/tmp/dataconnections.sql.j2"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+- 
+  name: "initialize default data connections"
+  shell: "sqlite3 arcviz.sqlite3 < /tmp/dataconnections.sql.j2"
+  args:
+    chdir: "{{ arcadia_user.home }}/webserver_data"
+  sudo: "yes"
+  sudo_user: "{{ arcadia.sysuser.name }}"
+- 
+  name: "initialize nginx service"
+  command: /etc/init.d/nginx restart
