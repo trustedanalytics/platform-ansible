@@ -54,11 +54,19 @@
     owner: "{{ arcadia.sysuser.name }}"
     group: "{{ arcadia.sysuser.name }}"
 - 
+  name: "enable arcadia yum repo for yumdownloader"
+  shell: "yum-config-manager --enable arcadia-base"
+  sudo: "yes"
+- 
   name: "gather arcadia package urls"
   shell: "yumdownloader -q --urls {{ item }}| grep '://.*rpm'"
   with_items: "{{ arcadia.packages }}"
   register: "yumdownloader_out"
   changed_when: "False"
+- 
+  name: "disable arcadia yum repo"
+  shell: "yum-config-manager --disable arcadia-base"
+  sudo: "yes"
 - 
   name: "prepare arcadia setup files"
   get_url: 
