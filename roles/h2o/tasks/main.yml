@@ -1,0 +1,78 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#this playbook installs h2o
+
+- name: "Create h2o system group"
+  group: 
+    name: "{{ h2o.sysgroup }}"
+
+- name: "Create h2o system user"
+  user: 
+    name: "{{ h2o.sysuser }}"
+    group: "{{ h2o.sysgroup }}"
+  register: "h2o_user"
+
+- name: "Install unzip package"
+  yum: 
+    name: "unzip"
+    state: "latest"
+
+- name: "Get h2o binaries"
+  get_url: 
+    url: "{{ h2o.install_pkg }}"
+    dest: "{{ h2o_user.home }}"
+  register: "h2o_binaries"
+
+- name: "Unpack h2o binaries"
+  unarchive: 
+    src: "{{ h2o_binaries.dest }}"
+    dest: "{{ h2o_user.home }}"
+    owner: "{{ h2o.sysuser }}"
+    group: "{{ h2o.sysgroup }}"
+    copy: "no"
+  register: "h2o_unpack"
+
+- name: "Create h2o working dir"
+  file: 
+    src: "{{ h2o_user.home }}/{{ h2o_unpack.extract_results.out.split()[3].split(h2o_user.home)[1].split('/')[1] }}"
+    dest: "{{ h2o_user.home }}/{{ h2o.working_dir }}"
+    state: "link"
+    force: "yes"
+
+- name: "Deliver launcher script"
+  copy: 
+    src: "{{ h2o.launcher_file }}"
+    dest: "{{ h2o_user.home }}/{{ h2o.working_dir }}/{{ h2o.launcher_file }}"
+    mode: "755"
+    owner: "{{ h2o.sysuser }}"
+    group: "{{ h2o.sysgroup }}"
+
+- name: "Prepare h2o locations"
+  file: 
+    path: "{{ item }}"
+    state: "directory"
+    owner: "{{ h2o.sysuser }}"
+    group: "{{ h2o.sysgroup }}"
+    recurse: "yes"
+  with_items: "{{ h2o.localdirs }}"
+
+- name: "Launch h2o"
+  shell: "{{ h2o_user.home }}/{{ h2o.working_dir }}/{{ h2o.launcher_file }} {{ h2o.nodecount }}"
+  args: 
+    chdir: "{{ h2o_user.home }}/{{ h2o.working_dir }}"
+  sudo: "yes"
+  sudo_user: "{{ h2o.sysuser }}"
+
