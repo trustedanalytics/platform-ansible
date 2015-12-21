@@ -34,7 +34,9 @@
   get_url: 
     url: "{{ h2o.install_pkg }}"
     dest: "{{ h2o_user.home }}"
+    validate_certs: "no"
   register: "h2o_binaries"
+  environment: proxy_env
 
 - name: "Unpack h2o binaries"
   unarchive: 
