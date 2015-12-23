@@ -6,15 +6,15 @@ yum_repos:
     failovermethod: priority
     gpgcheck: 1
     gpgkey: http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
-    mirrorlist: http://mirrors.fedoraproject.org/mirrorlist?repo=epel-6&arch=$basearch
+    baseurl: http://dl.fedoraproject.org/pub/epel/6/x86_64/
     sslverify: true
   epel-testing:
     name: Extra Packages for Enterprise Linux 6 - Testing - $basearch
     enabled: 1
     failovermethod: priority
     gpgcheck: 1
-    gpgkey: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
-    mirrorlist: http://mirrors.fedoraproject.org/metalink?repo=testing-epel6&arch=$basearch
+    gpgkey: http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
+    baseurl: http://dl.fedoraproject.org/pub/epel/testing/6/x86_64/
     sslverify: true
   zabbix:
     name: Zabbix Official Repository - $basearch
