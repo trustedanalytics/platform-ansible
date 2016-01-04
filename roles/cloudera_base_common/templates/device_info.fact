@@ -28,7 +28,7 @@ kafka_log = ['/{0}/kafka'.format(x) for x in mount_points]
 data_dir = ['/{0}/hadoop/datanode'.format(x) for x in mount_points]
 name_dir = ['/{0}/hadoop/namenode'.format(x) for x in mount_points]
 secondary_dir = ['/{0}/hadoop/namesecondary'.format(x) for x in mount_points]
-yarn_nm_dir = '/'+mount_points[1]+'/hadoop/yarn/nm'
+yarn_nm_dir = '/'+mount_points[-1]+'/hadoop/yarn/nm'
 journal_dir = '/'+mount_points[0]+'/hadoop/journal'
 
 output['non_root_block_devs'] = block_devices
