@@ -28,5 +28,6 @@
     - { name: 'kms_service', value: 'KMS' }
   notify:
     - restart cluster
+    - restart cm
 
 - meta: flush_handlers

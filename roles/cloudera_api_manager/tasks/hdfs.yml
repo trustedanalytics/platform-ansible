@@ -95,6 +95,8 @@
   tags: 
     - one_node_install_only
 
+- meta: flush_handlers
+
 - name: init kerberos if enabled
   ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
   delegate_to: '{{ groups["cdh-master"][0] }}'
