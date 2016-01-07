@@ -29,7 +29,7 @@
     - { name: 'sentry_server_database_port', value: '3306' }
     - { name: 'sentry_server_database_user', value: 'sentry' }
     - { name: 'sentry_server_database_password', value: '{{ hive_mysql_root_password }}' }
-    - { name: 'sentry_server_config_safety_valve', value: '<property><name>sentry.hdfs.integration.path.prefixes</name><value>/user/hive/warehouse,/org</value></property>' }
+    - { name: 'sentry_server_config_safety_valve', value: '<property><name>sentry.hdfs.integration.path.prefixes</name><value>/user/hive/warehouse</value></property>' }
 
 - name: create sentry database
   cdh: action=run_command service=sentry name=SentryCreateDbTables
@@ -40,13 +40,13 @@
   with_items:
     - { name: 'hdfs_sentry_sync_enable', value: 'true' }
     - { name: 'dfs_namenode_acls_enabled', value: 'true' }
-    - { name: 'hdfs_sentry_sync_path_prefixes', value: '/user/hive/warehouse,/org' }
+    - { name: 'hdfs_sentry_sync_path_prefixes', value: '/user/hive/warehouse' }
     
 - name: set hive service properties for sentry
   cdh: action=set_config entity=service service=hive name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'sentry_service', value: 'SENTRY' }
-    - { name: 'hive_service_config_safety_valve', value: '<property><name>sentry.hdfs.integration.path.prefixes</name><value>/user/hive/warehouse,/org</value></property>' }
+    - { name: 'hive_service_config_safety_valve', value: '<property><name>sentry.hdfs.integration.path.prefixes</name><value>/user/hive/warehouse</value></property>' }
     
 - name: set hive hiveserver2 properties for sentry
   cdh: action=set_config entity=role service=hive role=hiveserver2 name={{ item.name }} value={{ item.value }}
