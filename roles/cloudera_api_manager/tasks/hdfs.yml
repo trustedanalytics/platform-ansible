@@ -108,7 +108,7 @@
   hdfs: dir={{ item.dir }} owner={{ item.owner }} mode={{ item.mode }} group={{ item.group }}
   delegate_to: '{{ groups["cdh-master"][0] }}'
   with_items:
-    - { dir: '/org', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org', owner: 'authgateway', group: 'supergroup', mode: '701' }
     - { dir: '/org/intel', owner: 'cf', group: 'intel', mode: '755' }
     - { dir: '/org/intel/hdfsbroker', owner: 'cf', group: 'intel', mode: '771' }
     - { dir: '/org/intel/hdfsbroker/userspace', owner: 'cf', group: 'intel', mode: '771' }
