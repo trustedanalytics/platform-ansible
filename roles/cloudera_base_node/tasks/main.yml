@@ -59,6 +59,7 @@
   - skip_on_vagrant
   - skip_on_one_node_install
   - skip_on_bare_metal
+  when: item.1 is not none
 
 - name: install mysql-connector
   yum: pkg=mysql-connector-java state=installed
