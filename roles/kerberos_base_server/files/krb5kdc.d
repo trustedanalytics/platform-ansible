@@ -14,9 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# chkconfig: -
-# description: Kerberos 5 KDC
+# krb5kdc      Start and stop the Kerberos 5 servers.
 #
+# chkconfig:   - 35 65
+# description: Kerberos 5 is a trusted third-party authentication system.
+# processname: krb5kdc
+# config: /etc/sysconfig/krb5kdc
+# pidfile: /var/run/krb5kdc.pid
+#
+
+### BEGIN INIT INFO
+# Provides: krb5kdc
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:
+# Default-Stop: 0 1 2 3 4 5 6
+# Short-Description: start and stop the Kerberos 5 KDC
+# Description: The krb5kdc is the Kerberos 5 key distribution center, which \
+#              issues credentials to Kerberos 5 clients.
+### END INIT INFO
+
 
 . /etc/sysconfig/network
 
