@@ -14,16 +14,17 @@
 
 ---
 
-- name: Install needed packages
-  yum: name={{ item }} state=installed
+- name: Install 'redhat-lsb-core' package
+  yum: name=redhat-lsb-core state=installed
   environment: proxy_env
-  with_items:
-    - epel-release
-    - redhat-lsb-core
 
 - name: Configure Yum repositories
   template: src=repo.j2 dest=/etc/yum.repos.d/{{ item.key }}.repo
   with_dict: "{{ yum_repos }}"
+
+- name: Install 'epel-release' package
+  yum: name=epel-release state=installed
+  environment: proxy_env
 
 - name: upload bash functions file
   copy: src=bash_functions_custom dest=/usr/local/bin/
