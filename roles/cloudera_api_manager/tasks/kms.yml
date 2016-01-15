@@ -18,16 +18,24 @@
 
 - name: deploy kms assign role
   cdh: action=deploy_base_roles service=kms host={{ groups['cdh-master'][0] }}
+  register: kms_deployed
 
 - name: start kms service
   cdh: action=service service=kms state=started
 
 - name: configure HDFS
-  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
-  with_items:
-    - { name: 'kms_service', value: 'KMS' }
-  notify:
-    - restart cluster
-    - restart cm
+  cdh: action=set_config entity=service service=hdfs name=kms_service value=KMS
+  register: kms_activated
 
-- meta: flush_handlers
+- name: wait for the CM checks to pass after deploy
+  pause: seconds=120
+  when: kms_deployed.changed
+
+- name: restart cluster
+  cdh: action=cluster state=restarted
+  when: kms_activated.changed
+  ignore_errors: yes
+
+- name: restart cm
+  cdh: action=service service=cm state=restarted
+  when: kms_activated.changed
