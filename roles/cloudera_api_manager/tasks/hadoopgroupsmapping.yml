@@ -93,7 +93,7 @@
 - meta: flush_handlers
 
 - name: create users in hadoopgroupsmapping
-  znode: dir=/user-management/{{ item.user }}/{{ item.group }} type='create_r' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}' 
+  zk_znode: dir=/user-management/{{ item.user }}/{{ item.group }} type='create_r' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}' 
     acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181'
   delegate_to: '{{ groups["cdh-master"][-1] }}'
   with_items:

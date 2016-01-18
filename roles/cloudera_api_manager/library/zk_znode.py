@@ -16,8 +16,8 @@
 #
 
 #
-# recommended pylint: pylint znode.py -d maybe-no-member,line-too-long --indent-string "  "
-# recommended formating: autopep8 --indent-size 2 -i --ignore E501 znode.py
+# recommended pylint: pylint zk_znode.py -d maybe-no-member,line-too-long --indent-string "  "
+# recommended formating: autopep8 --indent-size 2 -i --ignore E501 zk_znode.py
 
 from ansible.module_utils.basic import *
 from re import match
