@@ -63,9 +63,8 @@
   with_items:
     - { name: 'sentry_service', value: 'SENTRY' }
    
-- name: restart cluster after enabling sentry
-  cdh: action=cluster state=restarted
-  when: sentry_deployed|changed
+- name: start sentry service
+  cdh: action=service service=sentry state=started 
 
 - wait_for: host={{ groups['cdh-master'][0] }} port=10000
   when: sentry_deployed|changed
