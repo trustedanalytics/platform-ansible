@@ -40,11 +40,8 @@
   kadduser: name='{{ item.name }}' password='{{ item.pass }}'
   with_items:
     - { name: 'hdfs', pass: '{{ kadmin_pass }}' }
-    - { name: 'hdfs/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hbase/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'hive/sys', pass: '{{ kadmin_pass }}' }
-    - { name: 'authgateway/sys', pass: '{{ kadmin_pass }}' }
     - { name: 'hgm/sys', pass: '{{ kadmin_pass }}' }
+    - { name: 'hbase', pass: '{{ kadmin_pass }}' }
     - { name: 'cf', pass: '{{ cf_password }}' }
     - { name: 'vcap', pass: '{{ cf_password }}' }
     - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}' }
