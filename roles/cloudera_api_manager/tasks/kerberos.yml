@@ -83,7 +83,3 @@
   cdh: action=set_config entity=role service=hue role=hue-kt name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'keytab_reinit_frequency', value: '604800' }
-
-- name: restart cluster
-  cdh: action=cluster state=restarted
-  when: krb_creds_cmd|success and krb_creds.stat.exists == false

@@ -84,7 +84,6 @@
   with_items:
     - oozie
     - hue
-    - sentry
 
 - name: Create other oozie users
   mysql_user: name='oozie' host='{{ item }}' password={{ hive_mysql_root_password }}
@@ -100,14 +99,6 @@
   with_items:
     - '%'
     - "{{ groups['cdh-master'][0] }}"
-  notify: Flush MySQL
-
-- name: Create other sentry users
-  mysql_user: name='sentry' host='{{ item }}' password={{ hive_mysql_root_password }}
-    priv=sentry.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
-  with_items:
-    - '%'
-    - "{{ groups['cdh-master'][1] }}"
   notify: Flush MySQL
 
 - name: install cloudera packages

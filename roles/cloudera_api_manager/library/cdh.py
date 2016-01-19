@@ -55,7 +55,6 @@ SERVICE_MAP = {
     'management': '',
     'cm': '',
     'kms': 'KMS',
-    'sentry': 'SENTRY',
     'hadoopgroupsmapping': 'HADOOPGROUPSMAPPING',
 }
 
@@ -75,12 +74,10 @@ ROLE_MAP = {
     'nodemanager': 'YARN-NODEMANAGER-BASE',
     'jobhistory': 'YARN-JOBHISTORY-BASE',
     'metastore': 'HIVE-HIVEMETASTORE-BASE',
-    'hiveserver2': 'HIVE-HIVESERVER2-BASE',
     'oozieserver': 'OOZIE-OOZIE_SERVER-BASE',
     'kafka': 'KAFKA-KAFKA_BROKER-BASE',
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',
     'hue-kt': 'HUE-KT_RENEWER-BASE',
-    'sentry': 'SENTRY-SENTRY_SERVER',
     'hadoopgroupsmapping_rest': "HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER-BASE",
 }
 
@@ -148,9 +145,6 @@ BASE_SERVICE_ROLE_MAP = {
     },
     'kms': {
         'KMS-KEY_MANAGEMENT_SERVER': 'KMS'
-    },
-    'sentry': {
-        'SENTRY-SENTRY_SERVER': 'SENTRY_SERVER'
     },
     'hadoopgroupsmapping': {
         'HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER': 'HADOOPGROUPSMAPPING_RESTSERVER'
