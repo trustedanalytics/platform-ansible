@@ -48,6 +48,13 @@
 - name: reload ansible_local facts
   setup: filter=ansible_local
 
+- name: install krb rpms
+  yum: pkg={{ item }} state=installed
+  environment: proxy_env
+  with_items:
+    - krb5-workstation
+    - openssl-devel
+
 - name: Copy the Oracle JDK 8
   copy: src=java-jdk-1.8.0_40.rpm dest=/root/java-jdk-1.8.0_40.rpm
 

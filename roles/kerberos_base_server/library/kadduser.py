@@ -31,8 +31,7 @@ from subprocess import PIPE, Popen
 # arguments that the module gets in various actions
 MODULE_ARGUMENTS = {
     'name': {'type': 'str', 'required': True},
-    'password': {'type': 'str'},
-    'params': {'type': 'str'}
+    'password': {'type': 'str', 'required': True}
 }
 
 
@@ -52,7 +51,6 @@ def main():
   # script will only set password at start, at creation time. If you want change it you have to delete user before script start
   name_a = module.params.get('name', None)
   password_a = module.params.get('password', None)
-  params_a = module.params.get('params', '')
 
   std_o, err_o = execute('list_principals', ' grep "{0}@"'.format(name_a))
   if err_o != '' and err_o != None:
@@ -61,13 +59,7 @@ def main():
 
   # checking if principal elready exist
   if std_o == '' or std_o == None:
-    cmd_a = 'addprinc ';
-    if password_a != None and password_a != '':
-      cmd_a += '-pw {1} '
-    elif '-nokey' not in params_a:
-      cmd_a += '-randkey '
-    cmd_a += '{2} {0}'
-    std_o, err_o = execute(cmd_a.format(name_a, password_a, params_a))
+    std_o, err_o = execute('addprinc -pw "{1}" "{0}"'.format(name_a, password_a))
     if err_o != '' and err_o != None and err_o[0] != 'W':
       module.fail_json(msg='Kerberos error {0}'.format(err_o))
     changed = True

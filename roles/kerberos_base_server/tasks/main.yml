@@ -14,51 +14,21 @@
 #
 
 #this playbook installs all of the components of the krb5 server
-- name: install KRB5 base dependencies
+- name: install KRB5 base
   yum: pkg={{ item }} state=installed
   environment: proxy_env
   with_items:
-    - openssl-devel
+    - krb5-server
     - openldap-clients
 
-- name: create kerberos directory
-  file: path=/var/krb5kdc state=directory mode=0755
-
 - name: copy kadm5.acl
-  copy: src=kadm5.acl dest=/var/krb5kdc/kadm5.acl
-
-- name: copy extensions.kdc
-  copy: src=extensions.kdc dest=/var/krb5kdc/extensions.kdc
-
+  copy: src=kadm5.acl dest=/var/kerberos/krb5kdc/kadm5.acl
+ 
 - name: copy kdc.conf
-  template: src=kdc.j2 dest=/var/krb5kdc/kdc.conf
-
-- name: Generate certs
-  script: generate_cert.sh CLOUDERA creates=/var/krb5kdc/PKINIT_SUCCESS
-
-# Install KRB5 base
-- name: Install KRB5 base with jwt support
-  yum: pkg='{{ item }}' state=installed
-  environment: proxy_env
-  with_items:
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-lib-1.12.4-0.x86_64.rpm
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-client-1.12.4-0.x86_64.rpm
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-server-1.12.4-0.x86_64.rpm
-
-- name: move ktutil to ktutil2
-  shell: mv /bin/ktutil /bin/ktutil_old creates=/bin/ktutil_old
-
-- name: copy ktutil fix
-  copy: src=ktutil dest=/bin/ktutil mode=0755
-
-- name: deploy kerberos daemon scripts
-  copy: src={{ item }}.d dest=/etc/rc.d/init.d/{{ item }} mode=0700
-  with_items:
-    - krb5kdc
-    - kadmin
+  template: src=kdc.j2 dest=/var/kerberos/krb5kdc/kdc.conf
 
 - name: create the initial kerberos database
-  shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/krb5kdc/db_created creates=/var/krb5kdc/db_created
+  shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/kerberos/db_created creates=/var/kerberos/db_created
 
 #- name: create an admin for the administering the kerberos database
 #  shell: echo -e "{{ kadmin_pass }}\n{{ kadmin_pass }}" | kadmin.local -q "addprinc kadmin/admin" && touch /var/kerberos/admin_created creates=/var/kerberos/admin_created
@@ -67,7 +37,7 @@
 #  shell: echo -e "{{ kadmin_pass }}\n{{ kadmin_pass }}" | kadmin.local -q "addprinc cloudera-scm/admin" && touch /var/kerberos/cdh_admin_created creates=/var/kerberos/cdh_admin_created
 
 - name: create users
-  kadduser: name='{{ item.name }}' password='{{ item.pass }}' params='{{ item.params }}'
+  kadduser: name='{{ item.name }}' password='{{ item.pass }}'
   with_items:
     - { name: 'hdfs', pass: '{{ kadmin_pass }}' }
     - { name: 'hdfs/sys', pass: '{{ kadmin_pass }}' }
