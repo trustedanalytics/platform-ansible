@@ -14,25 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# kadmind      Start and stop the Kerberos 5 administrative server.
+# chkconfig: -
+# description: Kerberos 5 Kadmin Server
 #
-# chkconfig:   - 35 65
-# description: Kerberos 5 is a trusted third-party authentication system.
-# processname: kadmind
-# config: /etc/sysconfig/kadmin
-# pidfile: /var/run/kadmind.pid
-#
-
-### BEGIN INIT INFO
-# Provides: kadmin
-# Required-Start:
-# Required-Stop:
-# Should-Start:
-# Default-Start:
-# Default-Stop: 0 1 2 3 4 5 6
-# Short-Description: start and stop the Kerberos 5 admin server
-# Description: The kadmind service.
-### END INIT INFO
 
 . /etc/sysconfig/network
 
@@ -53,7 +37,7 @@ start() {
         fi
         echo -n $"Starting $prog: "
         
-        daemon ${kadmind} -P /var/run/kadmin.pid
+        daemon ${kadmin} -P /var/run/kadmin.pid
         RETVAL=$?
         
         echo
