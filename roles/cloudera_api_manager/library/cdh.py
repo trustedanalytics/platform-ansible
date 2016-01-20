@@ -74,6 +74,7 @@ ROLE_MAP = {
     'nodemanager': 'YARN-NODEMANAGER-BASE',
     'jobhistory': 'YARN-JOBHISTORY-BASE',
     'metastore': 'HIVE-HIVEMETASTORE-BASE',
+    'hiveserver2': 'HIVE-HIVESERVER2-BASE',
     'oozieserver': 'OOZIE-OOZIE_SERVER-BASE',
     'kafka': 'KAFKA-KAFKA_BROKER-BASE',
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',

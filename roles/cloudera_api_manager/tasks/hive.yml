@@ -40,5 +40,8 @@
   cdh: action=deploy_service_worker_nodes service=hive host={{ item }}
   with_items: groups['cdh-worker']
 
+- name: set heap size for hive server2
+  cdh:  action=set_config entity=role service=hive role=hiveserver2 name='hiveserver2_java_heapsize' value='2147483648'
+
 - name: start hive service
   cdh: action=service service=hive state=started
