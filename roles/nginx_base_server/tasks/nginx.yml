@@ -44,11 +44,16 @@
   notify: restart nginx
 
 - name: gather EC2 facts
+  when: ansible_virtualization_type == 'xen'
   action: ec2_facts
 
 - name: set proper domain name
   set_fact: cf_domain="{{ ansible_ec2_public_ipv4 }}.xip.io"
-  when: cf_domain == "XIP"
+  when: cf_domain == "XIP" and ansible_virtualization_type == 'xen'
+
+- name: set proper domain name
+  set_fact: cf_domain="{{ openstack_addr }}.xip.io"
+  when: cf_domain == "XIP" and ansible_virtualization_type == 'NA'
 
 - name: create service configs
   template: src={{ item }}.j2 dest=/etc/nginx/conf.d/{{ item }}.conf

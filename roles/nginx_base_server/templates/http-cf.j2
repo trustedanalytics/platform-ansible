@@ -1,6 +1,11 @@
 upstream api {
-  #XXX: add openstack support
+{% if ansible_virtualization_type == 'NA' %}
+#openstack
+  server 192.168.2.7:80;
+{% else %}
+#aws
   server 10.10.3.7:80;
+{% endif %}
 }
 
 server {
