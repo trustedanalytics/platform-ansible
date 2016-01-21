@@ -21,6 +21,7 @@
   cdh: action=set_config entity=service service=yarnspark name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'yarn_service', value: 'YARN' }
+    - { name: 'spark_jar_hdfs_path', value: '/user/spark/share/lib/spark-assembly.jar' }
 
 - name: deploy spark on yarn components
   cdh: action=deploy_base_roles service=yarnspark host={{ groups['cdh-master'][0] }} 
