@@ -15,7 +15,7 @@
 ---
 
 - name: Install 'redhat-lsb-core' package
-  yum: name=redhat-lsb-core state=installed
+  yum: name=redhat-lsb-core state=present update_cache=yes
   environment: proxy_env
 
 - name: Configure Yum repositories
