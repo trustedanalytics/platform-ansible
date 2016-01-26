@@ -51,10 +51,13 @@
   environment: proxy_env
   delegate_to: '{{ groups["cdh-master"][-1] }}'
   
-- name: install kazoo
-  pip: name=kazoo
+- name: install argparse and kazoo
+  pip: name={{ item }}
   environment: proxy_env
   delegate_to: '{{ groups["cdh-master"][-1] }}'
+  with_items:
+    - argparse
+    - kazoo
  
 - name: deploy hadoopgroupsmapping gateways
   cdh: action=deploy_service_worker_nodes service=hadoopgroupsmapping host={{ item }}
@@ -83,7 +86,7 @@
 - name: set hdfs service properties if hadoopgroupsmapping is included
   cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
   with_items:
-    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.group.mapping</name><value>org.trustedanalytics.zookeeper.mapping.ZookeeperMapping</value></property>' }
+    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.groups.cache.secs</name><value>1</value></property><property><name>hadoop.user.group.static.mapping.overrides</name><value>cloudera-scm=cloudera-scm;accumulo=accumulo;flume=flume;hbase=hbase;hdfs=supergroup,hdfs;hive=hive;httpfs=httpfs;hue=hue;impala=hive,hdfs,supergroup,impala;kafka=kafka;kms=kms;keytrustee=keytrustee;llama=llama;mapred=supergroup,mapred;oozie=oozie;solr=solr;spark=spark;sentry=sentry;sqoop=sqoop;sqoop2=sqoop,sqoop2;yarn=supergroup,yarn;zookeeper=zookeeper;</value></property>' }
   notify:
     - restart cluster
 
