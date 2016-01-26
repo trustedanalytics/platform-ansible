@@ -36,6 +36,14 @@ kerberos_enabled: false
 #kerberos ticket life and renew time limits
 kerberos_ticket_lifetime: 30d
 kerberos_ticket_renewtime: 60d
+#groups created on each machine
+cdh_work_groups:
+  - { name: 'intel', gid: '1001' }
+  - { name: 'orggroup', gid: '1002' }
+#users created on each machine
+cdh_work_users:
+  - { name: 'cf', uid: '1001', group: 'intel' }
+  - { name: 'hdfsbroker', uid: '1002', group: 'orggroup' }
 configure_backup: false
 #hbase_snapshot_s3_access_key_id: ENTER YOUR S3 KEY FOR BACKUPS HERE
 #hbase_snapshot_s3_secret_access_key: ENTER YOUR S3 SECRET FOR BACKUPS HERE
