@@ -14,8 +14,16 @@
 #
 
 #deploying hue
+- name: deploy the hue parcel to all hosts
+  cdh: action=deploy_parcel name=HUE_TRUSTEDANALYTICS version=3.9.0
+  when: deploy_hue_trustedanalytics == true
+
 - name: deploy hue master components
   cdh: action=deploy_base_roles service=hue host={{ groups['cdh-master'][0] }} 
+
+- name: set hue service safety valve
+  cdh: action=set_config entity=service service=hue name=hue_service_safety_valve value="{{ lookup('template', 'hue_service_safety_valve.j2') }}"
+  when: deploy_hue_trustedanalytics == true
 
 - name: set hue server role properties
   cdh: action=set_config entity=service service=hue name={{ item.name }} value={{ item.value }}
@@ -35,5 +43,6 @@
 
 - wait_for: host={{ groups['cdh-master'][0] }} port=8888
 
-- name: create hue first user
-  script: create_hue_superuser.py {{ groups['cdh-master'][0] }} {{ cf_password }} && touch /var/hue_user_created creates=/var/hue_user_created
+- name: prepare hue users database to oauth integration
+  shell: mysql -u root --password={{ hive_mysql_root_password }} -D hue -e 'ALTER TABLE auth_user MODIFY COLUMN username VARCHAR(255) NOT NULL;'
+
