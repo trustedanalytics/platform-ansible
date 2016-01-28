@@ -84,4 +84,5 @@
     - { command: 'GRANT ALL ON SERVER server1 TO ROLE admin;', file: 'grant_role' }
     - { command: 'GRANT ROLE admin TO GROUP hive;', file: 'grant_hive' }
     - { command: 'GRANT ROLE admin TO GROUP hue;', file: 'grant_hue' }
+    - { command: 'GRANT ROLE admin TO GROUP intel;', file: 'grant_intel' }
   delegate_to: '{{ groups["cdh-master"][0] }}'
