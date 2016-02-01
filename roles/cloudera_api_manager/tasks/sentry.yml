@@ -39,7 +39,6 @@
   cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'hdfs_sentry_sync_enable', value: 'true' }
-    - { name: 'dfs_namenode_acls_enabled', value: 'true' }
     - { name: 'hdfs_sentry_sync_path_prefixes', value: '/user/hive/warehouse' }
     
 - name: set hive service properties for sentry

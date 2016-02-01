@@ -26,6 +26,7 @@
     - { name: 'dfs_permissions', value: 'true' }
     - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
     - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
+    - { name: 'dfs_namenode_acls_enabled', value: 'true' }
 
 - name: override replication for one node install
   cdh: action=set_config entity=service service=hdfs name=dfs_replication value=1
