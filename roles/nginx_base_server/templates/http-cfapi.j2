@@ -8,6 +8,7 @@ server {
             proxy_set_header Host api.{{ cf_domain }};
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_pass http://api;
         }
 }
@@ -25,6 +26,7 @@ server {
             proxy_set_header Host api.{{ cf_domain }};
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_pass http://api;
         }
 }
