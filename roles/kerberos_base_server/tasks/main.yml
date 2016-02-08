@@ -37,25 +37,24 @@
   script: generate_cert.sh CLOUDERA creates=/var/krb5kdc/PKINIT_SUCCESS
 
 # Install KRB5 base
-- name: Install KRB5 base with jwt support
+- name: Install KRB5 base
   yum: pkg='{{ item }}' state=installed
   environment: proxy_env
   with_items:
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-lib-1.12.4-0.x86_64.rpm
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-client-1.12.4-0.x86_64.rpm
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-server-1.12.4-0.x86_64.rpm
+    - krb5-workstation
+    - krb5-server
+
+- name: Download kerberos binaries
+  get_url: url=http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt.zip dest=/root/kerberos-jwt.zip
+
+- name: Untar kerberos server
+  unarchive: src=/root/kerberos-jwt.zip dest=/ copy=no creates=/usr/bin/ktutil_old
 
 - name: move ktutil to ktutil2
-  shell: mv /bin/ktutil /bin/ktutil_old creates=/bin/ktutil_old
+  shell: mv /usr/bin/ktutil /usr/bin/ktutil_old creates=/usr/bin/ktutil_old
 
 - name: copy ktutil fix
-  copy: src=ktutil dest=/bin/ktutil mode=0755
-
-- name: deploy kerberos daemon scripts
-  copy: src={{ item }}.d dest=/etc/rc.d/init.d/{{ item }} mode=0700
-  with_items:
-    - krb5kdc
-    - kadmin
+  copy: src=ktutil dest=/usr/bin/ktutil mode=0755
 
 - name: create the initial kerberos database
   shell: echo -e "{{ master_krb_pass }}\n{{ master_krb_pass }}" | kdb5_util create -s && touch /var/krb5kdc/db_created creates=/var/krb5kdc/db_created

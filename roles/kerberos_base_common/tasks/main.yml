@@ -15,11 +15,8 @@
 
 #this playbook installs krb5 configs and policy files
 - name: install KRB5 base
-  yum: pkg='{{ item }}' state=installed
+  yum: pkg=krb5-workstation state=installed
   environment: proxy_env
-  with_items:
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-lib-1.12.4-0.x86_64.rpm
-    - http://krb5jwt.s3-website-us-east-1.amazonaws.com/krb5jwt-client-1.12.4-0.x86_64.rpm
 
 - set_fact:
     krb_server: krb_server
