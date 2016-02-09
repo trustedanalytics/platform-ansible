@@ -14,5 +14,5 @@
 # limitations under the License.
 #
 
-consul_url: https://dl.bintray.com/mitchellh/consul/0.5.2_linux_amd64.zip
+consul_url: https://releases.hashicorp.com/consul/0.5.2/consul_0.5.2_linux_amd64.zip
 consul_template_url: https://releases.hashicorp.com/consul-template/0.11.1/consul-template_0.11.1_linux_amd64.zip
