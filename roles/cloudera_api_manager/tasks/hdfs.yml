@@ -26,6 +26,7 @@
     - { name: 'dfs_permissions', value: 'true' }
     - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
     - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
+    - { name: 'dfs_namenode_acls_enabled', value: 'true' }
 
 - name: override replication for one node install
   cdh: action=set_config entity=service service=hdfs name=dfs_replication value=1
@@ -108,7 +109,7 @@
   hdfs: dir={{ item.dir }} owner={{ item.owner }} mode={{ item.mode }} group={{ item.group }}
   delegate_to: '{{ groups["cdh-master"][0] }}'
   with_items:
-    - { dir: '/org', owner: 'cf', group: 'intel', mode: '755' }
+    - { dir: '/org', owner: 'authgateway', group: 'supergroup', mode: '701' }
     - { dir: '/org/intel', owner: 'cf', group: 'intel', mode: '755' }
     - { dir: '/org/intel/hdfsbroker', owner: 'cf', group: 'intel', mode: '771' }
     - { dir: '/org/intel/hdfsbroker/userspace', owner: 'cf', group: 'intel', mode: '771' }
@@ -117,6 +118,6 @@
     - { dir: '/org/intel/tmp', owner: 'cf', group: 'intel', mode: '777' }
     - { dir: '/user', owner: 'mapred', group: 'supergroup', mode: '755' }
     - { dir: '/user/cf', owner: 'cf', group: 'cf', mode: '755' }
-    - { dir: '/user/history', owner: 'mapred', group: 'supergroup', mode: '770' }
+    - { dir: '/user/history', owner: 'mapred', group: 'supergroup', mode: '777' }
     - { dir: '/user/atkuser', owner: 'vcap', group: 'supergroup', mode: '755' }
     - { dir: '/user/vcap', owner: 'vcap', group: 'supergroup', mode: '755' }

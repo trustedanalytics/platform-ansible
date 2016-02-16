@@ -56,6 +56,7 @@ SERVICE_MAP = {
     'cm': '',
     'kms': 'KMS',
     'hadoopgroupsmapping': 'HADOOPGROUPSMAPPING',
+    'sentry': 'SENTRY',
 }
 
 # similar to SERVICE_MAP, but for roles
@@ -80,6 +81,7 @@ ROLE_MAP = {
     'kms': 'KMS-KEY_MANAGEMENT_SERVER',
     'hue-kt': 'HUE-KT_RENEWER-BASE',
     'hadoopgroupsmapping_rest': "HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER-BASE",
+    'sentry': 'SENTRY-SENTRY_SERVER',
 }
 
 # when creating worker node roles, this map is used to determine the worker role
@@ -149,6 +151,9 @@ BASE_SERVICE_ROLE_MAP = {
     },
     'hadoopgroupsmapping': {
         'HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER': 'HADOOPGROUPSMAPPING_RESTSERVER'
+    },
+    'sentry': {
+        'SENTRY-SENTRY_SERVER': 'SENTRY_SERVER'
     },
 }
 

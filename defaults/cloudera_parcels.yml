@@ -13,6 +13,8 @@ cloudera_parcels:
   - http://archive.cloudera.com/accumulo-c5/parcels/latest/
   - http://hadoopgroupsmapping.s3-website-us-east-1.amazonaws.com/
 
+# Add the location of remote Hue repository here.
+
 # Add the location of the remote Gearpump repository here.
 #
 # More details about how to build a Gearpump parcel:

@@ -98,3 +98,5 @@
   delegate_to: '{{ groups["cdh-master"][-1] }}'
   with_items:
     - { user: 'cf', group: 'intel' }
+    - { user: 'authgateway', group: 'authgateway' }
+    - { user: 'authgateway', group: 'supergroup' }

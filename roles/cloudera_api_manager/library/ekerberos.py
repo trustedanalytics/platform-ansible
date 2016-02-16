@@ -61,10 +61,13 @@ def main():
     if match('^Default principal: {0}@.*$'.format(usr_a), std_lines[1]) == None:
       kerberos_renew = True
     else:
-      # Extracting principal expire date
-      expire_date = 'T'.join([a.replace(' ', '').replace('/', ':') for a in std_lines[-3].split(' ')][3:5])
-      # Checking if principal will expire in next 15 minutes or is already expired
-      if datetime.now() > datetime.strptime(expire_date, '%m:%d:%yT%H:%M:%S') - timedelta(minutes=15):
+      try:
+        # Extracting principal expire date
+        expire_date = 'T'.join([a.replace(' ', '').replace('/', ':') for a in std_lines[-3].split(' ')][3:5])
+        # Checking if principal will expire in next 15 minutes or is already expired
+        if datetime.now() > datetime.strptime(expire_date, '%m:%d:%yT%H:%M:%S') - timedelta(minutes=15):
+          kerberos_renew = True
+      except:
         kerberos_renew = True
   if kerberos_renew:
     std_o, err_o = execute('echo -e "{1}\n" | sudo -u "{0}" kinit "{0}"'.format(usr_a, pass_a))
