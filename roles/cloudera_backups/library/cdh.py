@@ -1,1 +1,0 @@
-../../cloudera_api_manager/library/cdh.py
