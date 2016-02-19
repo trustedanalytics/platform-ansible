@@ -113,7 +113,6 @@
     - { dir: '/org/intel', owner: 'cf', group: 'intel', mode: '755' }
     - { dir: '/org/intel/hdfsbroker', owner: 'cf', group: 'intel', mode: '771' }
     - { dir: '/org/intel/hdfsbroker/userspace', owner: 'cf', group: 'intel', mode: '771' }
-    - { dir: '/org/intel/hdfsbroker/metadata', owner: 'cf', group: 'intel', mode: '771' }
     - { dir: '/org/intel/users', owner: 'cf', group: 'intel', mode: '775' }
     - { dir: '/org/intel/tmp', owner: 'cf', group: 'intel', mode: '777' }
     - { dir: '/user', owner: 'mapred', group: 'supergroup', mode: '755' }
