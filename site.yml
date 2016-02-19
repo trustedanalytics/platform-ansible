@@ -120,6 +120,7 @@
 #install KRB5 server
 - hosts: cdh-manager
   vars_files:
+    - defaults/arcadia.yml
     - defaults/proxy.yml
     - defaults/cdh.yml
   roles:

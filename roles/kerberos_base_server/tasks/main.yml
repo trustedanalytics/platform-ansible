@@ -68,6 +68,7 @@
 - name: create users
   kadduser: name='{{ item.name }}' password='{{ item.pass }}' params='{{ item.params }}'
   with_items:
+    - { name: '{{ arcadia.kerberos.user }}', pass: '', params: '-randkey -requires_preauth' }
     - { name: 'hdfs', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
     - { name: 'hdfs/sys', pass: '', params: '-nokey -requires_preauth' }
     - { name: 'hbase/sys', pass: '', params: '-nokey -requires_preauth' }
