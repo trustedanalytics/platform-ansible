@@ -15,7 +15,7 @@
 
 #deploying hue
 - name: deploy the hue parcel to all hosts
-  cdh: action=deploy_parcel name=HUE_TRUSTEDANALYTICS version=3.9.0
+  cdh: action=deploy_parcel name=HUE_TRUSTEDANALYTICS version=3.9.0.1
   when: deploy_hue_trustedanalytics == true
 
 - name: deploy hue master components
