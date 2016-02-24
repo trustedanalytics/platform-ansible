@@ -33,17 +33,5 @@ I. One node (all in one) installation
 
 II. Bare-metal installation
 
-Assumption: only CDH workers and masters on bare-metal. 
-
-1. Prepare hosts with latest CentOS6.x86_64
-2. Make sure you have sufficient amount of memory and disk space
-3. Configure 2 paths for data:
- - should be separate mountpoints for better performance
- - if not, may be any dir, but separate for each datapath
-4. Check network connectivity between hosts
-5. Setup working dns and ntp
-6. Format with ext3 and mount datapaths (add to /etc/fstab as well)
-7. Set proper options at defaults/cdh.yml:
- - data paths
-8. Fill up inventory/cdh with your hosts
-9. Launch bin/bare_metal_install.sh
+Documentation for hybrid installation is available at:
+https://github.com/trustedanalytics/platform-wiki/wiki/Hybrid-Deployment-(OpenStack-&-bare-metal)

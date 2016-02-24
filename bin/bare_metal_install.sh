@@ -16,7 +16,8 @@
 
 cd $(dirname $0)/..
 echo -e "\n\nYou are trying to start BARE-METAL install.\n\n
-Read README-CUSTOM_INSTALL.txt first and make sure there is a proper configuration.
+If unsure refer to online documentation at:
+https://github.com/trustedanalytics/platform-wiki/wiki/Hybrid-Deployment-(OpenStack-&-bare-metal)
 \n\nPress Ctrl-C to abort in 30s.\n\n"
 sleep 30;
 
