@@ -16,7 +16,7 @@
 - hosts: cdh-master[0]
   vars_files:
     - defaults/proxy.yml
+    - defaults/cdh.yml
     - defaults/h2o.yml
   roles:
     - h2o
-

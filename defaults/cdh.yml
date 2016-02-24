@@ -46,6 +46,7 @@ cdh_work_groups:
 cdh_work_users:
   - { name: 'cf', uid: '1001', group: 'intel' }
   - { name: 'hdfsbroker', uid: '1002', group: 'orggroup' }
+  - { name: 'h2o', uid: '1003', group: 'intel' }
 configure_backup: false
 #hbase_snapshot_s3_access_key_id: ENTER YOUR S3 KEY FOR BACKUPS HERE
 #hbase_snapshot_s3_secret_access_key: ENTER YOUR S3 SECRET FOR BACKUPS HERE

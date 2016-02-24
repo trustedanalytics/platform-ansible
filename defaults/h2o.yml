@@ -14,11 +14,11 @@
 #
 
 h2o: 
-  install_pkg: "http://h2o-release.s3.amazonaws.com/h2o/rel-tibshirani/8/h2o-3.6.0.8-cdh5.4.2.zip" 
+  install_pkg: "http://download.h2o.ai/versions/h2o-3.8.0.4-cdh5.4.2.zip" 
   launcher_file: "h2o_launcher.sh"
   nodecount: "3"
-  sysuser: "hdfs"
-  sysgroup: "hdfs"
+  sysuser: "h2o"
+  sysgroup: "intel"
   working_dir: "h2o"
   localdirs: 
     - "/h2o"

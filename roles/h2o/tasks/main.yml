@@ -15,6 +15,15 @@
 
 #this playbook installs h2o
 
+- name: "Install unzip package"
+  yum: 
+    name: "{{ item }}"
+    state: "latest"
+  environment: proxy_env
+  sudo: "yes"
+  with_items: 
+    - "unzip"
+
 - name: "Create h2o system group"
   group: 
     name: "{{ h2o.sysgroup }}"
@@ -24,11 +33,6 @@
     name: "{{ h2o.sysuser }}"
     group: "{{ h2o.sysgroup }}"
   register: "h2o_user"
-
-- name: "Install unzip package"
-  yum: 
-    name: "unzip"
-    state: "latest"
 
 - name: "Get h2o binaries"
   get_url: 
@@ -70,6 +74,12 @@
     group: "{{ h2o.sysgroup }}"
     recurse: "yes"
   with_items: "{{ h2o.localdirs }}"
+  
+- name: "Init kerberos for h2o"
+  ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
+  when: kerberos_enabled
+  with_items:
+    - { usr: 'h2o', pass: '{{ h2o_password }}' }
 
 - name: "Launch h2o"
   shell: "{{ h2o_user.home }}/{{ h2o.working_dir }}/{{ h2o.launcher_file }} {{ h2o.nodecount }}"
