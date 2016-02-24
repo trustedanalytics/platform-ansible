@@ -59,6 +59,7 @@
   - skip_on_vagrant
   - skip_on_one_node_install
   - skip_on_bare_metal
+  when: item.1 is not none
 
 - name: set outgoing ports so that they wont conflict with hbase
   sysctl: name=net.ipv4.ip_local_port_range value="32768 60000" sysctl_set=yes reload=no
