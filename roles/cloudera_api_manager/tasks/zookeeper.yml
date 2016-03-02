@@ -38,7 +38,7 @@
   cdh: action=service service=zookeeper state=started
 
 - name: creating metadata zookeeper znode for brokers
-  znode: dir=/broker/{{ item }}/metadata type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
+  zk_znode: dir=/broker/{{ item }}/metadata type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
   with_items:
     - 'zookeeper'
     - 'gearpump'
@@ -47,6 +47,6 @@
     - 'hdfs'
 
 - name: creating userspace zookeeper znode for brokers
-  znode: dir=/org/intel/{{ item }}/userspace type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
+  zk_znode: dir=/org/intel/{{ item }}/userspace type='create_r' host='{{ groups["cdh-master"][0] }}:2181'
   with_items:
     - 'zookeeperbroker'
