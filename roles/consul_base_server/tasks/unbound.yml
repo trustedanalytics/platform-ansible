@@ -11,12 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-- include: facts.yml
+- name: Install unbound package
+  yum: name=unbound state=latest
 
-- include: consul.yml
+- name: Copy service configuration
+  template: src=unbound.conf.j2 dest=/etc/unbound/unbound.conf
+  notify:
+    - restart unbound
 
-- include: unbound.yml
+- name: Create pidfile firectory
+  file: path=/var/run/unbound state=directory mode=0755
 
-- include: nginx.yml
+- name: Start the service
+  service: name=unbound state=started enabled=yes

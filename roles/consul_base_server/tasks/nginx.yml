@@ -13,10 +13,17 @@
 # limitations under the License.
 #
 
-- include: facts.yml
+- name: Install python-passlib as dependency for htpasswd module
+  yum: pkg=python-passlib state=installed
 
-- include: consul.yml
+- name: Install nginx
+  yum: pkg=nginx state=installed enablerepo=nginx
 
-- include: unbound.yml
+- name: create config
+  copy: src=nginx_default.conf dest=/etc/nginx/conf.d/default.conf
 
-- include: nginx.yml
+- name: create htpasswd file
+  htpasswd: path=/etc/nginx/conf.d/htpasswd name=consuluser password={{ consul_proxy_pass }}
+
+- name: start nginx
+  service: name=nginx state=started enabled=yes
