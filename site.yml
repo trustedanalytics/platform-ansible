@@ -30,7 +30,7 @@
     - common
 
 #install consul agent on the master machines
-- hosts: consul-master
+- hosts: cdh-master
   vars_files:
     - defaults/consul.yml
     - defaults/proxy.yml
@@ -70,12 +70,12 @@
   pre_tasks:
     - name: set server to zabbix proxy on consul node if any exists
       set_fact: 
-        zabbix_server_group: consul-master
-      when: groups.has_key('consul-master')
+        zabbix_server_group: cdh-master
+      when: groups.has_key('cdh-master')
     - name: set server to zabbix server if consul does not exist
       set_fact: 
         zabbix_server_group: zabbix-server
-      when: not groups.has_key('consul-master')
+      when: not groups.has_key('cdh-master')
     - name: set agent config to a simpler vagrant one
       set_fact: 
         zabbix_agent_conf: "{{ zabbix_agent_conf_vagrant }}"
@@ -182,7 +182,7 @@
   roles:
     - { role: zabbix_base_web, tags: skip_on_one_node_install }
 
-- hosts: consul-master[-1]
+- hosts: cdh-master[-1]
   vars_files:
     - defaults/zabbix.yml
   roles:

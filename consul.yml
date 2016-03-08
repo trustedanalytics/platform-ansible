@@ -15,7 +15,7 @@
 
 ---
 #install consul agent on the master machines
-- hosts: consul-master
+- hosts: cdh-master
   vars_files:
     - defaults/consul.yml
     - defaults/proxy.yml

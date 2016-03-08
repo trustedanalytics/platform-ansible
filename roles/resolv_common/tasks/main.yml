@@ -17,8 +17,6 @@
 #the consul_server role uses them to determine upstream DNS!
 - name: copy resolv.conf
   template: src=resolv.j2 dest=/etc/resolv.conf
-  when: "'consul-master' not in group_names"
 
 - name: prevent dhclient from overwriting resolv.conf
   template: src=dhclient.j2 dest=/etc/dhcp/dhclient-enter-hooks mode=555
-  when: "'consul-master' not in group_names"
