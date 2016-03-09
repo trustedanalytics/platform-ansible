@@ -20,7 +20,7 @@
   service: name=nginx enabled=yes
 
 - name: create self-signed SSL cert if none provided
-  command: openssl req -new -nodes -x509 -subj "/C=US/ST=Oregon/L=Portland/O=IT/CN=${ansible_fqdn}" -days 3650 -keyout /etc/nginx/cert.key -out /etc/nginx/cert.crt -extensions v3_ca creates=/etc/nginx/cert.crt
+  command: "openssl req -new -nodes -x509 -subj /C=US/ST=Oregon/L=Portland/O=IT/CN={{ ansible_fqdn }} -days 3650 -keyout /etc/nginx/cert.key -out /etc/nginx/cert.crt -extensions v3_ca creates=/etc/nginx/cert.crt"
   notify: restart nginx
   when: self_signed_cert
 
