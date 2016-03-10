@@ -13,10 +13,11 @@
 # limitations under the License.
 #
 
-- include: facts.yml
+- name: ensure custom facts directory exists
+  file: path=/etc/ansible/facts.d recurse=yes state=directory
 
-- include: consul.yml
+- name: distribute resolv info fact
+  copy: src=resolv.fact dest=/etc/ansible/facts.d/resolv.fact mode=0755
 
-- include: unbound.yml
-
-- include: nginx.yml
+- name: reload ansible_local facts
+  setup: filter=ansible_local

@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-- include: facts.yml
+---
 
-- include: consul.yml
+- name: restart unbound
+  service: name=unbound state=restarted
 
-- include: unbound.yml
+- name: restart consul
+  service: name=consul state=restarted
+  when: not consul_started.changed
 
-- include: nginx.yml
+# vi:et:sw=2 ts=2 sts=2 ft=ansible
