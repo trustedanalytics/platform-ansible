@@ -39,12 +39,12 @@
 
 - name: start the consul service
   service: name=consul state=started enabled=yes
-  when: "'consul-master' not in group_names"
+  when: "'cdh-master' not in group_names"
 
 - name: wait for local consul agent port 8301 to become accessible
   wait_for: host=localhost port=8301 timeout=10
-  when: "'consul-master' not in group_names"
+  when: "'cdh-master' not in group_names"
 
 - name: wait for consul port 8500 to become accessible and check cluster state
   uri: url=http://localhost:8500/v1/catalog/nodes
-  when: "'consul-master' not in group_names"
+  when: "'cdh-master' not in group_names"

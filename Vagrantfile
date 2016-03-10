@@ -8,7 +8,6 @@
 groups = {
   "zabbix-server" => ["zabbix-server"],
   "zabbix-proxy" => ["zabbix-proxy"],
-  "consul-master" => ["consul-master"],
   "cdh-worker" => ["cdh-worker"],
   "cdh-master" => ["cdh-master"],
   "cdh-manager" => ["cdh-manager"],
@@ -43,7 +42,7 @@ Vagrant.configure(2) do |config|
     ansible.skip_tags = "skip_on_vagrant"
   end
 
-  %w(cdh-manager cdh-worker cdh-master consul-master zabbix-proxy zabbix-web zabbix-server).each do |vmname|
+  %w(cdh-manager cdh-worker cdh-master zabbix-proxy zabbix-web zabbix-server).each do |vmname|
     config.vm.define vmname 
   end
 end
