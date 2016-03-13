@@ -57,6 +57,8 @@ SERVICE_MAP = {
     'kms': 'KMS',
     'hadoopgroupsmapping': 'HADOOPGROUPSMAPPING',
     'sentry': 'SENTRY',
+    'sqoop-client': 'SQOOP_CLIENT',
+    'sqoop-metastore': 'SQOOP_METASTORE',
 }
 
 # similar to SERVICE_MAP, but for roles
@@ -82,6 +84,7 @@ ROLE_MAP = {
     'hue-kt': 'HUE-KT_RENEWER-BASE',
     'hadoopgroupsmapping_rest': "HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER-BASE",
     'sentry': 'SENTRY-SENTRY_SERVER',
+    'sqoop-metastore': 'SQOOP-SQOOP_METASTORE',
 }
 
 # when creating worker node roles, this map is used to determine the worker role
@@ -96,6 +99,7 @@ SERVICE_WORKER_MAP = {
     'hive': {'name': 'GATEWAY', 'formatstring': 'HIVE-GATEWAY-{0}'},
     'gearpump': {'name': 'GEARPUMP_WORKER', 'formatstring': 'GEARPUMP-GEARPUMP_WORKER-{0}'},
     'hadoopgroupsmapping': {'name': 'GATEWAY', 'formatstring': 'HADOOPGROUPSMAPPING-GATEWAY-{0}'},
+    'sqoop-client': {'name': 'GATEWAY', 'formatstring': 'SQOOP_CLIENT-GATEWAY-{0}'},
 }
 
 # when creating base roles, this map is used to determine what initilization
@@ -154,6 +158,9 @@ BASE_SERVICE_ROLE_MAP = {
     },
     'sentry': {
         'SENTRY-SENTRY_SERVER': 'SENTRY_SERVER'
+    },
+    'sqoop-metastore': {
+        'SQOOP-SQOOP_METASTORE': 'SQOOP_METASTORE'
     },
 }
 

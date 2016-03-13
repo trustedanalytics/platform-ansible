@@ -1,0 +1,37 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# deploying Sqoop Metastore
+- name: deploy sqoop client gateways
+  cdh: action=deploy_service_worker_nodes service=sqoop-client host={{ item }}
+  with_items: groups['cdh-all']
+  delegate_to: '{{ groups["cdh-manager"][0] }}'
+
+- name: deploy sqoop-metastore service
+  cdh: action=deploy_service name=sqoop-metastore
+  delegate_to: '{{ groups["cdh-manager"][0] }}'
+
+- name: deploy sqoop-metastore base component
+  cdh: action=deploy_base_roles service=sqoop-metastore host={{ groups['cdh-master'][1] }}
+  delegate_to: '{{ groups["cdh-manager"][0] }}'
+
+- name: upload sqoop-site.xml
+  template: src=sqoop-site.xml.j2 dest=/etc/sqoop/conf.cloudera.sqoop_client/sqoop-site.xml
+
+- name: start sqoop-metastore service
+  cdh: action=service service=sqoop-metastore state=started
+  delegate_to: '{{ groups["cdh-manager"][0] }}'
+
+- name: include changes needed for oozie
+  include: oozie.yml
