@@ -85,6 +85,7 @@ ROLE_MAP = {
     'hadoopgroupsmapping_rest': "HADOOPGROUPSMAPPING-HADOOPGROUPSMAPPING_RESTSERVER-BASE",
     'sentry': 'SENTRY-SENTRY_SERVER',
     'sqoop-metastore': 'SQOOP-SQOOP_METASTORE',
+    'sqoop-client': 'SQOOP_CLIENT-GATEWAY-BASE',
 }
 
 # when creating worker node roles, this map is used to determine the worker role
@@ -161,6 +162,9 @@ BASE_SERVICE_ROLE_MAP = {
     },
     'sqoop-metastore': {
         'SQOOP-SQOOP_METASTORE': 'SQOOP_METASTORE'
+    },
+    'sqoop-client': {
+        'SQOOP-SQOOP_CLIENT': 'SQOOP_CLIENT'
     },
 }
 

@@ -19,7 +19,7 @@
 
 - name: init kerberos if enabled
   ekerberos: usr=hdfs pass={{ kadmin_pass }}
-  delegate_to: '{{ groups["cdh-master"][1] }}'
+  when: inventory_hostname == groups['cdh-master'][1]
   when: kerberos_enabled
 
 - name: copy postgresql jdbc jar
@@ -28,4 +28,4 @@
 
 - name: put postgresql jdbc jar in sharelib in hdfs
   hdfs: src=/tmp/postgresql-9.3-1104.jdbc4.jar dst=/user/oozie/share/lib owner=oozie group=oozie mode=644
-  delegate_to: '{{ groups["cdh-master"][1] }}'
+  when: inventory_hostname == groups['cdh-master'][1]
