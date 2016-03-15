@@ -64,3 +64,15 @@
 - name: create user on each machine
   user: name={{ item.name }} group={{ item.group }} uid={{ item.uid }} system=yes
   with_items: cdh_work_users
+
+- name: Download nss binaries
+  get_url: url=http://zookeeper-nss.s3-website-eu-west-1.amazonaws.com/zookeeper_nss-1.0.zip dest=/root/zookeeper_nss.zip
+
+- name: install nss module
+  unarchive: src=/root/zookeeper_nss.zip dest=/ copy=no
+
+- name: enable hgm nns passwd module
+  lineinfile: 'dest=/etc/nsswitch.conf regexp="^passwd:" line="passwd: files zk"'
+
+- name: enable hgm nns group module
+  lineinfile: 'dest=/etc/nsswitch.conf regexp="^group:" line="group: files zk"'

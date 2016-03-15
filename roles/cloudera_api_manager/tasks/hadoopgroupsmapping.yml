@@ -14,7 +14,46 @@
 #
 # deploying HadoopGroupsMapping
 - name: deploy the hadoopgroupsmapping parcel to all hosts
-  cdh: action=deploy_parcel name=HADOOPGROUPSMAPPING version=1.0
+  cdh: action=deploy_parcel name=HADOOPGROUPSMAPPING version=1.1
+
+# TODO: bump hgm version in repo after HGM task review + bump CSD
+
+- name: install pip
+  yum: pkg=python-pip state=installed
+  environment: proxy_env
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+
+- name: install argparse and kazoo
+  pip: name={{ item }}
+  environment: proxy_env
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+  with_items:
+    - argparse
+    - kazoo
+
+- name: create config znodes for hgm
+  zk_znode: dir={{ item.znode }} type='create' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}'
+    acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181' value='{{ item.value }}'
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+  with_items:
+    - { znode: '/hgm-conf', value: 'NULL' }
+    - { znode: '/hgm-conf/userId', value: '1500' }
+    - { znode: '/hgm-conf/groupId', value: '1500' }
+
+- name: create users in hadoopgroupsmapping
+  zk_znode: dir=/user-management/{{ item.user }}/{{ item.group }} type='create_r' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}'
+    acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181'
+  delegate_to: '{{ groups["cdh-master"][-1] }}'
+  with_items:
+    - { user: 'cf', group: 'intel' }
+    - { user: 'authgateway', group: 'authgateway' }
+    - { user: 'authgateway', group: 'supergroup' }
+    - { user: 'arcadia-user', group: 'hive' }
+    - { user: 'h2o', group: 'intel' }
+    - { user: 'hdfs', group: 'supergroup' }
+    - { user: 'mapred', group: 'supergroup' }
+    - { user: 'yarn', group: 'supergroup' }
+    - { user: 'impala', group: 'supergroup' }
 
 - name: deploy hadoopgroupsmapping service
   cdh: action=deploy_service name=hadoopgroupsmapping
@@ -46,19 +85,6 @@
            -keyalg RSA -keypass {{ hgm_basic_pass }} -storepass {{ hgm_basic_pass }} -keystore /root/HGM_Key.jks creates=/root/HGM_Key.jks
   delegate_to: '{{ groups["cdh-master"][-1] }}'
 
-- name: install pip
-  yum: pkg=python-pip state=installed
-  environment: proxy_env
-  delegate_to: '{{ groups["cdh-master"][-1] }}'
-  
-- name: install argparse and kazoo
-  pip: name={{ item }}
-  environment: proxy_env
-  delegate_to: '{{ groups["cdh-master"][-1] }}'
-  with_items:
-    - argparse
-    - kazoo
- 
 - name: deploy hadoopgroupsmapping gateways
   cdh: action=deploy_service_worker_nodes service=hadoopgroupsmapping host={{ item }}
   with_items: groups['cdh-all']
@@ -75,30 +101,9 @@
   cdh: action=deploy_configuration service=hadoopgroupsmapping
   when: hgm_deployed.changed
   
-- name: deploy hadoopgroupsmapping scripts
-  cdh: action=run_command service=hadoopgroupsmapping name=deploy_scripts
+- name: sync hgm znodes
+  cdh: action=run_command service=hadoopgroupsmapping name=update_znode_structure
   when: hgm_deployed.changed
-
-- name: create hadoopgroupsmapping base groups
-  cdh: action=run_command service=hadoopgroupsmapping name=create_base_groups
-  when: hgm_deployed.changed
-
-- name: set hdfs service properties if hadoopgroupsmapping is included
-  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
-  with_items:
-    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.groups.cache.secs</name><value>1</value></property><property><name>hadoop.user.group.static.mapping.overrides</name><value>cloudera-scm=cloudera-scm;accumulo=accumulo;flume=flume;hbase=hbase;hdfs=supergroup,hdfs;hive=hive;httpfs=httpfs;hue=hue;impala=hive,hdfs,supergroup,impala;kafka=kafka;kms=kms;keytrustee=keytrustee;llama=llama;mapred=supergroup,mapred;oozie=oozie;solr=solr;spark=spark;sentry=sentry;sqoop=sqoop;sqoop2=sqoop,sqoop2;yarn=supergroup,yarn;zookeeper=zookeeper;</value></property>' }
-  notify:
-    - restart cluster
 
 - meta: flush_handlers
 
-- name: create users in hadoopgroupsmapping
-  zk_znode: dir=/user-management/{{ item.user }}/{{ item.group }} type='create_r' authmethod='digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}' 
-    acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181'
-  delegate_to: '{{ groups["cdh-master"][-1] }}'
-  with_items:
-    - { user: 'cf', group: 'intel' }
-    - { user: 'authgateway', group: 'authgateway' }
-    - { user: 'authgateway', group: 'supergroup' }
-    - { user: 'arcadia-user', group: 'hive' }
-    - { user: 'h2o', group: 'intel' }
