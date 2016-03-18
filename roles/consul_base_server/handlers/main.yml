@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-#the consul master should use the dhcp provided DNS names
-#the consul_server role uses them to determine upstream DNS!
-- name: copy resolv.conf
-  template: src=resolv.j2 dest=/etc/resolv.conf
+---
 
-- name: prevent dhclient from overwriting resolv.conf
-  template: src=dhclient.j2 dest=/etc/dhcp/dhclient-enter-hooks mode=555
+- name: restart unbound
+  service: name=unbound state=restarted
+
+- name: restart consul
+  service: name=consul state=restarted
+  when: not consul_started.changed
+
+# vi:et:sw=2 ts=2 sts=2 ft=ansible

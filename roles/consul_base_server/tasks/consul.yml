@@ -13,38 +13,29 @@
 # limitations under the License.
 #
 
-- name: install unzip and httplib2
-  yum: pkg={{ item }} state=installed
-  with_items:
-    - unzip
-    - python-httplib2.noarch
+- name: make sure dns.json is removed
+  file: path=/etc/consul.d/dns.json state=absent
+  notify:
+    - restart consul
 
-- name: download consul
-  get_url: url={{ consul_url }} dest=/tmp/consul.zip validate_certs=no
-  environment: proxy_env
-  register: downloaded
-
-- name: copy consul initscript
-  copy: src=consul dest=/etc/init.d/consul mode=755
-
-- name: create consul conf directory
-  file: path=/etc/consul.d state=directory
-
-- name: unpack binaries
-  unarchive: src=/tmp/consul.zip dest=/usr/local/bin copy=no
-  when: downloaded|changed
-
-- name: copy base.json
-  template: src=base.j2 dest=/etc/consul.d/base.json
+- name: copy server.json
+  template: src=server.j2 dest=/etc/consul.d/server.json
+  register: server
+  notify:
+    - restart consul
 
 - name: start the consul service
   service: name=consul state=started enabled=yes
-  when: "'cdh-master' not in group_names"
+  register: consul_started
 
-- name: wait for local consul agent port 8301 to become accessible
+- meta: flush_handlers
+
+- name: wait for consul port 8301 to become accessible
   wait_for: host=localhost port=8301 timeout=10
-  when: "'cdh-master' not in group_names"
 
 - name: wait for consul port 8500 to become accessible and check cluster state
   uri: url=http://localhost:8500/v1/catalog/nodes
-  when: "'cdh-master' not in group_names"
+  register: cluster_state
+  until: cluster_state|success
+  retries: 6
+  delay: 10

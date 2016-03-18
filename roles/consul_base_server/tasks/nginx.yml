@@ -13,10 +13,17 @@
 # limitations under the License.
 #
 
-#the consul master should use the dhcp provided DNS names
-#the consul_server role uses them to determine upstream DNS!
-- name: copy resolv.conf
-  template: src=resolv.j2 dest=/etc/resolv.conf
+- name: Install python-passlib as dependency for htpasswd module
+  yum: pkg=python-passlib state=installed
 
-- name: prevent dhclient from overwriting resolv.conf
-  template: src=dhclient.j2 dest=/etc/dhcp/dhclient-enter-hooks mode=555
+- name: Install nginx
+  yum: pkg=nginx state=installed enablerepo=nginx
+
+- name: create config
+  copy: src=nginx_default.conf dest=/etc/nginx/conf.d/default.conf
+
+- name: create htpasswd file
+  htpasswd: path=/etc/nginx/conf.d/htpasswd name=consuluser password={{ consul_proxy_pass }}
+
+- name: start nginx
+  service: name=nginx state=started enabled=yes

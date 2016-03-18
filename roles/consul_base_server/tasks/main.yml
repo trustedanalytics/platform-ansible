@@ -13,46 +13,8 @@
 # limitations under the License.
 #
 
-- name: ensure custom facts directory exists
-  file: path=/etc/ansible/facts.d recurse=yes state=directory
+- include: consul.yml
 
-- name: distribute resolv info fact
-  copy: src=resolv.fact dest=/etc/ansible/facts.d/resolv.fact mode=0755
+- include: unbound.yml
 
-- name: reload ansible_local facts
-  setup: filter=ansible_local
-
-- name: copy dns.json
-  template: src=dns.j2 dest=/etc/consul.d/dns.json
-
-- name: copy server.json
-  template: src=server.j2 dest=/etc/consul.d/server.json
-  register: server
-
-- name: start the consul service
-  service: name=consul state=started enabled=yes
-
-- name: wait for consul port 8301 to become accessible
-  wait_for: host=localhost port=8301 timeout=10 
-
-- name: wait for consul port 8500 to become accessible and check cluster state
-  uri: url=http://localhost:8500/v1/catalog/nodes
-  register: cluster_state
-  until: cluster_state|success
-  retries: 6
-  delay: 10
-
-- name: Install python-passlib as dependency for htpasswd module
-  yum: pkg=python-passlib state=installed
-
-- name: Install nginx
-  yum: pkg=nginx state=installed enablerepo=nginx
-
-- name: create config
-  copy: src=nginx_default.conf dest=/etc/nginx/conf.d/default.conf
-
-- name: create htpasswd file
-  htpasswd: path=/etc/nginx/conf.d/htpasswd name=consuluser password={{ consul_proxy_pass }}
-
-- name: start nginx
-  service: name=nginx state=started enabled=yes
+- include: nginx.yml
