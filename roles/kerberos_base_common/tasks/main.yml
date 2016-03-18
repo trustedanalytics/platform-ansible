@@ -30,7 +30,7 @@
   template: src=krb5.j2 dest=/etc/krb5.conf
 
 - name: Copy unlimited strength local policy file
-  copy: src=UnlimitedJCEPolicyJDK8/local_policy.jar dest=/usr/java/jdk1.8.0_40/jre/lib/security/local_policy.jar
+  copy: src=UnlimitedJCEPolicyJDK8/local_policy.jar dest=/usr/java/jdk1.8.0_72/jre/lib/security/local_policy.jar
 
 - name: Copy unlimited strength US export policy file
-  copy: src=UnlimitedJCEPolicyJDK8/US_export_policy.jar dest=/usr/java/jdk1.8.0_40/jre/lib/security/US_export_policy.jar
+  copy: src=UnlimitedJCEPolicyJDK8/US_export_policy.jar dest=/usr/java/jdk1.8.0_72/jre/lib/security/US_export_policy.jar
