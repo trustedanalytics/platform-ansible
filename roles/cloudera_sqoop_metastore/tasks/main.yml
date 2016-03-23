@@ -1,0 +1,42 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# deploying Sqoop Metastore
+- name: deploy sqoop client gateways
+  cdh: action=deploy_service_worker_nodes service=sqoop-client host={{ item }}
+  with_items: groups['cdh-all']
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: set shared configuration for sqoop client and metastore
+  cdh: action=set_config entity=role service=sqoop-client role=sqoop-client name='sqoop-conf/sqoop-site.xml_client_config_safety_valve' value="<property><name>sqoop.metastore.server.port</name><value>16000</value></property><property><name>sqoop.metastore.client.enable.autoconnect</name><value>false</value></property><property><name>sqoop.metastore.client.autoconnect.url</name><value>jdbc:hsqldb:hsql://{{ hostvars[groups['cdh-master'][1]]['ansible_eth0']['ipv4']['address'] }}:16000/sqoop</value></property><property><name>sqoop.metastore.client.autoconnect.username</name><value>sqoopmetastoreuser</value></property><property><name>sqoop.metastore.client.autoconnect.password</name><value>sqoopmetastorepassword</value></property><property><name>sqoop.metastore.client.record.password</name><value>true</value></property><property><name>sqoop.metastore.server.location</name><value>/var/lib/sqoop/shared-metastore.db</value></property>"
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: deploy sqoop client configuration
+  cdh: action=deploy_configuration service=sqoop-client
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: deploy sqoop-metastore service
+  cdh: action=deploy_service name=sqoop-metastore
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: deploy sqoop-metastore base component
+  cdh: action=deploy_base_roles service=sqoop-metastore host={{ groups['cdh-master'][1] }}
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: start sqoop-metastore service
+  cdh: action=service service=sqoop-metastore state=started
+  when: inventory_hostname == groups['cdh-manager'][0]
+
+- name: include changes needed for oozie
+  include: oozie.yml

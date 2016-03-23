@@ -1,0 +1,31 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+- name: create oozie log dir
+  file: path=/var/log/oozie state=directory owner=oozie group=oozie
+
+- name: init kerberos if enabled
+  ekerberos: usr=hdfs pass={{ kadmin_pass }}
+  when: inventory_hostname == groups['cdh-master'][1]
+  when: kerberos_enabled
+
+- name: copy postgresql jdbc jar
+  copy: src=postgresql-9.3-1104.jdbc4.jar dest=/tmp/postgresql-9.3-1104.jdbc4.jar
+  when: inventory_hostname == groups['cdh-master'][1]
+
+- name: put postgresql jdbc jar in sharelib in hdfs
+  hdfs: src=/tmp/postgresql-9.3-1104.jdbc4.jar dst=/user/oozie/share/lib owner=oozie group=oozie mode=644
+  when: inventory_hostname == groups['cdh-master'][1]
