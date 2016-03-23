@@ -1,0 +1,3 @@
+export http_proxy={{ lookup('env', 'http_proxy') }}
+export https_proxy={{ lookup('env', 'https_proxy') }}
+export no_proxy=localhost,127.0.0.1,.consul
