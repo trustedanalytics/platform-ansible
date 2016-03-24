@@ -50,7 +50,7 @@ def execute(cmd):
   proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
   out, err = proc.communicate()
   proc.wait()
-  if proc.returncode == 1:
+  if proc.returncode == 0:
     err = None
   return out, err
 
@@ -120,9 +120,9 @@ def hdfs_put_file(module, source, destination, owner=None, group=None, mode=None
   if not os.path.isfile(source):
     module.fail_json(msg='Local file {0} does not exist'.format(source))
   std_o, err_o = executehdfs('ls hdfs://{0}'.format(destination))
-  if err_o is None:
+  if err_o is not None:
     put_needed = True
-  elif err_o is not None and err_o == '':
+  elif err_o is None:
     std_o_2, err_o_2 = executehdfs('du hdfs://{0}'.format(destination))
     if err_o_2 != '' and err_o_2 is not None:
       module.fail_json(msg='File hdfs://{0} du error. Error: {1}'.format(destination, err_o_2))
