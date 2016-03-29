@@ -31,7 +31,6 @@
   with_items:
     - { name: 'hbase_hregion_memstore_flush_size', value: '1024000000' }
     - { name: 'hbase_regionserver_handler_count', value: '10' }
-    - { name: 'hbase_regionserver_java_heapsize', value: '2048000000' }
     - { name: 'hbase_regionserver_java_opts', value: '' }
 
 - name: deploy hbase master components
