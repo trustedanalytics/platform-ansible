@@ -49,10 +49,10 @@
   setup: filter=ansible_local
 
 - name: Copy the Oracle JDK 8
-  copy: src=java-jdk-1.8.0_40.rpm dest=/root/java-jdk-1.8.0_40.rpm
+  copy: src=java-jdk-1.8.0_72.rpm dest=/root/java-jdk-1.8.0_72.rpm
 
 - name: Install the Oracle JDK 8
-  yum: name=/root/java-jdk-1.8.0_40.rpm state=present
+  yum: name=/root/java-jdk-1.8.0_72.rpm state=present
 
 - name: set java home
   copy: src=java_env.sh dest=/etc/profile.d/java_env.sh owner=root group=root mode=0755

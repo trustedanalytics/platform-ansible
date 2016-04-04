@@ -16,9 +16,9 @@
 
 cd $(dirname $0)/..
 
-url='http://download.oracle.com/otn-pub/java/jdk/8u40-b26/jdk-8u40-linux-x64.rpm'
+url='http://download.oracle.com/otn-pub/java/jdk/8u72-b15/jdk-8u72-linux-x64.rpm'
 cookie='Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
-file='roles/cloudera_base_common/files/java-jdk-1.8.0_40.rpm'
+file='roles/cloudera_base_common/files/java-jdk-1.8.0_72.rpm'
 
 if [ -r "$file" ]; then
   exit 0
@@ -37,7 +37,7 @@ while getopts ':u:a' flag; do
 done
 
 cat <<JCE
-Java SE Development Kit (JDK) 1.8.0_40
+Java SE Development Kit (JDK) 1.8.0_72
 Download
 
 You must accept the Oracle Binary Code License Agreement for the Java SE
@@ -57,6 +57,6 @@ done
 wget --header "$cookie" -O $file $url
 
 if [[ "$?" -ne 0 ]]; then
-  echo "Unable to download Java SE Development Kit (JDK) 1.8.0_40" >&2
+  echo "Unable to download Java SE Development Kit (JDK) 1.8.0_72" >&2
   exit 1
 fi

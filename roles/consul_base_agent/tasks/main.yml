@@ -47,4 +47,6 @@
 
 - name: wait for consul port 8500 to become accessible and check cluster state
   uri: url=http://localhost:8500/v1/catalog/nodes
+  environment:
+    no_proxy: localhost
   when: "'cdh-master' not in group_names"

@@ -42,7 +42,7 @@
     - { name: 'ssl_server_keystore_password', value: '{{ hgm_basic_pass }}' }
 
 - name: generate key for hadoopgroupsmapping rest server
-  shell: echo -e "\n\n\n\n\n\nyes" | /usr/java/jdk1.8.0_40/bin/keytool -genkey -alias CLOUDERA 
+  shell: echo -e "\n\n\n\n\n\nyes" | /usr/java/jdk1.8.0_72/bin/keytool -genkey -alias CLOUDERA 
            -keyalg RSA -keypass {{ hgm_basic_pass }} -storepass {{ hgm_basic_pass }} -keystore /root/HGM_Key.jks creates=/root/HGM_Key.jks
   delegate_to: '{{ groups["cdh-master"][-1] }}'
 

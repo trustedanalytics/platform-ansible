@@ -46,6 +46,7 @@
 
 - name: Download kerberos binaries
   get_url: url=http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt.zip dest=/root/kerberos-jwt.zip
+  environment: proxy_env
 
 - name: Untar kerberos server
   unarchive: src=/root/kerberos-jwt.zip dest=/ copy=no creates=/usr/bin/ktutil_old
