@@ -41,11 +41,10 @@
   copy: src=consul-template.conf dest=/etc/consul-template.d/
   notify: restart consul-template
 
-- name: copy stream-mosquitto
-  copy: src={{ item }}.conf dest=/etc/consul-template-files/
-  with_items:
-    - stream-mosquitto
-    - kubernetes-services
+- name: copy stream
+  copy: src={{ item }} dest=/etc/consul-template-files/
+  with_fileglob:
+    - stream-*.conf
   notify: restart consul-template
 
 - name: start the consul service
