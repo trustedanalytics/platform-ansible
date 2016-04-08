@@ -67,6 +67,7 @@ ROLE_MAP = {
     'datanode': 'HDFS-DATANODE-BASE',
     'namenode': 'HDFS-NAMENODE-BASE',
     'secondarynamenode': 'HDFS-SECONDARYNAMENODE-BASE',
+    'hdfsgateway': 'HDFS-GATEWAY-BASE',
     'activitymonitor': 'mgmt-ACTIVITYMONITOR-BASE',
     'eventserver': 'mgmt-EVENTSERVER-BASE',
     'reportsmanager': 'mgmt-REPORTSMANAGER-BASE',
