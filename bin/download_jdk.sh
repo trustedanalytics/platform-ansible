@@ -19,10 +19,9 @@ cd $(dirname $0)/..
 url='http://download.oracle.com/otn-pub/java/jdk/8u72-b15/jdk-8u72-linux-x64.rpm'
 cookie='Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
 file='roles/cloudera_base_common/files/java-jdk-1.8.0_72.rpm'
+md5sums='roles/cloudera_base_common/files/md5sums'
 
-if [ -r "$file" ]; then
-  exit 0
-fi
+md5sum --quiet -c $md5sums && exit 0
 
 while getopts ':u:a' flag; do
   case "${flag}" in
