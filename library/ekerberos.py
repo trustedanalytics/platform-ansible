@@ -43,6 +43,8 @@ def execute(cmd):
   proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
   out, err = proc.communicate()
   proc.wait()
+  if proc.returncode is 0:
+    err = ''
   return out, err
 
 

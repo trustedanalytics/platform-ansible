@@ -38,7 +38,8 @@ MODULE_ARGUMENTS = {
     'acl': {'type': 'str', 'required': False},
     'authmethod': {'type': 'str', 'required': False},
     'type': {'type': 'str', 'required': True, 'choices': ['create', 'create_r']},
-    'host': {'type': 'str', 'required': True}
+    'host': {'type': 'str', 'required': True},
+    'value': {'type': 'str', 'required': False}
 }
 
 
@@ -92,12 +93,12 @@ def generate_acl_list(module, acl_a):
 
 
 # create dir if not exists and update acls
-def create_dir(module, client, dir_a, acl_list):
+def create_dir(module, client, dir_a, acl_list, value = ''):
   changed = False
   if not client.exists(dir_a):
     changed = True
     try:
-      client.create(dir_a, '')
+      client.create(dir_a, value)
     except Exception as e:
       module.fail_json(msg='Error while creating znode {0} {1}'.format(dir_a, dir(e)))
 
@@ -128,6 +129,7 @@ def main():
   type_a = module.params.get('type', None)
   dir_a = module.params.get('dir', None)
   acl_a = module.params.get('acl', None)
+  value_a = module.params.get('value', '')
 
   # return error if library is not installed
   if not KAZOO_IMPORTED:
@@ -169,7 +171,7 @@ def main():
     # check if znode parent exists
     if not client.exists(get_parent(dir_a)):
       module.fail_json(msg='Znode {0} parent doesnt exists'.format(dir_a))
-    changed = create_dir(module, client, dir_a, acl_list)
+    changed = create_dir(module, client, dir_a, acl_list, value_a if value_a is not None else '')
 
   elif type_a == 'create_r':
     path = [a.replace('/', '') for a in dir_a.split('/') if a is not '' and a is not None]
