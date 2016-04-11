@@ -16,5 +16,6 @@
 ---
 
 - include: nginx.yml
+  when: install_nginx
 
 - include: consul.yml
