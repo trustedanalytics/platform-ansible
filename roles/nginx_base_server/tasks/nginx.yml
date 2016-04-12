@@ -43,6 +43,9 @@
     - example_ssl.conf
   notify: restart nginx
 
+- name: create stream directory
+  file: path=/etc/nginx/conf.d/stream state=directory
+
 - name: gather EC2 facts
   when: ansible_virtualization_type == 'xen'
   action: ec2_facts

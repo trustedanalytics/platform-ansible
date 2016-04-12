@@ -30,12 +30,7 @@
   register: downloaded
 
 - name: copy consul initscript
-  copy: src=consul dest=/etc/init.d/consul mode=755
-  when: ansible_os_family == "RedHat"
-
-- name: copy consul initscript (Debian)
-  copy: src=consul_debian dest=/etc/init.d/consul mode=755
-  when: ansible_os_family == "Debian"
+  template: src=upstart.conf.j2 dest=/etc/init/consul.conf
 
 - name: create consul conf directory
   file: path=/etc/consul.d state=directory
