@@ -36,42 +36,17 @@
   when: item.name == "dfs_block_local_path_access_user"
   with_items: "{{ cdh_hdfs_remote_config.json['items'] }}"
 - 
-  name: "prepare HDFS config changes"
-  set_fact:
-    cdh_hdfs_config: 
-      service_wide:
-        items: 
-          - 
-            name: "dfs_block_local_path_access_user"
-            value: "{{ dfs_block_local_path_access_user | join(',') }}"
-          - 
-            name: "dfs_datanode_read_shortcircuit"
-            value: "true"
-          - 
-            name: "dfs_datanode_hdfs_blocks_metadata_enabled"
-            value: "true"
-      gateway_dflt_group:
-        items:
-          -
-            name: "dfs_client_read_shortcircuit"
-            value: "true"
-# there is a bug in uri module, preventing us from using JSON body; falling back to good ol' curl
+  name: "set HDFS service config"
+  cdh: action=set_config entity=service service=hdfs name={{ item.name }} value={{ item.value }}
+  with_items: 
+    - { name: "dfs_block_local_path_access_user", value: "{{ dfs_block_local_path_access_user | join(',') }}" }
+    - { name: "dfs_datanode_read_shortcircuit", value: "true" }
+    - { name: "dfs_datanode_hdfs_blocks_metadata_enabled", value: "true" }
 - 
-  name: "apply HDFS Service-Wide config changes"
-  command: /usr/bin/curl -kSs -XPUT -H 'Content-Type:application/json' -u '{{ arcadia.cdh.managerUser }}:{{ arcadia.cdh.managerPass }}' -d '{{ cdh_hdfs_config.service_wide|to_json }}' 'http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/services/{{ arcadia.cdh.hdfsName }}/config'
-  register: "s_w_curlout"
-- 
-  name: "display HDFS Service-Wide config change result"
-  debug: 
-    msg: "{{ s_w_curlout.stdout }}"
-- 
-  name: "apply HDFS Gateway Default Group config changes"
-  command: /usr/bin/curl -kSs -XPUT -H 'Content-Type:application/json' -u '{{ arcadia.cdh.managerUser }}:{{ arcadia.cdh.managerPass }}' -d '{{ cdh_hdfs_config.gateway_dflt_group|to_json }}' 'http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/services/{{ arcadia.cdh.hdfsName }}/roleConfigGroups/{{ arcadia.cdh.gatewayDefaultGroup }}/config'
-  register: "g_d_curlout"
-- 
-  name: "display HDFS Gateway Default Group config change result"
-  debug: 
-    msg: "{{ g_d_curlout.stdout }}"
+  name: "set HDFS gateway role config"
+  cdh: action=set_config entity=role service=hdfs role=hdfsgateway name={{ item.name }} value={{ item.value }}
+  with_items: 
+    - { name: "dfs_client_read_shortcircuit", value: "true" }
 - 
   name: "wait for an empty command loop"
   uri: 
@@ -90,6 +65,8 @@
     user: "{{ arcadia.cdh.managerUser }}"
     password: "{{ arcadia.cdh.managerPass }}"
     method: "POST"
+  notify:
+    - restart cluster
 - 
   name: "wait for an empty command loop"
   uri: 
@@ -102,21 +79,4 @@
   delay: "10"
   retries: "100"
 - 
-  name: "restart CDH cluster"
-  command: /usr/bin/curl -kSs -XPOST -H 'Content-Type:application/json' -u '{{ arcadia.cdh.managerUser }}:{{ arcadia.cdh.managerPass }}' -d '{"restartOnlyStaleServices":"true"}' 'http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/commands/restart'
-  register: "cdh_restart"
-- 
-  name: "display HDFS Cluster restart result"
-  debug: 
-    msg: "{{ cdh_restart.stdout }}"
-- 
-  name: "wait for an empty command loop"
-  uri: 
-    url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/commands"
-    user: "{{ arcadia.cdh.managerUser }}"
-    password: "{{ arcadia.cdh.managerPass }}"
-  register: "command_queue"
-  until: command_queue.json['items']|length == 0
-# this will surely fail one day
-  delay: "10"
-  retries: "100"
+  meta: flush_handlers

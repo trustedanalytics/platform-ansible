@@ -76,7 +76,7 @@ server:
   do-not-query-localhost: no
 
   # allow reverse lookups
-  local-zone: "10.10.in-addr.arpa." transparent
+  local-zone: "10.in-addr.arpa." transparent
   local-zone: "168.192.in-addr.arpa." transparent
 
 # Remote control config section.
@@ -97,7 +97,7 @@ forward-zone:
   forward-addr: 127.0.0.1@8600
 
 stub-zone:
-  name: "10.10.in-addr.arpa."
+  name: "10.in-addr.arpa."
   stub-addr: 127.0.0.1@8600
 
 stub-zone:
