@@ -18,6 +18,11 @@
   with_items:
     - unzip
     - python-httplib2.noarch
+  when: ansible_os_family == "RedHat"
+
+- name: install unzip and httplib2
+  apt: pkg=python-httplib2 state=installed
+  when: ansible_os_family == "Debian"
 
 - name: download consul
   get_url: url={{ consul_url }} dest=/tmp/consul.zip validate_certs=no
@@ -26,6 +31,11 @@
 
 - name: copy consul initscript
   copy: src=consul dest=/etc/init.d/consul mode=755
+  when: ansible_os_family == "RedHat"
+
+- name: copy consul initscript (Debian)
+  copy: src=consul_debian dest=/etc/init.d/consul mode=755
+  when: ansible_os_family == "Debian"
 
 - name: create consul conf directory
   file: path=/etc/consul.d state=directory
