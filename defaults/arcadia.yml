@@ -23,7 +23,7 @@ arcadia:
     common: "cdh-all-nodes"
     masternode: "cdh-master"
     webnode: "cdh-worker"
-    cdhsetupnode: "cdh-master"
+    cdhsetupnode: "cdh-manager"
     kdcnode: "cdh-manager"
   webinterface: 
     http_port: "80"
