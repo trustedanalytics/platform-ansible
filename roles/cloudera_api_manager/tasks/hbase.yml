@@ -24,6 +24,7 @@
     - { name: 'hdfs_service', value: 'HDFS' }
     - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
     - { name: 'hbase_superuser', value: 'cf' }
+    - { name: 'hbase_security_authorization', value: 'true' }
 
 - name: set hbase rs role properties
   cdh: action=set_config entity=role service=hbase role=regionserver name={{ item.name }} value={{ item.value }}

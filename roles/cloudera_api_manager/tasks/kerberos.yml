@@ -30,7 +30,6 @@
   cdh: action=set_config entity=service service=hbase name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'hbase_security_authentication', value: 'kerberos' }
-    - { name: 'hbase_security_authorization', value: 'true' }
 
 - name: enable security on Zookeeper
   cdh: action=set_config entity=service service=zookeeper name={{ item.name }} value={{ item.value }}
