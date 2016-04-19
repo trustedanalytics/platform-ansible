@@ -16,7 +16,7 @@
 #
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
-platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-feature-DPNG-5744-new-deployment-wrapper.tar.gz'}
+platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-feature-DPNG-6233-new-deployment-apployer.tar.gz'}
 tmpdir=$(mktemp -d)
 
 apt-get install -y python-dev python-pip python-virtualenv unzip

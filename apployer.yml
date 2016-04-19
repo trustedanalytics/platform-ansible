@@ -1,0 +1,58 @@
+- hosts: localhost
+  vars:
+    workspace: "{{ ansible_env['HOME'] }}"
+    apployer_repo_name: apployer
+    apployer_path: "{{ workspace }}/{{ apployer_repo_name }}"
+    artifacts_path: https://s3.amazonaws.com/trustedanalytics/daily-artifacts-1461027286.zip
+    github_auth: tapaas-devops:bfd1689b53757cb533b808189ab7e34cf805242f
+    kerberos_enabled: False
+    org: trustedanalytics
+    space: platform
+  tasks:
+    # in ansible 2.0 can be unarchive with url
+    - name: get artifacts
+      get_url:
+        url: "{{ artifacts_path }}"
+        dest: "{{ workspace }}/artifacts.zip"
+
+    - name: unarchive artifacts
+      unarchive:
+        src: "{{ workspace }}/artifacts.zip"
+        dest: "{{ workspace }}"
+        copy: no
+        creates: "{{ workspace }}/release_package/apps"
+
+    - name: clone apployer repo
+      git:
+        repo: https://{{ github_auth }}@github.com/intel-data/{{ apployer_repo_name }}.git
+        dest: "{{ apployer_path }}"
+        version: DPNG-6664-removed-inventory
+        force: true
+
+    - name: install apployer requirements in virtualenv
+      pip:
+        virtualenv: "{{ apployer_path }}/env"
+        requirements: "{{ apployer_path }}/requirements.txt"
+
+    - name: install apployer to virtualenv
+      shell: . env/bin/activate && python setup.py build && python setup.py install
+      args:
+        chdir: "{{ apployer_path }}"
+        executable: /bin/bash
+
+    - replace:
+        dest: "{{ apployer_path }}/fetcher_config.yml"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      with_items:
+        - { regexp: "hostname.+$", replace: "hostname: localhost" }
+        - { regexp: "username.+$", replace: "username: ubuntu" }
+        - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled }}" }
+
+    - name: run apployer
+      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/release_package/apps/ https://cf-api.{{ cf_system_domain }}
+      args:
+        chdir: "{{ apployer_path }}"
+        executable: /bin/bash
+
+# vi:et:sw=2 ts=2 sts=2 ft=ansible

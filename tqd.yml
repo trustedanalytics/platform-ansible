@@ -17,21 +17,21 @@
 
 - hosts: localhost
   tasks:
-    - add_host: name=cdh-master-2.node.envname.consul
+    - add_host: name=cdh-master-2.node.consul
                 groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}" 
-    - add_host: name=cdh-master-{{ item.0 }}.node.envname.consul
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}"
+    - add_host: name=cdh-master-{{ item.0 }}.node.consul
                 groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] }}" 
-    - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] }}"
+    - add_host: name=cdh-worker-{{ item.0 }}.node.consul
                 groups=cdh-worker,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Worker'] }}" 
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Worker'] }}"
 
 - include: site.yml
 
@@ -39,9 +39,9 @@
   vars:
     deployment: "{{ ansible_env['HOME'] }}/cf.yml"
     dns:
-      - "{{ hostvars['cdh-master-0.node.envname.consul']['ansible_ssh_host'] }}"
-      - "{{ hostvars['cdh-master-1.node.envname.consul']['ansible_ssh_host'] }}"
-      - "{{ hostvars['cdh-master-2.node.envname.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-0.node.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-1.node.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-2.node.consul']['ansible_ssh_host'] }}"
   handlers:
     - name: Deploy
       shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ deployment }} deploy
@@ -59,87 +59,6 @@
         - service.consul
         - node.consul
 
-- hosts: localhost
-  vars:
-    bosh_workspace: /root
-    gh_auth: tapaas-devops:bfd1689b53757cb533b808189ab7e34cf805242f
-    apployer_repo_name: apployer
-    apployer_path: "{{ bosh_workspace }}/{{ apployer_repo_name }}"
-    org: trustedanalytics
-    space: platform
-  tasks:
-    - name: create atrifacts directory
-      file:
-        path: "{{ bosh_workspace }}/artifacts"
-        state: directory
-
-    - name: download artifacts from s3
-      get_url:
-        url: https://s3.amazonaws.com/trustedanalytics/v0.7.x/artifacts/{{ item }}
-        dest: "{{ bosh_workspace }}/artifacts/{{ item }}"
-      with_items:
-      - app-launcher-helper-0.4.14.zip
-      - application-broker-0.5.40.zip
-      - atk-2016030911060.zip
-      - auth-gateway-0.6.1.zip
-      - auth-proxy-0.4.3.zip
-      - console-0.4.153.zip
-      - data-acquisition-0.5.7.zip
-      - data-catalog-0.4.21.zip
-      - dataset-publisher-0.4.15.zip
-      - downloader-0.6.7.zip
-      - gateway-0.4.5.zip
-      - gearpump-broker-0.6.3.zip
-      - gearpump-dashboard-0.6.2.zip
-      - hbase-broker-0.8.0.zip
-      - hdfs-broker-0.9.0.zip
-      - latest-events-service-0.4.9.zip
-      - metadata-parser-0.5.7.zip
-      - metrics-provider-0.4.14.zip
-      - model-catalog-0.0.7.zip
-      - platform-context-0.4.16.zip
-      - platform-operations-0.0.12.zip
-      - router-metrics-provider-0.4.9.zip
-      - scoring-engine-2016030911060.zip
-      - service-catalog-0.4.21.zip
-      - service-exposer-0.2.8.zip
-      - tap-java-buildpack-latest.zip
-      - uploader-0.5.10.zip
-      - user-management-0.5.38.zip
-      - wssb-0.4.1.zip
-      - yarn-broker-0.8.0.zip
-      - zookeeper-broker-0.7.0.zip
-
-    - name: clone apployer repo
-      git: repo=https://{{ gh_auth }}@github.com/intel-data/{{ apployer_repo_name }}.git
-           dest={{ apployer_path }}
-           version=new-deployment-mar-2
-           force=true
-
-    - name: install apployer requirements in virtualenv
-      pip:
-        virtualenv: "{{ apployer_path }}/env"
-        requirements: "{{ apployer_path }}/requirements.txt"
-
-    - name: install apployer to virtualenv
-      shell: . env/bin/activate && python setup.py build && python setup.py install
-      args:
-        chdir: "{{ apployer_path }}"
-        executable: /bin/bash
-
-    - replace:
-        dest: "{{ apployer_path }}/fetcher_config.yml"
-        regexp: "{{ item.regexp }}"
-        replace: "{{ item.replace }}"
-      with_items:
-      - { regexp: "hostname:", replace: "hostname: 127.0.0.1" }
-      - { regexp: "inventory_cdh.+$", replace: "inventory_cdh: /root/ansible-playbooks/helper_scripts/cdh/ansible-cdh/inventory/cdh" }
-      - { regexp: "username.+$", replace: "username: root" }
-
-    - name: run apployer
-      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ bosh_workspace }}/artifacts/ https://cf-api.{{ cf_system_domain }}
-      args:
-        chdir: "{{ apployer_path }}"
-        executable: /bin/bash
+- include: apployer.yml
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
