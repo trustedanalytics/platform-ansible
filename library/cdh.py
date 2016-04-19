@@ -76,6 +76,7 @@ ROLE_MAP = {
     'thrift': 'HBASE-HBASETHRIFTSERVER-BASE',
     'regionserver': 'HBASE-REGIONSERVER-BASE',
     'nodemanager': 'YARN-NODEMANAGER-BASE',
+    'resourcemanager': 'YARN-RESOURCEMANAGER-BASE',
     'jobhistory': 'YARN-JOBHISTORY-BASE',
     'metastore': 'HIVE-HIVEMETASTORE-BASE',
     'hiveserver2': 'HIVE-HIVESERVER2-BASE',

@@ -12,6 +12,7 @@ cloudera_parcels:
   - http://archive.cloudera.com/accumulo/parcels/1.4/
   - http://archive.cloudera.com/accumulo-c5/parcels/latest/
   - http://hadoopgroupsmapping.s3-website-us-east-1.amazonaws.com/
+  - http://hue-sso.s3-website-us-east-1.amazonaws.com/ 
 
 # Add the location of remote Hue repository here.
 
