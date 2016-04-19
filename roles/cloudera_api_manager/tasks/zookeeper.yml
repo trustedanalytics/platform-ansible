@@ -45,6 +45,7 @@
     - 'yarn'
     - 'hbase'
     - 'hdfs'
+    - 'hive'
 
 - name: creating userspace zookeeper znode for brokers
   zk_znode: dir=/org/intel/{{ item }}/userspace type='create_r' host='{{ groups["cdh-master"][0] }}:2181'

@@ -30,7 +30,7 @@ kafka_parcel_version: latest
 #same for gearpump
 gearpump_parcel_version: latest
 #don't deploy  modified hue parcel by default
-deploy_hue_trustedanalytics: false
+deploy_hue_trustedanalytics: true
 #default password for cf account
 cf_password: cf1
 #define if kerberos will be enabled, do not change it after first script start

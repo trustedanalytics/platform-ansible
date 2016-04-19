@@ -45,6 +45,10 @@
     acl='world:anyone:r;digest:{{ hgm_zookeeper_user }}:{{ hgm_zookeeper_pass }}:cdrwa' host='{{ groups["cdh-master"][-1] }}:2181'
   delegate_to: '{{ groups["cdh-master"][-1] }}'
   with_items:
+    - { user: 'cf', group: 'DEPRECATED' }
+    - { user: 'h2o', group: 'DEPRECATED' }
+    - { user: 'vcap', group: 'DEPRECATED' }
+    - { user: 'hive', group: 'DEPRECATED' }
     - { user: 'cf', group: 'intel' }
     - { user: 'authgateway', group: 'authgateway' }
     - { user: 'authgateway', group: 'supergroup' }

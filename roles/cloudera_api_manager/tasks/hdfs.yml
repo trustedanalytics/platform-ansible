@@ -27,7 +27,8 @@
     - { name: 'dfs_block_local_path_access_user', value: 'impala,hbase,mapred,spark' }
     - { name: 'hue_kerberos_principal_shortname', value: 'hue' }
     - { name: 'dfs_namenode_acls_enabled', value: 'true' }
-    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.groups.cache.secs</name><value>1</value></property>' }
+    - { name: 'core_site_safety_valve', value: '<property><name>hadoop.security.groups.cache.secs</name><value>1</value></property><property><name>hadoop.http.staticuser.user</name><value>mapred</value></property>' }
+    - { name: 'hdfs_service_config_safety_valve', value: '<property><name>dfs.web.ugi</name><value>hdfs</value></property>' }
 
 - name: override replication for one node install
   cdh: action=set_config entity=service service=hdfs name=dfs_replication value=1
