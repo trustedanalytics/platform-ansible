@@ -45,7 +45,7 @@
     - krb5-server
 
 - name: Download kerberos binaries
-  get_url: url=http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt.zip dest=/root/kerberos-jwt.zip
+  get_url: url={{ kerberos_binary_url }} dest=/root/kerberos-jwt.zip
   environment: proxy_env
 
 - name: Untar kerberos server
