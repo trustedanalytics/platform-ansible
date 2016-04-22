@@ -176,6 +176,13 @@
   roles:
     - { role: cloudera_backups_hdfs, when: configure_backup, tags: skip_on_vagrant }
 
+- hosts: cdh-manager
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+  roles:
+    - cloudera_atk_config_tool
+
 - hosts: zabbix-server
   vars_files:
     - defaults/zabbix.yml
