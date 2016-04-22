@@ -27,7 +27,7 @@
   yum: name=python27-cluster-config-0.1.0 state=present
 
 - name: create directory for atk config tool metadata
-  file: path=/opt/cluster-config state=directory owner=ec2-user group=ec2-user
+  file: path=/opt/cluster-config state=directory
 
 - name: copy needed user json with cdh settings
   copy: src=user-cdh.json dest=/opt/cluster-config
