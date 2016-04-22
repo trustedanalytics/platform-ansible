@@ -89,6 +89,7 @@
   vars_files:
     - defaults/cdh.yml
     - defaults/proxy.yml
+    - defaults/urls.yml
   roles:
     - cloudera_base_common
 
@@ -123,6 +124,7 @@
     - defaults/arcadia.yml
     - defaults/proxy.yml
     - defaults/cdh.yml
+    - defaults/urls.yml
   roles:
     - { role: kerberos_base_server, when: kerberos_enabled }
 
