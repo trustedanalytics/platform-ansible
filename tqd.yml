@@ -35,6 +35,8 @@
 
 - include: site.yml
 
+- include: kerberos-token.yml
+
 - hosts: localhost
   vars:
     deployment: "{{ ansible_env['HOME'] }}/cf.yml"
