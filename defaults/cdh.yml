@@ -52,7 +52,7 @@ configure_backup: false
 #hbase_snapshot_s3_path: ENTER UNIQUE PATH FOR BACKUPS HERE
 
 #atk config tool
-atk_config_tool_enabled: false
+atk_config_tool_enabled: true
 
 ## CHANGE THIS FOR PROPER ONES ON ONE NODE  / BARE-METAL INSTALL
 cdh_storage_paths:  ['mnt/data0','mnt/data1']

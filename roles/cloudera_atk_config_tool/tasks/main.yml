@@ -37,3 +37,4 @@
   args:
     chdir: /opt/cluster-config
   when: atk_config_tool_enabled
+  ignore_errors: yes
