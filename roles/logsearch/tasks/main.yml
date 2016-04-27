@@ -1,0 +1,74 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+- set_fact:
+    region: "{{ lookup('ini', 'region section=main file=/etc/cfn/cfn-hup.conf') }}"
+
+- set_fact:
+    cf_bosh_security_group: "{{ bosh_default_security_groups | first }}" 
+
+- shell: bosh --no-color -n status --uuid
+  changed_when: False
+  register: shell_result
+- set_fact: cf_director_uuid={{ shell_result.stdout }}
+
+- ec2_vpc_subnet_facts:
+    region: "{{ region | mandatory }}"
+    filters:
+      subnet-id: "{{ cf_private_subnet_id | mandatory }}"
+  register: ec2_vpc_subnet_facts_result
+- set_fact:
+    cf_private_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+
+- ec2_vpc_subnet_facts:
+    region: "{{ region | mandatory }}"
+    filters:
+      subnet-id: "{{ logsearch_subnet_id | mandatory }}"
+  register: ec2_vpc_subnet_facts_result
+- set_fact:
+    logsearch_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+
+- git: repo=git://github.com/logsearch/logsearch-for-cloudfoundry.git
+       dest="{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry"
+
+- shell: bosh --no-color -n upload release {{ item }}
+  register: shell_result
+  changed_when: shell_result.stdout | search('Release uploaded')
+  failed_when: shell_result.rc != 0 and not shell_result.stdout | search('Release `.*\' already exists')
+  with_items:
+    - "{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-7.yml"
+    - https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=23.0.0
+
+#prepare logsearch manifest and deploy
+- template: src=logsearch-manifest-aws.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
+            validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
+  register: logsearch_template_result
+  when: logsearch_deployment_size == "medium"
+
+- template: src=logsearch-manifest-aws-small.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
+            validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
+  register: logsearch_template_result
+  when: logsearch_deployment_size == "small"
+
+- shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n deploy
+  when: logsearch_template_result.changed
+- shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n run errand push-kibana
+  when: logsearch_template_result.changed
+
+- shell: cf login -a https://api.{{ cf_system_domain }} -u admin -p {{ cf_password }} -o {{ cf_system_domain_organization }} -s elk-for-pcf --skip-ssl-validation
+  when: logsearch_template_result.changed
+- shell: cf scale logs -i 4 -m 1G -f
+  when: logsearch_template_result.changed
