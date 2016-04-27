@@ -13,13 +13,5 @@
 # limitations under the License.
 #
 
----
-
-- hosts: nginx-master
-  vars_files:
-    - defaults/env.yml
-    - defaults/consul.yml
-    - defaults/proxy.yml
-    - defaults/deployment.yml
-  roles:
-    - nginx_base_server
+#should nginx get installed
+install_nginx: true

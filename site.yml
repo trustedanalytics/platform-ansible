@@ -27,7 +27,7 @@
     - defaults/yum_repos.yml
     - defaults/proxy.yml
   roles:
-    - common
+    - { role: common, when: ansible_os_family == "RedHat" }
 
 #install consul agent on the master machines
 - hosts: cdh-master
@@ -82,7 +82,7 @@
       when: ansible_env.SUDO_USER == "vagrant"
   roles:
     #disabled on Openstack
-    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' }
+    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' and ansible_os_family == "RedHat" }
 
 #install all base packages needed on cloudera machines
 - hosts: cdh-all
