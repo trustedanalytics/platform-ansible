@@ -18,6 +18,7 @@
 set -e
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
+push_apps=${PUSH_APPS:-'True'}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-feature-DPNG-6233-new-deployment-apployer.tar.gz'}
 tmpdir=$(mktemp -d)
 
@@ -65,7 +66,11 @@ cf_system_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/an
 cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_password=${cf_password} cf_system_domain=${cf_system_domain}" \
+ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
+
+if [ ${push_apps,,} == "true" ]; then
+  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_system_domain=${cf_system_domain}" -s apployer.yml
+fi
 
 popd
