@@ -27,7 +27,7 @@
     - defaults/yum_repos.yml
     - defaults/proxy.yml
   roles:
-    - common
+    - { role: common, when: ansible_os_family == "RedHat" }
 
 #install consul agent on the master machines
 - hosts: cdh-master
@@ -82,13 +82,14 @@
       when: ansible_env.SUDO_USER == "vagrant"
   roles:
     #disabled on Openstack
-    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' }
+    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' and ansible_os_family == "RedHat" }
 
 #install all base packages needed on cloudera machines
 - hosts: cdh-all
   vars_files:
     - defaults/cdh.yml
     - defaults/proxy.yml
+    - defaults/urls.yml
   roles:
     - cloudera_base_common
 
@@ -123,6 +124,7 @@
     - defaults/arcadia.yml
     - defaults/proxy.yml
     - defaults/cdh.yml
+    - defaults/urls.yml
   roles:
     - { role: kerberos_base_server, when: kerberos_enabled }
 
@@ -175,6 +177,13 @@
     - defaults/env.yml
   roles:
     - { role: cloudera_backups_hdfs, when: configure_backup, tags: skip_on_vagrant }
+
+- hosts: cdh-manager
+  vars_files:
+    - defaults/cdh.yml
+    - defaults/proxy.yml
+  roles:
+    - cloudera_atk_config_tool
 
 - hosts: zabbix-server
   vars_files:

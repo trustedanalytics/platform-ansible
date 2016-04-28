@@ -66,10 +66,11 @@
   with_items: cdh_work_users
 
 - name: Download nss binaries
-  get_url: url=http://zookeeper-nss.s3-website-eu-west-1.amazonaws.com/zookeeper_nss-1.0.zip dest=/root/zookeeper_nss.zip
+  get_url: url={{ nss_binary_url }} dest=/root/zookeeper_nss.zip
+  environment: proxy_env
 
 - name: install nss module
-  unarchive: src=/root/zookeeper_nss.zip dest=/ copy=no
+  unarchive: src=/root/zookeeper_nss.zip dest=/ copy=no creates=/lib64/libnss_zk.so.2
 
 - name: enable hgm nns passwd module
   lineinfile: 'dest=/etc/nsswitch.conf regexp="^passwd:" line="passwd: files zk"'

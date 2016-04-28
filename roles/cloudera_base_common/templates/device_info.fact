@@ -10,7 +10,11 @@ def filter_devs(item):
     return False
   if 'vda' in item:
     return False
+{% if ansible_product_version in ('2015.1.1','2015.1.0') %}
+  if 'vdb' in item:
+{% else %}
   if 'dvd' in item:
+{% endif %}
     return False
   
   return True

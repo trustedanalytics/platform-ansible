@@ -18,6 +18,7 @@
   with_items:
     - unzip
     - python-httplib2.noarch
+  when: ansible_os_family == "RedHat"
 
 - name: download consul template
   get_url: url={{ consul_template_url }} dest=/tmp/consul-template.zip validate_certs=no

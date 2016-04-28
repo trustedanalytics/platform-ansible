@@ -12,14 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#
 
----
-
-- hosts: nginx-master
-  vars_files:
-    - defaults/env.yml
-    - defaults/consul.yml
-    - defaults/proxy.yml
-    - defaults/deployment.yml
-  roles:
-    - nginx_base_server
+nss_binary_url: http://zookeeper-nss.s3-website-eu-west-1.amazonaws.com/zookeeper_nss-1.0.zip
+kerberos_binary_url: http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt.zip

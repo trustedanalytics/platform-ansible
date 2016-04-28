@@ -1,0 +1,40 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#this playbook runs atk config tool on the cdh cluster
+- name: install separately python 2.7
+  yum: name={{ item }} state=latest
+  with_items:
+    - python27
+    - python27-argparse
+    - python27-cm-api
+    - python27-pip
+    - python27-pyyaml
+
+- name: install atk config tool from rpm
+  yum: name=python27-cluster-config-0.1.0 state=present
+
+- name: create directory for atk config tool metadata
+  file: path=/opt/cluster-config state=directory
+
+- name: copy needed user json with cdh settings
+  copy: src=user-cdh.json dest=/opt/cluster-config
+
+- name: run cluster-generate-push tool
+  shell: cluster-generate-push --update-cdh yes --restart-cdh yes --host 127.0.0.1 --port 7180 --username admin --password admin --cluster CDH-cluster 2>&1 >> cluster-generate-push_$(date +%Y%m%d%H%M%S).log
+  args:
+    chdir: /opt/cluster-config
+  when: atk_config_tool_enabled
+  ignore_errors: yes
