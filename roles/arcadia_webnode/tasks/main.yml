@@ -48,19 +48,19 @@
   lineinfile:
     dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
     line: "KERBEROS_PRINCIPAL = '{{ arcadia.kerberos.user }}@{{ arcadia.kerberos.realm }}'"
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
 -
   name: "kerberos hack #2 for web node"
   lineinfile:
     dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
     line: "KERBEROS_KEYTAB = '{{ arcadia_user.home }}/{{ arcadia.kerberos.client_keytabfile }}'"
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
 -
   name: "kerberos hack #3 for web node"
   lineinfile:
     dest: "/opt/arcadia/tools/arcviz/arcweb/settings.py"
     line: "KERBEROS_RENEW_SECONDS = '43200'"
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
 -
   name: "set up proper SQL endpoint"
   lineinfile:

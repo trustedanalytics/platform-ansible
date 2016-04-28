@@ -20,7 +20,6 @@
   any_errors_fatal: true
   tasks:
     - local_action: wait_for port=22 host={{ ansible_ssh_host }} search_regex=OpenSSH delay=10
-
 - hosts: cdh-all
   vars_files:
     - defaults/cdh.yml
@@ -116,7 +115,7 @@
     - defaults/proxy.yml
     - defaults/cdh.yml
   roles:
-    - { role: kerberos_base_common, when: kerberos_enabled }
+    - { role: kerberos_base_common, when: kerberos_enabled|bool }
 
 #install KRB5 server
 - hosts: cdh-manager
@@ -126,7 +125,7 @@
     - defaults/cdh.yml
     - defaults/urls.yml
   roles:
-    - { role: kerberos_base_server, when: kerberos_enabled }
+    - { role: kerberos_base_server, when: kerberos_enabled|bool }
 
 #install and configure the cloudera cluster
 - hosts: cdh-manager
