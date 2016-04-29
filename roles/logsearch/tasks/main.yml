@@ -16,6 +16,7 @@
 ---
 - set_fact:
     region: "{{ lookup('ini', 'region section=main file=/etc/cfn/cfn-hup.conf') }}"
+  when: provider == 'aws'
 
 - set_fact:
     cf_bosh_security_group: "{{ bosh_default_security_groups | first }}" 
@@ -25,24 +26,50 @@
   register: shell_result
 - set_fact: cf_director_uuid={{ shell_result.stdout }}
 
-- ec2_vpc_subnet_facts:
-    region: "{{ region | mandatory }}"
-    filters:
-      subnet-id: "{{ cf_private_subnet_id | mandatory }}"
-  register: ec2_vpc_subnet_facts_result
-- set_fact:
-    cf_private_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+- block:
+  - ec2_vpc_subnet_facts:
+      region: "{{ region | mandatory }}"
+      filters:
+        subnet-id: "{{ cf_private_subnet_id | mandatory }}"
+    register: ec2_vpc_subnet_facts_result
+  - set_fact:
+      cf_private_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+  - ec2_vpc_subnet_facts:
+      region: "{{ region | mandatory }}"
+      filters:
+        subnet-id: "{{ logsearch_subnet_id | mandatory }}"
+    register: ec2_vpc_subnet_facts_result
+  - set_fact:
+      logsearch_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+  - set_fact:
+      logsearch_cidr: "{{ ec2_vpc_subnet_facts_result.subnets[0].cidr_block }}"
+  - set_fact:
+      availability_zone: "{{ logsearch_subnet.availability_zone }}"
+  when: provider == 'aws'
 
-- ec2_vpc_subnet_facts:
-    region: "{{ region | mandatory }}"
-    filters:
-      subnet-id: "{{ logsearch_subnet_id | mandatory }}"
-  register: ec2_vpc_subnet_facts_result
-- set_fact:
-    logsearch_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+- block:
+  - os_subnets_facts:
+      cloud: TAP
+      filters:
+        network_id: "{{ cf_private_subnet_id | mandatory }}"
+    register: os_subnet_facts_result
+  - set_fact:
+      cf_private_subnet: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets | first }}"
+  - os_subnets_facts:
+      cloud: TAP
+      filters:
+        network_id: "{{ logsearch_subnet_id | mandatory }}"
+    register: os_subnet_facts_result
+  - set_fact:
+      logsearch_subnet: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets | first }}"
+  - set_fact:
+      logsearch_cidr: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets[0].cidr }}"          
+  when: provider == 'openstack'
 
-- git: repo=git://github.com/logsearch/logsearch-for-cloudfoundry.git
+- git: repo=https://github.com/logsearch/logsearch-for-cloudfoundry.git
        dest="{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry"
+
+- get_url: url="https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=23.0.0" dest="{{ ansible_env['HOME'] }}/logsearch-boshrelease" use_proxy=yes force=no
 
 - shell: bosh --no-color -n upload release {{ item }}
   register: shell_result
@@ -50,25 +77,12 @@
   failed_when: shell_result.rc != 0 and not shell_result.stdout | search('Release `.*\' already exists')
   with_items:
     - "{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-7.yml"
-    - https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=23.0.0
+    - "{{ ansible_env['HOME'] }}/logsearch-boshrelease"
 
-#prepare logsearch manifest and deploy
-- template: src=logsearch-manifest-aws.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
-            validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
-  register: logsearch_template_result
-  when: logsearch_deployment_size == "medium"
-
-- template: src=logsearch-manifest-aws-small.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
-            validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
-  register: logsearch_template_result
-  when: logsearch_deployment_size == "small"
-
-- shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n deploy
-  when: logsearch_template_result.changed
-- shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n run errand push-kibana
-  when: logsearch_template_result.changed
-
-- shell: cf login -a https://api.{{ cf_system_domain }} -u admin -p {{ cf_password }} -o {{ cf_system_domain_organization }} -s elk-for-pcf --skip-ssl-validation
-  when: logsearch_template_result.changed
-- shell: cf scale logs -i 4 -m 1G -f
-  when: logsearch_template_result.changed
+- include_vars: "{{ provider }}.yml"
+- block:  
+# prepare logsearch manifest and deploy
+  - template: src=logsearch-manifest.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
+              validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
+    notify:
+      - Deploy Logsearch
