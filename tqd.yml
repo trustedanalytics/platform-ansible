@@ -17,16 +17,16 @@
 
 - hosts: localhost
   tasks:
-    - add_host: name=cdh-master-2.node.consul
-                groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
-                ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
-                ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}"
     - add_host: name=cdh-master-{{ item.0 }}.node.consul
                 groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
       with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] }}"
+    - add_host: name=cdh-master-2.node.consul
+                groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
+                ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}"
     - add_host: name=cdh-worker-{{ item.0 }}.node.consul
                 groups=cdh-worker,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
