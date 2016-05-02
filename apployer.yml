@@ -48,6 +48,7 @@
         - { regexp: "hostname.+$", replace: "hostname: localhost" }
         - { regexp: "username.+$", replace: "username: ubuntu" }
         - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled }}" }
+        - { regexp: "envname.+$", replace: "envname: envname" }
 
     - name: run apployer
       shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/release_package/apps/ https://cf-api.{{ cf_system_domain }}

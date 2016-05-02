@@ -17,17 +17,17 @@
 
 - hosts: localhost
   tasks:
-    - add_host: name=cdh-master-{{ item.0 }}.node.consul
+    - add_host: name=cdh-master-{{ item.0 }}.node.envname.consul
                 groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
       with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] }}"
-    - add_host: name=cdh-master-2.node.consul
+    - add_host: name=cdh-master-2.node.envname.consul
                 groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
       with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}"
-    - add_host: name=cdh-worker-{{ item.0 }}.node.consul
+    - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
                 groups=cdh-worker,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
@@ -41,9 +41,9 @@
   vars:
     deployment: "{{ ansible_env['HOME'] }}/cf.yml"
     dns:
-      - "{{ hostvars['cdh-master-0.node.consul']['ansible_ssh_host'] }}"
-      - "{{ hostvars['cdh-master-1.node.consul']['ansible_ssh_host'] }}"
-      - "{{ hostvars['cdh-master-2.node.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-0.node.envname.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-1.node.envname.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-2.node.envname.consul']['ansible_ssh_host'] }}"
   handlers:
     - name: Deploy
       shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ deployment }} deploy
