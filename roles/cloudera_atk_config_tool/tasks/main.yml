@@ -22,15 +22,19 @@
     - python27-cm-api
     - python27-pip
     - python27-pyyaml
+  when: atk_config_tool_enabled
 
 - name: install atk config tool from rpm
   yum: name=python27-cluster-config-0.1.0 state=present
+  when: atk_config_tool_enabled
 
 - name: create directory for atk config tool metadata
   file: path=/opt/cluster-config state=directory
+  when: atk_config_tool_enabled
 
 - name: copy needed user json with cdh settings
   copy: src=user-cdh.json dest=/opt/cluster-config
+  when: atk_config_tool_enabled
 
 - name: run cluster-generate-push tool
   shell: cluster-generate-push --update-cdh yes --restart-cdh yes --host 127.0.0.1 --port 7180 --username admin --password admin --cluster CDH-cluster 2>&1 >> cluster-generate-push_$(date +%Y%m%d%H%M%S).log
