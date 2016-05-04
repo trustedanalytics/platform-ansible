@@ -1,33 +1,77 @@
 - hosts: localhost
   vars:
     workspace: "{{ ansible_env['HOME'] }}"
-    apployer_repo_name: apployer
-    apployer_path: "{{ workspace }}/{{ apployer_repo_name }}"
-    artifacts_path: https://s3.amazonaws.com/trustedanalytics/daily-artifacts-1461027286.zip
-    github_auth: tapaas-devops:bfd1689b53757cb533b808189ab7e34cf805242f
+    apployer_path: "{{ workspace }}/apployer"
+    release_version: "0.7.5"
+    artifacts_path: "https://s3.amazonaws.com/trustedanalytics/{{ release_version }}"
     kerberos_enabled: False
     org: trustedanalytics
     space: platform
   tasks:
-    # in ansible 2.0 can be unarchive with url
+    - name: create folder for apps
+      file:
+        path: "{{ workspace }}/apps"
+        state: directory
+
     - name: get artifacts
       get_url:
-        url: "{{ artifacts_path }}"
-        dest: "{{ workspace }}/artifacts.zip"
+        url: "{{ artifacts_path }}/{{ item }}.zip"
+        dest: "{{ workspace }}/apps"
+      with_items:
+        - app-dependency-discoverer
+        - app-launcher-helper
+        - application-broker
+        - atk
+        - auth-gateway
+        - auth-proxy
+        - console
+        - data-acquisition
+        - data-catalog
+        - dataset-publisher
+        - demiurge
+        - downloader
+        - gateway
+        - gearpump-broker
+        - gearpump-dashboard
+        - h2o-broker
+        - h2o-scoring-engine-publisher
+        - hbase-broker
+        - hdfs-broker
+        - hive-broker
+        - kubernetes-broker
+        - latest-events-service
+        - metadata-parser
+        - metrics-provider
+        - model-catalog
+        - platform-context
+        - platform-operations
+        - platform-snapshot
+        - router-metrics-provider
+        - scoring-engine
+        - service-catalog
+        - service-exposer
+        - tap-java-buildpack
+        - uploader
+        - user-management
+        - workflow-scheduler
+        - wssb
+        - yarn-broker
+        - zookeeper-broker
 
-    - name: unarchive artifacts
+    - name: get apployer
+      get_url:
+        url: "{{ artifacts_path }}/apployer.zip"
+        dest: "{{ workspace }}/apployer.zip"
+
+    - name: create folder for apployer
+      file:
+        path: "{{ apployer_path }}"
+        state: directory
+
+    - name: unarchive apployer
       unarchive:
-        src: "{{ workspace }}/artifacts.zip"
-        dest: "{{ workspace }}"
-        copy: no
-        creates: "{{ workspace }}/release_package/apps"
-
-    - name: clone apployer repo
-      git:
-        repo: https://{{ github_auth }}@github.com/intel-data/{{ apployer_repo_name }}.git
+        src: "{{ workspace }}/apployer.zip"
         dest: "{{ apployer_path }}"
-        version: DPNG-6664-removed-inventory
-        force: true
 
     - name: install apployer requirements in virtualenv
       pip:
@@ -47,11 +91,11 @@
       with_items:
         - { regexp: "hostname.+$", replace: "hostname: localhost" }
         - { regexp: "username.+$", replace: "username: ubuntu" }
-        - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled }}" }
+        - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled|default('False') }}" }
         - { regexp: "envname.+$", replace: "envname: envname" }
 
     - name: run apployer
-      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/release_package/apps/ https://cf-api.{{ cf_system_domain }}
+      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/apps/ https://cf-api.{{ cf_system_domain }}
       args:
         chdir: "{{ apployer_path }}"
         executable: /bin/bash
