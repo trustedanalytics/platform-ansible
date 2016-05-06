@@ -69,6 +69,8 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
 
+ansible-playbook logsearch.yml
+
 if [ ${push_apps,,} == "true" ]; then
   ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_system_domain=${cf_system_domain}" -s apployer.yml
 fi
