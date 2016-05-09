@@ -128,13 +128,6 @@
   roles:
     - { role: kerberos_base_server, when: kerberos_enabled }
 
-#install ATK client on all hosts
-- hosts: cdh-all-nodes
-  vars_files:
-    - defaults/proxy.yml
-  roles:
-    - cloudera_atk_client
-
 #install and configure the cloudera cluster
 - hosts: cdh-manager
   vars_files:
@@ -145,6 +138,13 @@
     - defaults/hgm.yml
   roles:
     - { role: cloudera_api_manager, tags: skip_on_vagrant }
+
+#install ATK client on all hosts
+- hosts: cdh-all-nodes
+  vars_files:
+    - defaults/proxy.yml
+  roles:
+    - cloudera_atk_client
 
 - hosts: cdh-all
   vars_files:

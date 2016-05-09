@@ -19,3 +19,24 @@
   environment: proxy_env
   with_items:
     - trustedanalytics-python-client
+
+- name: install the ATK client libraries
+  yum: pkg={{ item }} state=installed
+  environment: proxy_env
+  with_items:
+    - trustedanalytics-python-client
+
+#versions prior to 2.0 don't support the find module
+#http://stackoverflow.com/questions/34788520/ansible-get-files-list-from-local-directory
+- name: list PySpark zips
+  shell: "ls pyspark.zip py4j-*-src.zip"
+  args:
+    chdir: /opt/cloudera/parcels/CDH/lib/spark/python/lib
+  register: pyspark_zips
+
+- name: unarchive PySpark libs needed for proper functioning
+  unarchive:
+    src: /opt/cloudera/parcels/CDH/lib/spark/python/lib/{{ item }}
+    dest: /opt/cloudera/parcels/CDH/lib/spark/python/lib
+    copy: no
+  with_items: pyspark_zips.stdout_lines
