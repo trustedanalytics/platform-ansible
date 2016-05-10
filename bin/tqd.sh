@@ -67,7 +67,7 @@ cf_system_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/an
 cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain}" \
+ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain} cf_password=${cf_password}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
 
 if [ ${arcadia_enabled,,} == "true" ] && [ ${kerberos_enabled,,} == "false" ]; then
