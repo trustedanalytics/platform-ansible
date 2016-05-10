@@ -18,6 +18,7 @@
 set -e
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
+arcadia_enabled=${ARCADIA_ENABLED:-'True'}
 push_apps=${PUSH_APPS:-'True'}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-feature-DPNG-6233-new-deployment-apployer.tar.gz'}
 tmpdir=$(mktemp -d)
@@ -68,6 +69,10 @@ cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
+
+if [ ${arcadia_enabled,,} == "true" ] && [ ${kerberos_enabled,,} == "false" ]; then
+    ansible-playbook arcadia.yml -i ec2.py -s
+fi
 
 ansible-playbook logsearch.yml
 
