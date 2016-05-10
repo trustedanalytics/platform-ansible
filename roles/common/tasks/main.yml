@@ -16,11 +16,11 @@
 
 - name: Set proxy on OpenStack
   template: src=proxy.sh.j2 dest=/etc/profile.d/proxy.sh
-  when: ansible_virtualization_type == 'NA'
+  when: ansible_virtualization_type == 'NA' and cdh_proxy_server|length > 1 and cdh_proxy_port|length > 1
 
 - name: Add proxy to yum.conf on OpenStack
   lineinfile: dest=/etc/yum.conf line="proxy={{ lookup('env', 'http_proxy') }}" state=present
-  when: ansible_virtualization_type == 'NA'
+  when: ansible_virtualization_type == 'NA' and cdh_proxy_server|length > 1 and cdh_proxy_port|length > 1
 
 - name: Install 'redhat-lsb-core' package
   yum: name=redhat-lsb-core state=present update_cache=yes
