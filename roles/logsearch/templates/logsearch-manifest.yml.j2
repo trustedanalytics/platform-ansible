@@ -36,10 +36,10 @@ jobs:
     release: logsearch
   - name: elasticsearch_config
     release: logsearch
-  {% if (provider == 'aws') %}
+{% if (provider == 'aws') %}
   - name: curator
     release: logsearch
-  {% endif %}
+{% endif %}
   update:
     serial: true
 - instances: 2
@@ -115,10 +115,10 @@ jobs:
     release: logsearch
   - name: ingestor_cloudfoundry-firehose
     release: logsearch-for-cloudfoundry
-  {% if (provider == 'aws') %}
+{% if (provider == 'aws') %}
   - name: curator
     release: logsearch
-  {% endif %}
+{% endif %}
   update:
     serial: true
 - instances: 1
