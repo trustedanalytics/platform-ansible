@@ -1,0 +1,88 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+- set_fact:
+    region: "{{ lookup('ini', 'region section=main file=/etc/cfn/cfn-hup.conf') }}"
+  when: provider == 'aws'
+
+- set_fact:
+    cf_bosh_security_group: "{{ bosh_default_security_groups | first }}" 
+
+- shell: bosh --no-color -n status --uuid
+  changed_when: False
+  register: shell_result
+- set_fact: cf_director_uuid={{ shell_result.stdout }}
+
+- block:
+  - ec2_vpc_subnet_facts:
+      region: "{{ region | mandatory }}"
+      filters:
+        subnet-id: "{{ cf_private_subnet_id | mandatory }}"
+    register: ec2_vpc_subnet_facts_result
+  - set_fact:
+      cf_private_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+  - ec2_vpc_subnet_facts:
+      region: "{{ region | mandatory }}"
+      filters:
+        subnet-id: "{{ logsearch_subnet_id | mandatory }}"
+    register: ec2_vpc_subnet_facts_result
+  - set_fact:
+      logsearch_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+  - set_fact:
+      logsearch_cidr: "{{ ec2_vpc_subnet_facts_result.subnets[0].cidr_block }}"
+  - set_fact:
+      availability_zone: "{{ logsearch_subnet.availability_zone }}"
+  when: provider == 'aws'
+
+- block:
+  - os_subnets_facts:
+      cloud: TAP
+      filters:
+        network_id: "{{ cf_private_subnet_id | mandatory }}"
+    register: os_subnet_facts_result
+  - set_fact:
+      cf_private_subnet: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets | first }}"
+  - os_subnets_facts:
+      cloud: TAP
+      filters:
+        network_id: "{{ logsearch_subnet_id | mandatory }}"
+    register: os_subnet_facts_result
+  - set_fact:
+      logsearch_subnet: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets | first }}"
+  - set_fact:
+      logsearch_cidr: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets[0].cidr }}"          
+  when: provider == 'openstack'
+
+- git: repo=https://github.com/logsearch/logsearch-for-cloudfoundry.git
+       dest="{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry"
+
+- get_url: url="https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=23.0.0" dest="{{ ansible_env['HOME'] }}/logsearch-boshrelease" use_proxy=yes force=no
+
+- shell: bosh --no-color -n upload release {{ item }}
+  register: shell_result
+  changed_when: shell_result.stdout | search('Release uploaded')
+  failed_when: shell_result.rc != 0 and not shell_result.stdout | search('Release `.*\' already exists')
+  with_items:
+    - "{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-7.yml"
+    - "{{ ansible_env['HOME'] }}/logsearch-boshrelease"
+
+- include_vars: "{{ provider }}.yml"
+- block:  
+# prepare logsearch manifest and deploy
+  - template: src=logsearch-manifest.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
+              validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
+    notify:
+      - Deploy Logsearch
