@@ -82,7 +82,7 @@
     - { name: 'vcap', pass: '{{ cf_password }}', params: '-requires_preauth' }
     - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
     - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'default_jwt', pass: '', params: '-randkey +requires_preauth' }
+    - { name: 'default_jwt', pass: '', params: '-randkey +requires_preauth -allow_renewable' }
     - { name: 'WELLKNOWN/ANONYMOUS', pass: '', params: '-randkey +requires_preauth' }
 
 - name: start kerberos services
