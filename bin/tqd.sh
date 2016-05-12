@@ -19,7 +19,7 @@ set -e
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}
-arcadia_url=${ARCADIA_URL:-'http://arcadia.repository.url/goes/here'}
+arcadia_url=${ARCADIA_URL}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-master-new-deployment.tar.gz'}
 tmpdir=$(mktemp -d)
 
@@ -73,11 +73,11 @@ pip install ansible==1.9.4 boto six
 ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain} cf_password=${cf_password}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
 
-if [ ${arcadia_url,,} != "http://arcadia.repository.url/goes/here" ] && [ ${kerberos_enabled,,} == "false" ]; then
+if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
   ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url}"
 fi
 
-if [ ${push_apps,,} == "true" ]; then
+if [[ ${push_apps,,} == "true" ]]; then
   ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_system_domain=${cf_system_domain}" -s apployer.yml
 fi
 

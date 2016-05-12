@@ -2,8 +2,8 @@
   vars:
     workspace: "{{ ansible_env['HOME'] }}"
     apployer_path: "{{ workspace }}/apployer"
-    release_version: "0.7.5"
-    artifacts_path: "https://s3.amazonaws.com/trustedanalytics/{{ release_version }}"
+    release_version: "v0.7.0"
+    artifacts_path: "https://s3.amazonaws.com/trustedanalytics/{{ release_version }}/artifacts"
     kerberos_enabled: False
     org: trustedanalytics
     space: platform
