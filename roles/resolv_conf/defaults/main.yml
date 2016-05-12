@@ -15,7 +15,8 @@
 
 ---
 
-- include: nginx.yml
-  when: install_nginx|bool
+resolv_conf_nameservers: []
+resolv_conf_domain: null
+resolv_conf_search: null
 
-- include: consul.yml
+# vi:et:sw=2 ts=2 sts=2 ft=ansible

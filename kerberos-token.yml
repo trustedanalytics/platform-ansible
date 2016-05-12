@@ -18,4 +18,4 @@
   any_errors_fatal: true
   sudo: yes
   roles:
-    - kerberos_uaa_update
+    - { role: kerberos_uaa_update, when: kerberos_enabled }

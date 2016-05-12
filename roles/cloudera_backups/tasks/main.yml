@@ -27,7 +27,7 @@
   cdh: action=set_config entity=role service=yarn role=nodemanager name={{ item.name }} value={{ item.value }}
   with_items:
     - { name: 'container_executor_allowed_system_users', value: 'nobody,impala,hive,llama,hbase' }
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
   register: yarn_updated
 
 - name: restart yarn service if yarn was changed

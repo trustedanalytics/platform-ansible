@@ -56,13 +56,13 @@
 
 - name: set hdfs role if kerberos is disabled
   cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
-  when: not kerberos_enabled
+  when: not kerberos_enabled|bool
   with_items:
     - { name: 'dfs_datanode_data_dir_perm', value: 755 }
 
 - name: set hdfs role if kerberos is enabled
   cdh: action=set_config entity=role service=hdfs role=datanode name={{ item.name }} value={{ item.value }}
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
   with_items:
     - { name: 'dfs_datanode_data_dir_perm', value: 700 }
 
@@ -103,7 +103,7 @@
 - name: init kerberos if enabled
   ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
   delegate_to: '{{ groups["cdh-master"][0] }}'
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
   with_items:
     - { usr: 'hdfs', pass: '{{ kadmin_pass }}' }
 

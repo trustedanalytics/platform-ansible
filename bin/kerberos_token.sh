@@ -19,4 +19,4 @@ cd $(dirname $0)/..
 domain=$1
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-exec ansible-playbook kerberos-token.yml -v -i inventory/cdh --extra-vars "domain=${domain}" -s
+exec ansible-playbook kerberos-token.yml -v -i inventory/cdh --extra-vars "cf_system_domain=${domain} kerberos_enabled=True" -s

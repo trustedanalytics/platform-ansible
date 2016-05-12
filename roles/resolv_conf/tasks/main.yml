@@ -15,7 +15,7 @@
 
 ---
 
-- include: nginx.yml
-  when: install_nginx|bool
+- template: src=resolv.conf.j2 dest=/etc/resolv.conf
+  become: yes
 
-- include: consul.yml
+# vi:et:sw=2 ts=2 sts=2 ft=ansible

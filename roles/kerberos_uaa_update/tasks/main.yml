@@ -22,7 +22,7 @@
     mode: 755
 
 - name: download token from uaac
-  uri: url=http://uaa.{{ domain }}/token_key
+  uri: url=http://uaa.{{ cf_system_domain }}/token_key
   register: url
 
 - name: write token to a file

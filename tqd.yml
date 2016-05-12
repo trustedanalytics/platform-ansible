@@ -1,0 +1,58 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+
+- include: create-inventory.yml
+
+- include: site.yml
+
+- include: kerberos-token.yml
+
+- hosts: localhost
+  vars:
+    deployment: "{{ ansible_env['HOME'] }}/cf.yml"
+    dns:
+      - "{{ hostvars['cdh-master-0.node.envname.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-1.node.envname.consul']['ansible_ssh_host'] }}"
+      - "{{ hostvars['cdh-master-2.node.envname.consul']['ansible_ssh_host'] }}"
+  handlers:
+    - name: Deploy
+      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ deployment }} deploy
+      args:
+        executable: /bin/bash
+  pre_tasks:
+    - replace: dest={{ deployment }} regexp=169\.254\.169\.253
+               replace={{ dns | join(',') }}
+      notify:
+        - Deploy
+  roles:
+    - role: resolv_conf
+      resolv_conf_nameservers: "{{ dns }}"
+      resolv_conf_search:
+        - service.consul
+        - node.consul
+  post_tasks:
+    - shell: "source /usr/local/rvm/scripts/rvm && {{ item }}"
+      register: shell_result
+      failed_when: shell_result.rc != 0 and not shell_result.stdout | search('(already exists)|(no new users given)')
+      with_items:
+        - uaac target https://uaa.{{ cf_system_domain }}/ --skip-ssl-validation
+        - uaac token client get admin -s {{ cf_password }}
+        - uaac member add console.admin admin
+      args:
+        executable: /bin/bash
+
+# vi:et:sw=2 ts=2 sts=2 ft=ansible
