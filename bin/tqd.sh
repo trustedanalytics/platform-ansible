@@ -18,16 +18,12 @@
 set -e
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
-arcadia_enabled=${ARCADIA_ENABLED:-'True'}
 push_apps=${PUSH_APPS:-'True'}
-platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-feature-DPNG-6233-new-deployment-apployer.tar.gz'}
+arcadia_url=${ARCADIA_URL:-'http://arcadia.repository.url/goes/here'}
+platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-master-new-deployment.tar.gz'}
 tmpdir=$(mktemp -d)
 
 apt-get install -y python-dev python-pip python-virtualenv unzip
-
-virtualenv venv
-source venv/bin/activate
-pip install ansible==1.9.4 boto six
 
 rm -fr platform-ansible && mkdir -p platform-ansible
 pushd platform-ansible
@@ -67,14 +63,19 @@ cf_system_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/an
 cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 
 export ANSIBLE_HOST_KEY_CHECKING=False
+
+ansible-playbook logsearch.yml
+
+virtualenv venv
+source venv/bin/activate
+pip install ansible==1.9.4 boto six
+
 ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain} cf_password=${cf_password}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
 
-if [ ${arcadia_enabled,,} == "true" ] && [ ${kerberos_enabled,,} == "false" ]; then
-    ansible-playbook arcadia.yml -i ec2.py -s
+if [ ${arcadia_url,,} != "http://arcadia.repository.url/goes/here" ] && [ ${kerberos_enabled,,} == "false" ]; then
+  ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url}"
 fi
-
-ansible-playbook logsearch.yml
 
 if [ ${push_apps,,} == "true" ]; then
   ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_system_domain=${cf_system_domain}" -s apployer.yml

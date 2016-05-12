@@ -45,12 +45,14 @@
         - service.consul
         - node.consul
   post_tasks:
-    - shell: "{{ item }}"
+    - shell: "source /usr/local/rvm/scripts/rvm && {{ item }}"
       register: shell_result
       failed_when: shell_result.rc != 0 and not shell_result.stdout | search('(already exists)|(no new users given)')
       with_items:
         - uaac target https://uaa.{{ cf_system_domain }}/ --skip-ssl-validation
         - uaac token client get admin -s {{ cf_password }}
         - uaac member add console.admin admin
+      args:
+        executable: /bin/bash
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
