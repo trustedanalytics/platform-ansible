@@ -58,7 +58,7 @@ instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "st
 EOF
 
 cf_password=$(awk -F = '{ if ($1 == "cf_password") print $2 }' /etc/ansible/hosts)
-cf_system_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/ansible/hosts)
+cf_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/ansible/hosts)
 
 cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 
@@ -70,7 +70,7 @@ virtualenv venv
 source venv/bin/activate
 pip install ansible==1.9.4 boto six
 
-ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_system_domain=${cf_system_domain} cf_password=${cf_password}" \
+ansible-playbook -e "kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}" \
   -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
 
 if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
@@ -78,7 +78,7 @@ if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
 fi
 
 if [[ ${push_apps,,} == "true" ]]; then
-  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_system_domain=${cf_system_domain}" -s apployer.yml
+  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_domain=${cf_domain}" -s apployer.yml
 fi
 
 popd

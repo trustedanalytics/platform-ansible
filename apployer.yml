@@ -95,7 +95,7 @@
         - { regexp: "envname.+$", replace: "envname: envname" }
 
     - name: run apployer
-      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/apps/ https://cf-api.{{ cf_system_domain }}
+      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/apps/ https://cf-api.{{ cf_domain }}
       args:
         chdir: "{{ apployer_path }}"
         executable: /bin/bash
