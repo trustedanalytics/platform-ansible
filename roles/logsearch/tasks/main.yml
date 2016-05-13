@@ -86,3 +86,9 @@
               validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
     notify:
       - Deploy Logsearch
+
+- block:
+  - pip: name=elasticsearch-curator version=3.2.3
+  - template: src=elasticsearch-curator.j2 dest=/etc/cron.daily/elasticsearch-curator mode=0750
+              validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
+  when: provider == 'openstack'

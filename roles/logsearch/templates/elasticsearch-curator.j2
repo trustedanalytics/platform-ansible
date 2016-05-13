@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Delete old indices
+test -x /usr/local/bin/curator || exit 0
+curator --host {{ logsearch_cidr | nthhost(10) }} --port 9200 delete indices --older-than 7 --time-unit days --timestring '%Y.%m.%d' >> /var/log/curator.log 2>&1
