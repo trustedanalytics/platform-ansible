@@ -18,6 +18,12 @@
   yum: name=ntp state=installed
   environment: proxy_env
 
+- name: Disable the NTP daemon service before sync
+  service: name=ntpd state=stopped enabled=yes
+
+- name: Force NTP update
+  shell: "ntpdate {{ ntp_servers|first }}"
+
 - name: Enable the NTP daemon service
   service: name=ntpd state=started enabled=yes
 
