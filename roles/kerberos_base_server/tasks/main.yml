@@ -78,8 +78,8 @@
     - { name: 'authgateway/sys', pass: '', params: '-randkey -requires_preauth' }
     - { name: 'hgm/sys', pass: '', params: '-randkey -requires_preauth' }
     - { name: 'hive', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
-    - { name: 'cf', pass: '{{ cf_password }}', params: '-requires_preauth' }
-    - { name: 'vcap', pass: '{{ cf_password }}', params: '-requires_preauth' }
+    - { name: 'cf', pass: '{{ cf_kerberos_password }}', params: '-requires_preauth' }
+    - { name: 'vcap', pass: '{{ cf_kerberos_password }}', params: '-requires_preauth' }
     - { name: 'kadmin/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
     - { name: 'cloudera-scm/admin', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
     - { name: 'default_jwt', pass: '', params: '-randkey +requires_preauth' }

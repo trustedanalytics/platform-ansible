@@ -47,5 +47,5 @@
   shell: mysql -u root --password={{ hive_mysql_root_password }} -D hue -e 'ALTER TABLE auth_user MODIFY COLUMN username VARCHAR(255) NOT NULL;'
 
 - name: create hue first user
-  script: create_hue_superuser.py {{ groups['cdh-master'][0] }} {{ cf_password }} && touch /var/hue_user_created creates=/var/hue_user_created
+  script: create_hue_superuser.py {{ groups['cdh-master'][0] }} {{ cf_kerberos_password }} && touch /var/hue_user_created creates=/var/hue_user_created
   when: deploy_hue_trustedanalytics == false
