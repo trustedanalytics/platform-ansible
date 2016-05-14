@@ -20,7 +20,7 @@ set -e
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}
 arcadia_url=${ARCADIA_URL}
-platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://s3.amazonaws.com/trustedanalytics/platform-ansible-master-new-deployment.tar.gz'}
+platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://github.com/trustedanalytics/platform-ansible/archive/master.tar.gz'}
 tmpdir=$(mktemp -d)
 
 apt-get install -y python-dev python-pip python-virtualenv unzip
