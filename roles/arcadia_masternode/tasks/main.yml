@@ -117,11 +117,11 @@
     dest: "/opt/arcadia/tools/arccluster/procmon/init.d/arcengine/start-statestore-fg.sh"
     insertbefore: '^for\sARG\sin'
     line: 'STATESTORE_ARGS="${STATESTORE_ARGS} --kerberos_reinit_interval=60 --principal={{ arcadia.sysuser.name }}/{{ inventory_hostname }}@{{ arcadia.kerberos.realm }} --keytab_file={{ arcadia_user.home }}/{{ arcadia.kerberos.client_keytabfile }}"'
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
 -
   name: "kerberos hack for catalogd startup"
   lineinfile:
     dest: "/opt/arcadia/tools/arccluster/procmon/init.d/arcengine/start-catalogd-fg.sh"
     insertbefore: '^for\sARG\sin'
     line: 'CATALOGD_ARGS="${CATALOGD_ARGS} --kerberos_reinit_interval=60 --principal={{ arcadia.sysuser.name }}/{{ inventory_hostname }}@{{ arcadia.kerberos.realm }} --keytab_file={{ arcadia_user.home }}/{{ arcadia.kerberos.client_keytabfile }}"'
-  when: kerberos_enabled
+  when: kerberos_enabled|bool

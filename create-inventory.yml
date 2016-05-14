@@ -1,0 +1,35 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+
+- hosts: localhost
+  tasks:
+    - add_host: name=cdh-master-{{ item.0 }}.node.envname.consul
+                groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
+                ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] }}"
+    - add_host: name=cdh-master-2.node.envname.consul
+                groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
+                ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] }}"
+    - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
+                groups=cdh-worker,cdh-all-nodes,cdh-all
+                ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Worker'] }}"
+

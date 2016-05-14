@@ -1,0 +1,103 @@
+- hosts: localhost
+  vars:
+    workspace: "{{ ansible_env['HOME'] }}"
+    apployer_path: "{{ workspace }}/apployer"
+    release_version: "v0.7.0"
+    artifacts_path: "https://s3.amazonaws.com/trustedanalytics/{{ release_version }}/artifacts"
+    kerberos_enabled: False
+    org: trustedanalytics
+    space: platform
+  tasks:
+    - name: create folder for apps
+      file:
+        path: "{{ workspace }}/apps"
+        state: directory
+
+    - name: get artifacts
+      get_url:
+        url: "{{ artifacts_path }}/{{ item }}.zip"
+        dest: "{{ workspace }}/apps"
+      with_items:
+        - app-dependency-discoverer
+        - app-launcher-helper
+        - application-broker
+        - atk
+        - auth-gateway
+        - auth-proxy
+        - console
+        - data-acquisition
+        - data-catalog
+        - dataset-publisher
+        - demiurge
+        - downloader
+        - gateway
+        - gearpump-broker
+        - gearpump-dashboard
+        - h2o-broker
+        - h2o-scoring-engine-publisher
+        - hbase-broker
+        - hdfs-broker
+        - hive-broker
+        - kubernetes-broker
+        - latest-events-service
+        - metadata-parser
+        - metrics-provider
+        - model-catalog
+        - platform-context
+        - platform-operations
+        - platform-snapshot
+        - router-metrics-provider
+        - scoring-engine
+        - service-catalog
+        - service-exposer
+        - tap-java-buildpack
+        - uploader
+        - user-management
+        - workflow-scheduler
+        - wssb
+        - yarn-broker
+        - zookeeper-broker
+
+    - name: get apployer
+      get_url:
+        url: "{{ artifacts_path }}/apployer.zip"
+        dest: "{{ workspace }}/apployer.zip"
+
+    - name: create folder for apployer
+      file:
+        path: "{{ apployer_path }}"
+        state: directory
+
+    - name: unarchive apployer
+      unarchive:
+        src: "{{ workspace }}/apployer.zip"
+        dest: "{{ apployer_path }}"
+
+    - name: install apployer requirements in virtualenv
+      pip:
+        virtualenv: "{{ apployer_path }}/env"
+        requirements: "{{ apployer_path }}/requirements.txt"
+
+    - name: install apployer to virtualenv
+      shell: . env/bin/activate && python setup.py build && python setup.py install
+      args:
+        chdir: "{{ apployer_path }}"
+        executable: /bin/bash
+
+    - replace:
+        dest: "{{ apployer_path }}/fetcher_config.yml"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      with_items:
+        - { regexp: "hostname.+$", replace: "hostname: localhost" }
+        - { regexp: "username.+$", replace: "username: ubuntu" }
+        - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled|default('False') }}" }
+        - { regexp: "envname.+$", replace: "envname: envname" }
+
+    - name: run apployer
+      shell: . env/bin/activate && apployer deploy -p {{ cf_password }} -o {{ org }} -s {{ space }} {{ workspace }}/apps/ https://cf-api.{{ cf_domain }}
+      args:
+        chdir: "{{ apployer_path }}"
+        executable: /bin/bash
+
+# vi:et:sw=2 ts=2 sts=2 ft=ansible

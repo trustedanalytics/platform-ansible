@@ -15,13 +15,12 @@
 
 ---
 
-- hosts: all
+- hosts: cdh-all
   gather_facts: no
   any_errors_fatal: true
   tasks:
     - local_action: wait_for port=22 host={{ ansible_ssh_host }} search_regex=OpenSSH delay=10
-
-- hosts: all
+- hosts: cdh-all
   vars_files:
     - defaults/cdh.yml
     - defaults/yum_repos.yml
@@ -41,7 +40,7 @@
     - { role: consul_base_server, tags: skip_on_one_node_install }
 
 #change hostnames to ones that are like the inv-names
-- hosts: all
+- hosts: cdh-all
   vars_files:
     - defaults/consul.yml
     - defaults/proxy.yml
@@ -51,7 +50,7 @@
     - { role: resolv_common, when: use_custom_dns }
 
 #install consul agents on all hosts
-- hosts: all
+- hosts: cdh-all
   vars_files:
     - defaults/consul.yml
     - defaults/proxy.yml
@@ -63,7 +62,7 @@
 - include: nginx.yml
 
 #install zabbix repos
-- hosts: all
+- hosts: cdh-all
   vars_files:
     - defaults/zabbix.yml
     - defaults/proxy.yml
@@ -116,7 +115,7 @@
     - defaults/proxy.yml
     - defaults/cdh.yml
   roles:
-    - { role: kerberos_base_common, when: kerberos_enabled }
+    - { role: kerberos_base_common, when: kerberos_enabled|bool }
 
 #install KRB5 server
 - hosts: cdh-manager
@@ -126,14 +125,7 @@
     - defaults/cdh.yml
     - defaults/urls.yml
   roles:
-    - { role: kerberos_base_server, when: kerberos_enabled }
-
-#install ATK client on all hosts
-- hosts: cdh-all-nodes
-  vars_files:
-    - defaults/proxy.yml
-  roles:
-    - cloudera_atk_client
+    - { role: kerberos_base_server, when: kerberos_enabled|bool }
 
 #install and configure the cloudera cluster
 - hosts: cdh-manager
@@ -145,6 +137,13 @@
     - defaults/hgm.yml
   roles:
     - { role: cloudera_api_manager, tags: skip_on_vagrant }
+
+#install ATK client on all hosts
+- hosts: cdh-all-nodes
+  vars_files:
+    - defaults/proxy.yml
+  roles:
+    - cloudera_atk_client
 
 - hosts: cdh-all
   vars_files:

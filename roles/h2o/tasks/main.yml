@@ -77,7 +77,7 @@
   
 - name: "Init kerberos for h2o"
   ekerberos: usr='{{ item.usr }}' pass='{{ item.pass }}'
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
   with_items:
     - { usr: 'h2o', pass: '{{ h2o_password }}' }
 

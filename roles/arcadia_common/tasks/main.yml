@@ -108,7 +108,7 @@
     force: "yes"
     owner: "{{ arcadia.sysuser.name }}"
   with_items: "{{ groups[arcadia.nodes.common] }}"
-  when: kerberos_enabled
+  when: kerberos_enabled|bool
 - 
   name: "check for obsoleted software package files"
   shell: "ls {{ arcadia_user.home }}/arcadia/pkgs/*.rpm /tmp/arc*rpm; true"

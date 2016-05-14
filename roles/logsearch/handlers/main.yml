@@ -12,25 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 ---
-- name: create krb5kdc directory
-  file:
-    state: directory
-    path: /var/krb5kdc
-    owner: root
-    group: root
-    mode: 755
+- name: Deploy Logsearch
+  shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n deploy
+  notify: Deploy Kibana
 
-- name: download token from uaac
-  uri: url=http://uaa.{{ cf_domain }}/token_key
-  register: url
+- name: Deploy Kibana
+  shell: bosh -d {{ ansible_env['HOME'] }}/logsearch-manifest.yml -n run errand push-kibana
+  notify: Prepare to scale Kibana
 
-- name: write token to a file
-  copy:
-    content: "{{ url['json']['value'] }}"
-    dest: /var/krb5kdc/cf_key.pub
-    owner: root
-    group: root
-    mode: 0644
-  notify:
-    - restart krb5kdc
+- name: Prepare to scale Kibana
+  shell: cf login -a https://api.{{ cf_system_domain }} -u admin -p {{ cf_password }} -o {{ cf_system_organization }} -s elk-for-pcf --skip-ssl-validation
+  notify: Scale Kibana
+
+- name: Scale Kibana
+  shell: cf scale logs -i 4 -m 1G -f

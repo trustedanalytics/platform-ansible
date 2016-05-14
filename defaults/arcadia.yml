@@ -13,11 +13,11 @@
 # limitations under the License.
 #
 
-arcadia: 
-  # you need to set Arcadia adminuser data
+arcadia:
+  # you can set Arcadia adminuser data
   adminuser: 
-    name: "arcadia_admin_user"
-    password: "arcadia_admin_pass"
+    name: "admin"
+    password: "admin"
     email: "admin@example.com"
   nodes:
     common: "cdh-all-nodes"
@@ -80,17 +80,17 @@ arcadia:
     groups: 
       common: "hdfs"
       masternode: "hive,hadoop"
-  # you need to set CDH service/group names, also user/pass
+  # you can set CDH service/group names, also user/pass
   cdh:
     clusterName: "CDH-cluster"
     hdfsName: "HDFS"
     hiveName: "HIVE"
     gatewayDefaultGroup: "HDFS-GATEWAY-BASE"
     managerPort: "7180"
-    managerUser: "cdh_admin_user"
-    managerPass: "cdh_admin_pass"
+    managerUser: "admin"
+    managerPass: "admin"
     managerHost: "{{ hostvars[groups['cdh-manager'][0]].ansible_ssh_host }}"
-  # you need to at least set the Kerberos realm
+  # you can set the Kerberos realm
   kerberos: 
     realm: "CLOUDERA"
     user: "arcviz"

@@ -14,6 +14,9 @@
 #
 
 ---
+-
+  include: create-inventory.yml
+
 - 
   name: "set up CDH for arcadia install"
   sudo: "yes"
@@ -33,7 +36,7 @@
   roles: 
     - 
       role: "arcadia_kerberos_setup"
-      when: kerberos_enabled
+      when: kerberos_enabled|bool
 - 
   name: "prepare all nodes for arcadia install"
   sudo: "yes"

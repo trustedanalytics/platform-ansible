@@ -53,7 +53,7 @@ yum_repos:
   arcadia-base:
     name: "arcadia-base"
     # IF YOU NEED TO INSTALL ARCADIA, PLEASE PUT A REAL ARCADIA RPM REPOSITORY URL BELOW
-    baseurl: "http://arcadia.repository.url/goes/here"
+    baseurl: "{{ arcadia_url|default('http://arcadia.repository.url/goes/here') }}"
     gpgcheck: 0
     priority: 1
     enabled: 0
