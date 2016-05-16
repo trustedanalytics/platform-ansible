@@ -2,7 +2,7 @@
 redirect_whitelist=^\/.*$,^https:\/\/.*.{{ cf_domain }}.*$
 [[oauthtrustedanalytics]]
 consumer_key=hue
-consumer_secret={{ cf_password }}
+consumer_secret={{ hue_oauth_secret }}
 access_token_url=https://uaa.{{ cf_domain }}/oauth/token
 authenticate_token_url=https://login.{{ cf_domain }}/oauth/authorize?response_type=code&redirect_uri={{ '{{' }}redirect_uri{{ '}}' }}&client_id={{ '{{' }}client_id{{ '}}' }}
 validate_ssl=no
