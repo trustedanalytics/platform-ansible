@@ -3,7 +3,7 @@ zabbix_pgsql_pass: password-for-zabbix-database
 zabbix_hipchat_api: 
 zabbix_statuspage_apikey: 
 hive_mysql_root_password: hivemetastore
-cf_password: huesecret
+hue_oauth_secret: "{{ cf_password | default('huesecret') }}"
 aws_access_key_id: 
 aws_secret_access_key: 
 aws_default_region: 

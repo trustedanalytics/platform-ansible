@@ -21,5 +21,7 @@
     - defaults/consul.yml
     - defaults/proxy.yml
     - defaults/deployment.yml
+    - defaults/yum_repos.yml
   roles:
+    - { role: common, when: ansible_os_family == "RedHat" }
     - nginx_base_server
