@@ -47,36 +47,10 @@
   cdh: action=set_config entity=role service=hdfs role=hdfsgateway name={{ item.name }} value={{ item.value }}
   with_items: 
     - { name: "dfs_client_read_shortcircuit", value: "true" }
-- 
-  name: "wait for an empty command loop"
-  uri: 
-    url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/commands"
-    user: "{{ arcadia.cdh.managerUser }}"
-    password: "{{ arcadia.cdh.managerPass }}"
-  register: "command_queue"
-  until: command_queue.json['items']|length == 0
-# this will surely fail one day
-  delay: "10"
-  retries: "100"
-- 
+-
   name: "deploy CDH cluster client config"
-  uri: 
-    url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/commands/deployClientConfig"
-    user: "{{ arcadia.cdh.managerUser }}"
-    password: "{{ arcadia.cdh.managerPass }}"
-    method: "POST"
+  cdh: action=deploy_configuration service=hdfs
   notify:
     - restart cluster
-- 
-  name: "wait for an empty command loop"
-  uri: 
-    url: "http://{{ arcadia.cdh.managerHost }}:{{ arcadia.cdh.managerPort }}/api/{{ cdh_api_version.content }}/clusters/{{ arcadia.cdh.clusterName }}/commands"
-    user: "{{ arcadia.cdh.managerUser }}"
-    password: "{{ arcadia.cdh.managerPass }}"
-  register: "command_queue"
-  until: command_queue.json['items']|length == 0
-# this will surely fail one day
-  delay: "10"
-  retries: "100"
 - 
   meta: flush_handlers
