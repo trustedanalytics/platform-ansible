@@ -92,6 +92,7 @@
         - { regexp: "hostname.+$", replace: "hostname: localhost" }
         - { regexp: "username.+$", replace: "username: ubuntu" }
         - { regexp: "kerberos_used.+$", replace: "kerberos_used: {{ kerberos_enabled|default('False') }}" }
+        - { regexp: "kubernetes_used.+$", replace: "kubernetes_used: {{ kubernetes_enabled|default('False') }}" }
         - { regexp: "envname.+$", replace: "envname: envname" }
 
     - name: run apployer

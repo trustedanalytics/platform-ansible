@@ -18,6 +18,7 @@
 set -e
 
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
+kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}
 arcadia_url=${ARCADIA_URL}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://github.com/trustedanalytics/platform-ansible/archive/master.tar.gz'}
@@ -118,7 +119,7 @@ if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
 fi
 
 if [[ ${push_apps,,} == "true" ]]; then
-  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} cf_password=${cf_password} cf_domain=${cf_domain}" -s apployer.yml
+  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain}" -s apployer.yml
 fi
 
 popd
