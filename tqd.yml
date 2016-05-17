@@ -34,10 +34,11 @@
       args:
         executable: /bin/bash
   pre_tasks:
-    - replace: dest={{ deployment }} regexp=169\.254\.169\.253
-               replace={{ dns | join(',') }}
+    - replace: dest={{ deployment }} regexp='dns:\ \[.*\]'
+               replace="dns":" [{{ dns | join(',') }}]"
       notify:
         - Deploy
+
   roles:
     - role: resolv_conf
       resolv_conf_nameservers: "{{ dns }}"
