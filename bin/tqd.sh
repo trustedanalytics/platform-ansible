@@ -78,13 +78,27 @@ EOF
 
 elif [ ${provider} == 'openstack' ];then
   cf_elastic_ip=$(awk -F = '/cf_elastic_ip/ { print $2 }' /etc/ansible/hosts)
+  cloudera_masters=$(awk -F = '/cloudera_masters/ { print $2 }' /etc/ansible/hosts)
+  cloudera_workers=$(awk -F = '/cloudera_workers/ { print $2 }' /etc/ansible/hosts)
+  cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts)
+  docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
+
+  if [ -n ${cloudera_storage_paths} ]; then
+    echo "cdh_storage_paths: ${cloudera_storage_paths}" >> defaults/cdh.yml
+  fi
+
   echo "${cf_elastic_ip} login.${cf_domain} api.${cf_domain} cf-api.${cf_domain}" \
     >> /etc/hosts
+
   if [ -n ${no_proxy} ]; then
-    seq 1 254 | while read a;
-    do
-      no_proxy=${no_proxy},10.0.5.$a
-    done
+    if [ -z ${cloudera_masters} ]; then
+      seq 1 254 | while read a;
+      do
+        no_proxy=${no_proxy},10.0.5.$a
+      done
+    else
+      no_proxy=${no_proxy},${cloudera_workers},${cloudera_masters}
+    fi
   fi
 
   stack=$(awk -F = '/stack=/ { print $2 }' /etc/ansible/hosts)
@@ -110,8 +124,15 @@ elif [ ${provider} == 'openstack' ];then
 
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
     && chmod +x openstack.py
-  ansible-playbook -e "provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}" \
+
+  ansible-playbook -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}" \
    -i openstack.py --skip-tags=one_node_install_only -s tqd.yml
+
+  if [ -n ${docker_fp} ]; then
+    ansible-playbook -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} docker_fp_addr=${docker_fp} docker_priv_addr=10.0.4.4 provider=${provider}" \
+      -i openstack.py -s hybrid_tqd_route.yml
+  fi
+
 fi
 
 if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
