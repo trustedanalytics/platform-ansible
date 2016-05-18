@@ -5,7 +5,6 @@
     jwt_public_key = /var/krb5kdc/cf_key.pub
     jwt_ignore_cert_missing = true
     jwt_expiration_time_sync = true
-    jwt_principal_names = user_id
 [realms]
     CLOUDERA = {
         max_life = {{ kerberos_ticket_lifetime }}
