@@ -23,23 +23,23 @@
 
 - hosts: localhost
   vars:
+    bosh_deployments:
+      - "{{ ansible_env['HOME'] }}/cf.yml"
+      - "{{ ansible_env['HOME'] }}/docker-broker.yml"
     dns:
       - "{{ hostvars['cdh-master-0.node.envname.consul']['ansible_ssh_host'] }}"
       - "{{ hostvars['cdh-master-1.node.envname.consul']['ansible_ssh_host'] }}"
       - "{{ hostvars['cdh-master-2.node.envname.consul']['ansible_ssh_host'] }}"
-  handlers:
-    - name: Deploy
-      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ item }} deploy
-      args:
-        executable: /bin/bash
   pre_tasks:
     - replace: dest={{ item }} regexp='dns:\ \[.*\]'
                replace="dns":" [{{ dns | join(',') }}]"
-      notify:
-        - Deploy
-      with_items:
-        - "{{ ansible_env['HOME'] }}/cf.yml"
-        - "{{ ansible_env['HOME'] }}/docker-broker.yml"
+      register: replace_result
+      with_items: "{{ bosh_deployments }}"
+    - shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ item }} deploy
+      args:
+        executable: /bin/bash
+      with_items: "{{ bosh_deployments }}"
+      when: "{{ replace_result.changed }}"
   roles:
     - role: resolv_conf
       resolv_conf_nameservers: "{{ dns }}"
