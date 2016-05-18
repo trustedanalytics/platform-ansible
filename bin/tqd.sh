@@ -114,8 +114,8 @@ elif [ ${provider} == 'openstack' ];then
    -i openstack.py --skip-tags=one_node_install_only -s tqd.yml
 fi
 
-if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
-  ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url}"
+if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" && ${provider} == "aws" ]]; then
+  ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
 fi
 
 if [[ ${push_apps,,} == "true" ]]; then
