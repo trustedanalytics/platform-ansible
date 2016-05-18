@@ -46,6 +46,7 @@
         - platform-context
         - platform-operations
         - platform-snapshot
+        - platform-tests
         - router-metrics-provider
         - scoring-engine
         - service-catalog
