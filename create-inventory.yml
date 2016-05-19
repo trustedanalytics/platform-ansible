@@ -21,37 +21,55 @@
                 groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] | default() }}"
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Master'] | default([]) }}"
       when: provider == "aws"
     - add_host: name=cdh-master-2.node.envname.consul
                 groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] | default() }}"
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Manager'] | default([]) }}"
       when: provider == "aws"
     - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
                 groups=cdh-worker,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]['ansible_ssh_host'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['tag_Name_Cloudera_Worker'] | default() }}"
+      with_indexed_items: "{{ groups['tag_Name_Cloudera_Worker'] | default([]) }}"
       when: provider == "aws"
     - add_host: name=cdh-master-{{ item.0 }}.node.envname.consul
                 groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
                 ansible_ssh_host={{ hostvars[item.1]["openstack"]['private_v4'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['Cloudera-Master'] | default() }}"
+      with_indexed_items: "{{ groups['Cloudera-Master'] | default([]) }}"
       when: provider == "openstack"
     - add_host: name=cdh-master-2.node.envname.consul
                 groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]["openstack"]['private_v4'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['Cloudera-Manager'] | default() }} "
+      with_indexed_items: "{{ groups['Cloudera-Manager'] | default([]) }} "
       when: provider == "openstack"
     - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
                 groups=cdh-worker,cdh-all-nodes,cdh-all
                 ansible_ssh_host={{ hostvars[item.1]["openstack"]['private_v4'] }}
                 ansible_ssh_user=ec2-user
-      with_indexed_items: "{{ groups['Cloudera-Worker'] | default() }}"
+      with_indexed_items: "{{ groups['Cloudera-Worker'] | default([]) }}"
       when: provider == "openstack"
+    - add_host: name=cdh-master-{{ item.0 }}.node.envname.consul
+                groups=cdh-master,cdh-all-nodes,cdh-all,consul-master
+                ansible_ssh_host={{ item.1 }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ cloudera_masters.split(',') | default([]) }}"
+      when: "{{ cloudera_masters|length > 1 }}"
+    - add_host: name=cdh-master-2.node.envname.consul
+                groups=cdh-manager,cdh-master,cdh-all-nodes,cdh-all
+                ansible_ssh_host={{ item.1 }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ cloudera_masters.split(',')[-1] | default([]) }}"
+      when: "{{ cloudera_masters|length > 1 }}"
+    - add_host: name=cdh-worker-{{ item.0 }}.node.envname.consul
+                groups=cdh-worker,cdh-all-nodes,cdh-all
+                ansible_ssh_host={{ item.1 }}
+                ansible_ssh_user=ec2-user
+      with_indexed_items: "{{ cloudera_workers.split(',') | default([]) }}"
+      when: "{{ cloudera_workers|length > 1 }}"
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
