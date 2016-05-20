@@ -135,7 +135,7 @@ elif [ ${provider} == 'openstack' ];then
 
 fi
 
-if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" && ${provider} == "aws" ]]; then
+if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
   ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
 fi
 
