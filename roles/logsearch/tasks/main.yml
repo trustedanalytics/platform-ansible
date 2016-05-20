@@ -66,6 +66,15 @@
       logsearch_cidr: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets[0].cidr }}"          
   when: provider == 'openstack'
 
+- name: Prepare to create org and space
+  shell: cf login -a https://cf-api.{{ cf_domain }} -u admin -p {{ cf_password }} --skip-ssl-validation
+- name: Create org
+  shell: cf create-org {{ cf_system_organization }}
+- name: Set target
+  shell: cf target -o {{ cf_system_organization }}
+- name: Create space
+  shell: cf create-space elk-for-pcf
+
 - git: repo=https://github.com/logsearch/logsearch-for-cloudfoundry.git
        dest="{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry"
 
