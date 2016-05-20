@@ -73,8 +73,12 @@ cache_max_age = 300
 instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "stack")  print $2 }' /etc/cfn/cfn-hup.conf)
 EOF
 
-  ansible-playbook -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}" \
-    -i ec2.py --skip-tags=one_node_install_only -s tqd.yml
+  ansible-playbook -i ec2.py --skip-tags=one_node_install_only -s tqd.yml \
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}"
+
+  if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
+    ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
+  fi
 
 elif [ ${provider} == 'openstack' ];then
   cf_elastic_ip=$(awk -F = '/cf_elastic_ip/ { print $2 }' /etc/ansible/hosts)
@@ -105,7 +109,7 @@ elif [ ${provider} == 'openstack' ];then
   openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts)
   openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $4 }' /etc/ansible/hosts)
   if [ -z "${openstack_dns2}" ]; then
-     openstack_dns2=$openstack_dns1
+    openstack_dns2=$openstack_dns1
   fi
 
   ntpServers=$(awk -F\' '/ntp_server/ { print $2 }' /etc/ansible/hosts)
@@ -113,11 +117,11 @@ elif [ ${provider} == 'openstack' ];then
   ntp_server3=$(awk -F\' '/ntp_server/ { print $6 }' /etc/ansible/hosts)
 
   if [ -n "$ntp_server2" ]; then
-     ntpServers=${ntpServers},${ntp_server2}
-     echo ${ntp_server2}
+    ntpServers=${ntpServers},${ntp_server2}
+    echo ${ntp_server2}
   fi
   if [ -n "${ntp_server3}" ]; then
-     ntpServers=${ntpServers},${ntp_server3}
+    ntpServers=${ntpServers},${ntp_server3}
   fi
 
   echo "ntp_servers: [$ntpServers]" > group_vars/cdh-all
@@ -125,22 +129,24 @@ elif [ ${provider} == 'openstack' ];then
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
     && chmod +x openstack.py
 
-  ansible-playbook -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}" \
-   -i openstack.py --skip-tags=one_node_install_only -s tqd.yml
+  ansible-playbook -i openstack.py --skip-tags=one_node_install_only -s tqd.yml \
+    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}"
+
+  if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
+    ansible-playbook arcadia.yml -i openstack.py -s \
+      -e "arcadia_url=${arcadia_url} provider=${provider} cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers}"
+  fi
 
   if [ -n ${docker_fp} ]; then
-    ansible-playbook -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} docker_fp_addr=${docker_fp} docker_priv_addr=10.0.4.4 provider=${provider}" \
-      -i openstack.py -s hybrid_tqd_route.yml
+    ansible-playbook -i openstack.py -s hybrid_tqd_route.yml \
+      -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} docker_fp_addr=${docker_fp} docker_priv_addr=10.0.4.4 provider=${provider}"
   fi
 
 fi
 
-if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
-  ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
-fi
-
 if [[ ${push_apps,,} == "true" ]]; then
-  ansible-playbook -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain}" -s apployer.yml
+  ansible-playbook -s apployer.yml \
+    -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain}"
 fi
 
 popd
