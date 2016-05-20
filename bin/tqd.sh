@@ -129,7 +129,11 @@ elif [ ${provider} == 'openstack' ];then
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
     && chmod +x openstack.py
 
-  ansible-playbook -i openstack.py --skip-tags=one_node_install_only -s tqd.yml \
+  if [ -n "${cloudera_masters}" ]; then
+    hybrid_skip_tags="--skip-tags=skip_on_bare_metal"
+  fi
+
+  ansible-playbook -i openstack.py --skip-tags=one_node_install_only ${hybrid_skip_tags} -s tqd.yml \
     -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
@@ -137,7 +141,7 @@ elif [ ${provider} == 'openstack' ];then
       -e "arcadia_url=${arcadia_url} provider=${provider} cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers}"
   fi
 
-  if [ -n ${docker_fp} ]; then
+  if [ -n "${docker_fp}" ]; then
     ansible-playbook -i openstack.py -s hybrid_tqd_route.yml \
       -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} docker_fp_addr=${docker_fp} docker_priv_addr=10.0.4.4 provider=${provider}"
   fi
