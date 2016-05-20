@@ -49,7 +49,10 @@ cf_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/ansible/h
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 
+# temporary no exit on non-zero status
+set +e
 ansible-playbook logsearch.yml -e "cf_domain=${cf_domain}"
+set -e
 
 virtualenv venv
 source venv/bin/activate
