@@ -1,4 +1,6 @@
 - hosts: localhost
+  vars_files:
+    - "defaults/proxy.yml"
   vars:
     workspace: "{{ ansible_env['HOME'] }}"
     apployer_path: "{{ workspace }}/apployer"
@@ -58,11 +60,13 @@
         - wssb
         - yarn-broker
         - zookeeper-broker
+      environment: proxy_env
 
     - name: get apployer
       get_url:
         url: "{{ artifacts_path }}/apployer.zip"
         dest: "{{ workspace }}/apployer.zip"
+      environment: proxy_env
 
     - name: create folder for apployer
       file:
@@ -78,6 +82,7 @@
       pip:
         virtualenv: "{{ apployer_path }}/env"
         requirements: "{{ apployer_path }}/requirements.txt"
+      environment: proxy_env
 
     - name: install apployer to virtualenv
       shell: . env/bin/activate && python setup.py build && python setup.py install
