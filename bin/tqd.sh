@@ -83,15 +83,15 @@ elif [ ${provider} == 'openstack' ];then
   cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts)
   docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
 
-  if [ -n ${cloudera_storage_paths} ]; then
+  if [ -n "${cloudera_storage_paths}" ]; then
     echo "cdh_storage_paths: ${cloudera_storage_paths}" >> defaults/cdh.yml
   fi
 
   echo "${cf_elastic_ip} login.${cf_domain} api.${cf_domain} cf-api.${cf_domain}" \
     >> /etc/hosts
 
-  if [ -n ${no_proxy} ]; then
-    if [ -z ${cloudera_masters} ]; then
+  if [ -n "${no_proxy}" ]; then
+    if [ -z "${cloudera_masters}" ]; then
       seq 1 254 | while read a;
       do
         no_proxy=${no_proxy},10.0.5.$a
@@ -104,7 +104,7 @@ elif [ ${provider} == 'openstack' ];then
   stack=$(awk -F = '/stack=/ { print $2 }' /etc/ansible/hosts)
   openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts)
   openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $4 }' /etc/ansible/hosts)
-  if [ -z ${openstack_dns2}]; then
+  if [ -z "${openstack_dns2}" ]; then
      openstack_dns2=$openstack_dns1
   fi
 
@@ -112,11 +112,11 @@ elif [ ${provider} == 'openstack' ];then
   ntp_server2=$(awk -F\' '/ntp_server/ { print $4 }' /etc/ansible/hosts)
   ntp_server3=$(awk -F\' '/ntp_server/ { print $6 }' /etc/ansible/hosts)
 
-  if [ "$ntp_server2" != "" ]; then
+  if [ -n "$ntp_server2" ]; then
      ntpServers=${ntpServers},${ntp_server2}
      echo ${ntp_server2}
   fi
-  if [ "${ntp_server3}" != "" ]; then
+  if [ -n "${ntp_server3}" ]; then
      ntpServers=${ntpServers},${ntp_server3}
   fi
 
