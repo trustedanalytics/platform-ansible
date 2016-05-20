@@ -23,7 +23,7 @@
   notify: Prepare to scale Kibana
 
 - name: Prepare to scale Kibana
-  shell: cf login -a https://api.{{ cf_system_domain }} -u admin -p {{ cf_password }} -o {{ cf_system_organization }} -s elk-for-pcf --skip-ssl-validation
+  shell: cf login -a https://api.{{ cf_domain }} -u admin -p {{ cf_password }} -o {{ cf_system_organization }} -s elk-for-pcf --skip-ssl-validation
   notify: Scale Kibana
 
 - name: Scale Kibana

@@ -67,7 +67,7 @@
   when: provider == 'openstack'
 
 - name: Prepare to create org and space
-  shell: cf login -a https://cf-api.{{ cf_system_domain }} -u admin -p {{ cf_password }} --skip-ssl-validation
+  shell: cf login -a https://cf-api.{{ cf_domain }} -u admin -p {{ cf_password }} --skip-ssl-validation
 - name: Create org
   shell: cf create-org {{ cf_system_organization }}
 - name: Set target
