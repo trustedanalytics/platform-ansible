@@ -121,6 +121,7 @@
     - { dir: '/user/cf', owner: 'cf', group: 'cf', mode: '755' }
     - { dir: '/user/history', owner: 'mapred', group: 'supergroup', mode: '777' }
     - { dir: '/user/hive', owner: 'hive', group: 'supergroup', mode: '755' }
+    - { dir: '/user/hbase', owner: 'hbase', group: 'supergroup', mode: '755' }
     - { dir: '/user/atkuser', owner: 'vcap', group: 'supergroup', mode: '755' }
     - { dir: '/user/vcap', owner: 'vcap', group: 'supergroup', mode: '755' }
     - { dir: '/user/root', owner: 'root', group: 'intel', mode: '755' }
