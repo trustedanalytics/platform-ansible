@@ -1,7 +1,7 @@
 ---
 cloudera_parcels:
   - http://archive.cloudera.com/cdh5/parcels/latest/
-  - http://archive.cloudera.com/cdh5/parcels/5.5.1/
+  - http://archive.cloudera.com/cdh5/parcels/5.7.1/
   - http://archive.cloudera.com/cdh4/parcels/latest/
   - http://archive.cloudera.com/impala/parcels/latest/
   - http://archive.cloudera.com/search/parcels/latest/
