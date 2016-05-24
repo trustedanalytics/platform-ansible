@@ -56,7 +56,7 @@ set -e
 
 virtualenv venv
 source venv/bin/activate
-pip install ansible==1.9.4 boto six shade
+pip install pytz ansible==1.9.4 boto six shade
 
 if [ ${provider} == 'aws' ];then
    wget -O ec2.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py' \
