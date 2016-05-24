@@ -70,7 +70,6 @@
   kadduser: name='{{ item.name }}' password='{{ item.pass }}' params='{{ item.params }}'
   with_items:
     - { name: '{{ arcadia.kerberos.user }}', pass: '', params: '-randkey -requires_preauth' }
-    - { name: 'h2o', pass: '{{ h2o_password }}', params: '-requires_preauth' }
     - { name: 'hdfs', pass: '{{ kadmin_pass }}', params: '-requires_preauth' }
     - { name: 'hdfs/sys', pass: '', params: '-randkey -requires_preauth' }
     - { name: 'hbase/sys', pass: '', params: '-randkey -requires_preauth' }

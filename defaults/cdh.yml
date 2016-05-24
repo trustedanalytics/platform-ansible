@@ -40,11 +40,9 @@ kerberos_ticket_lifetime: 30d
 kerberos_ticket_renewtime: 60d
 #groups created on each machine
 cdh_work_groups:
-  - { name: 'h2o', gid: '1001' }
   - { name: 'arcadia-user', gid: '1002' }
 #users created on each machine
 cdh_work_users:
-  - { name: 'h2o', uid: '1001', group: 'h2o' }
   - { name: 'arcadia-user', uid: '1002', group: 'arcadia-user' }
 configure_backup: false
 #hbase_snapshot_s3_access_key_id: ENTER YOUR S3 KEY FOR BACKUPS HERE

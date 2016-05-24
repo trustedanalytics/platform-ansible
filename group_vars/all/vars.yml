@@ -9,8 +9,7 @@ aws_secret_access_key:
 aws_default_region: 
 master_krb_pass: kerberos_masterpw
 kadmin_pass: kadmin_masterpw
-h2o_password: h2o_masterpw
-cdh_license: 
+cdh_license:
 cloud_foundry_enviornments:
   example:
     user: admin
