@@ -33,7 +33,7 @@
         subnet-id: "{{ cf_private_subnet_id | mandatory }}"
     register: ec2_vpc_subnet_facts_result
   - set_fact:
-      cf_private_subnet: "{{ ec2_vpc_subnet_facts_result.subnets | first }}"
+      cf_private_subnet_cidr: "{{ ec2_vpc_subnet_facts_result.subnets[0].cidr_block }}"
   - ec2_vpc_subnet_facts:
       region: "{{ region | mandatory }}"
       filters:
@@ -54,7 +54,7 @@
         network_id: "{{ cf_private_subnet_id | mandatory }}"
     register: os_subnet_facts_result
   - set_fact:
-      cf_private_subnet: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets | first }}"
+      cf_private_subnet_cidr: "{{ os_subnet_facts_result.ansible_facts.openstack_subnets[0].cidr }}"
   - os_subnets_facts:
       cloud: TAP
       filters:
@@ -78,20 +78,20 @@
 - git: repo=https://github.com/logsearch/logsearch-for-cloudfoundry.git
        dest="{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry"
 
-- get_url: url="https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=23.0.0" dest="{{ ansible_env['HOME'] }}/logsearch-boshrelease" use_proxy=yes force=no
+- get_url: url="https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v=200.0.0" dest="{{ ansible_env['HOME'] }}/logsearch-boshrelease" use_proxy=yes force=no
 
 - shell: bosh --no-color -n upload release {{ item }}
   register: shell_result
   changed_when: shell_result.stdout | search('Release uploaded')
   failed_when: shell_result.rc != 0 and not shell_result.stdout | search('Release `.*\' already exists')
   with_items:
-    - "{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-7.yml"
+    - "{{ ansible_env['HOME'] }}/logsearch-for-cloudfoundry/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-200.0.0.yml"
     - "{{ ansible_env['HOME'] }}/logsearch-boshrelease"
 
 - include_vars: "{{ provider }}.yml"
 - block:  
 # prepare logsearch manifest and deploy
-  - template: src=logsearch-manifest.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
+  - template: src=logsearch.yml.j2 dest={{ ansible_env['HOME'] }}/logsearch-manifest.yml
               validate='python -c "import yaml; yaml.load(file('%s', 'r'))"'
     notify:
       - Deploy Logsearch
