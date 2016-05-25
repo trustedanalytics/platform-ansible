@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+install_zabbix: False
+
 zabbix_server_db_host: zabbix.rds.example.com
 zabbix_server_db_name: zabbix
 zabbix_server_db_user: zabbix
