@@ -81,7 +81,7 @@
       when: ansible_env.SUDO_USER == "vagrant"
   roles:
     #disabled on Openstack
-    - { role: zabbix_base_agent, when: ansible_virtualization_type != 'NA' and ansible_os_family == "RedHat" }
+    - { role: zabbix_base_agent, when: install_zabbix and ansible_virtualization_type != 'NA' and ansible_os_family == "RedHat" }
 
 #install all base packages needed on cloudera machines
 - hosts: cdh-all
@@ -188,19 +188,19 @@
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - { role: zabbix_base_server, tags: skip_on_one_node_install }
+    - { role: zabbix_base_server, when: install_zabbix, tags: skip_on_one_node_install }
 
 - hosts: zabbix-web
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - { role: zabbix_base_web, tags: skip_on_one_node_install }
+    - { role: zabbix_base_web, when: install_zabbix, tags: skip_on_one_node_install }
 
 - hosts: cdh-master[-1]
   vars_files:
     - defaults/zabbix.yml
   roles:
-    - { role: zabbix_base_proxy, tags: skip_on_one_node_install }
+    - { role: zabbix_base_proxy, when: install_zabbix, tags: skip_on_one_node_install }
 
 - include: db-lb.yml
 - include: mysql-cluster.yml
