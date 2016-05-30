@@ -54,6 +54,7 @@
         - uaac target https://uaa.{{ cf_domain }}/ --skip-ssl-validation
         - uaac token client get admin -s {{ cf_password }}
         - uaac member add console.admin admin
+        - uaac client update cf --scope cloud_controller.admin,cloud_controller.read,cloud_controller.write,doppler.firehose,openid,password.write,scim.read,scim.write,console.admin
       args:
         executable: /bin/bash
 
