@@ -75,7 +75,7 @@
 
 
 - name: Grant privileges to hive
-  mysql_user: name='hive' host='{{ groups['cdh-master'][0] }}' password={{ hive_mysql_root_password }}
+  mysql_user: name='hive' host='{{ groups['cdh-master'][0]|lower }}' password={{ hive_mysql_root_password }}
     priv=metastore.*:ALL append_privs=no login_user=root login_password={{ hive_mysql_root_password }}
   notify: Flush MySQL
 
@@ -87,7 +87,7 @@
     - sentry
 
 - name: Create other oozie users
-  mysql_user: name='oozie' host='{{ item }}' password={{ hive_mysql_root_password }}
+  mysql_user: name='oozie' host='{{ item|lower }}' password={{ hive_mysql_root_password }}
     priv=oozie.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
   with_items:
     - '%'
@@ -95,7 +95,7 @@
   notify: Flush MySQL
 
 - name: Create other hue users
-  mysql_user: name='hue' host='{{ item }}' password={{ hive_mysql_root_password }}
+  mysql_user: name='hue' host='{{ item|lower }}' password={{ hive_mysql_root_password }}
     priv=hue.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
   with_items:
     - '%'
@@ -103,7 +103,7 @@
   notify: Flush MySQL
 
 - name: Create other sentry users
-  mysql_user: name='sentry' host='{{ item }}' password={{ hive_mysql_root_password }}
+  mysql_user: name='sentry' host='{{ item|lower }}' password={{ hive_mysql_root_password }}
     priv=sentry.*:ALL  login_user=root login_password={{ hive_mysql_root_password }}
   with_items:
     - '%'
