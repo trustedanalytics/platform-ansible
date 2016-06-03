@@ -47,7 +47,7 @@
         - service.consul
         - node.consul
   post_tasks:
-    - shell: "source /usr/local/rvm/scripts/rvm && {{ item }}"
+    - shell: source /usr/local/rvm/scripts/rvm && {{ item }}
       register: shell_result
       failed_when: shell_result.rc != 0 and not shell_result.stdout | search('(already exists)|(no new users given)')
       with_items:
@@ -57,5 +57,33 @@
         - uaac client update cf --scope cloud_controller.admin,cloud_controller.read,cloud_controller.write,doppler.firehose,openid,password.write,scim.read,scim.write,console.admin
       args:
         executable: /bin/bash
+
+- hosts: localhost
+  vars:
+    aws_cli_version: 1.10.34
+    bosh_vms_output_pattern: '^\| (?P<vm>.*) \| (?P<state>.*) \| (?P<az>.*) \| (?P<vm_type>.*) \| (?P<ips>.*) \| (?P<cid>.*) \| (?P<agent_id>.*) \| (?P<ressurection>.*) \|$'
+    docker_broker_manifest: "{{ ansible_env['HOME'] }}/docker-broker.yml"
+  tasks:
+    - name: Install the AWS CLI
+      pip: name=awscli version={{ aws_cli_version }}
+    - name: Return detailed VM information
+      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n vms docker-broker --detail
+      args:
+        executable: /bin/bash
+      register: shell_result
+    - name: Get the Cloud ID of the Docker Broker VM
+      set_fact: broker_0_cid={{ item | regex_replace(bosh_vms_output_pattern, '\\g<cid>') }}
+      when: "{{ item | search('broker/0') }}"
+      with_items: "{{ shell_result.stdout_lines }}"
+    - shell: aws --output text --region {{ region }} ec2 describe-route-tables --filters 'Name=tag:aws:cloudformation:stack-name,Values={{ stack }}' 'Name=tag:aws:cloudformation:logical-id,Values=PrivateRouteTable'
+      register: shell_result
+      when: "{{ provider == 'aws' }}"
+    - set_fact: private_route_table_id={{ shell_result.stdout_lines[0] | regex_replace('^ROUTETABLES\t([a-z0-9-]+)\t([a-z0-9-]+)', '\\1') }}
+      when: "{{ provider == 'aws' }}"
+    - shell: "{{ item }}"
+      with_items:
+        - aws --region {{ region }} ec2 create-route --route-table-id {{ private_route_table_id }} --destination-cidr-block 172.17.0.0/16 --instance-id {{ broker_0_cid }}
+        - aws --region {{ region }} ec2 modify-instance-attribute --instance-id {{ broker_0_cid }} --no-source-dest-check
+      when: "{{ provider == 'aws' }}"
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
