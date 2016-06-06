@@ -14,7 +14,7 @@
 #
 
 - name: install zabbix-server
-  yum: pkg={{ item }} state=installed
+  yum: pkg={{ item }} state=installed enablerepo=zabbix
   with_items:
     - zabbix-server-pgsql
 

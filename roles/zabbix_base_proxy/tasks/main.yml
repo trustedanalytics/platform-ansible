@@ -14,7 +14,7 @@
 #
 
 - name: install zabbix-proxy and stunnel
-  yum: pkg={{ item }} state=installed
+  yum: pkg={{ item }} state=installed enablerepo=zabbix
   with_items:
     - zabbix-proxy-sqlite3
     - stunnel

@@ -14,7 +14,7 @@
 #
 
 - name: zabbix_agent install package
-  yum: pkg=zabbix-agent state=present
+  yum: pkg=zabbix-agent state=present enablerepo=zabbix
   environment: proxy_env
 
 - name: ensure custom zabbix.d directory exists

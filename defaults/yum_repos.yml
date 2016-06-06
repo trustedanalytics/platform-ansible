@@ -19,7 +19,7 @@ yum_repos:
   zabbix:
     name: Zabbix Official Repository - $basearch
     baseurl: http://repo.zabbix.com/zabbix/2.4/rhel/6/$basearch/
-    enabled: 1
+    enabled: 0
     gpgcheck: 1
     gpgkey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
   cloudera-manager:
