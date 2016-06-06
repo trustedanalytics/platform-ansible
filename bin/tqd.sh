@@ -91,6 +91,7 @@ elif [ ${provider} == 'openstack' ];then
   cloudera_workers=$(awk -F = '/cloudera_workers/ { print $2 }' /etc/ansible/hosts)
   cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts)
   docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
+  docker_subnet_id=$(awk -F = '/docker_subnet_id/ { print $2 }' /etc/ansible/hosts)
 
   if [ -n "${cloudera_storage_paths}" ]; then
     echo "cdh_storage_paths: ${cloudera_storage_paths}" >> defaults/cdh.yml
@@ -139,7 +140,7 @@ elif [ ${provider} == 'openstack' ];then
   fi
 
   ansible-playbook -i openstack.py --skip-tags=one_node_install_only ${hybrid_skip_tags} -s tqd.yml \
-    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password}"
+    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
     ansible-playbook arcadia.yml -i openstack.py -s \
