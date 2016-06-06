@@ -85,5 +85,20 @@
         - aws --region {{ region }} ec2 create-route --route-table-id {{ private_route_table_id }} --destination-cidr-block 172.17.0.0/16 --instance-id {{ broker_0_cid }}
         - aws --region {{ region }} ec2 modify-instance-attribute --instance-id {{ broker_0_cid }} --no-source-dest-check
       when: "{{ provider == 'aws' }}"
+    - name: Register Docker subnet_id on OpenStack
+      shell: neutron --insecure --os-cloud TAP net-show {{ docker_subnet_id }} -c subnets -f value
+      register: subnet_id
+      when: "{{ provider == 'openstack' }}"
+    - name: Register Docker port_id on OpenStack
+      shell: >-
+        neutron --insecure --os-cloud TAP port-list |
+        grep "{{ subnet_id.stdout }}.*10.0.4.4" | cut -d ' ' -f2
+      register: port_id
+      when: "{{ provider == 'openstack' }}"
+    - name: Allow 172.17.0.0/16 on Doker port
+      shell: >-
+        neutron --insecure --os-cloud TAP port-update {{ port_id.stdout }} --allowed-address-pairs
+        type=dict list=true ip_address=10.0.4.4/24 ip_address=172.17.0.0/16
+      when: provider == 'openstack'
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
