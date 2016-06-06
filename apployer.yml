@@ -51,6 +51,7 @@
         - platform-tests
         - router-metrics-provider
         - scoring-engine
+        - scoring-pipelines
         - service-catalog
         - service-exposer
         - tap-java-buildpack
