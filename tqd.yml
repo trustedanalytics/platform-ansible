@@ -99,6 +99,6 @@
       shell: >-
         neutron --insecure --os-cloud TAP port-update {{ port_id.stdout }} --allowed-address-pairs
         type=dict list=true ip_address=10.0.4.4/24 ip_address=172.17.0.0/16
-      when: provider == 'openstack'
+      when: "{{ provider == 'openstack' }}"
 
 # vi:et:sw=2 ts=2 sts=2 ft=ansible
