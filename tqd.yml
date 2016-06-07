@@ -82,7 +82,7 @@
       when: "{{ provider == 'aws' }}"
     - shell: "{{ item }}"
       with_items:
-        - aws --region {{ region }} ec2 create-route --route-table-id {{ private_route_table_id }} --destination-cidr-block 172.17.0.0/16 --instance-id {{ broker_0_cid }}
+        - aws --region {{ region }} ec2 replace-route --route-table-id {{ private_route_table_id }} --destination-cidr-block 172.17.0.0/16 --instance-id {{ broker_0_cid }}
         - aws --region {{ region }} ec2 modify-instance-attribute --instance-id {{ broker_0_cid }} --no-source-dest-check
       when: "{{ provider == 'aws' }}"
     - name: Register Docker subnet_id on OpenStack
