@@ -15,4 +15,4 @@
 #
 
 nss_binary_url: http://zookeeper-nss.s3-website-eu-west-1.amazonaws.com/zookeeper_nss-1.0.zip
-kerberos_binary_url: http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt-1.1.zip
+kerberos_binary_url: http://krb5jwt.s3-website-us-east-1.amazonaws.com/kerberos-jwt-1.2.zip
