@@ -29,7 +29,7 @@ yum_repos:
     gpgcheck: 1
   trustedanalytics:
     name: trustedanalytics
-    baseurl: https://s3-us-west-2.amazonaws.com/analytics-tool-kit/public/weekly/regressed/w20151106/archive/yum/redhat/6/x86_64/
+    baseurl: "{{ atk_yum_repository }}"
     gpgcheck: 0
     priority: 1
     enabled: 1
