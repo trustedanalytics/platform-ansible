@@ -66,6 +66,7 @@
   tasks:
     - name: Install the AWS CLI
       pip: name=awscli version={{ aws_cli_version }}
+      when: "{{ provider == 'aws' }}"
     - name: Return detailed VM information
       shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n vms docker-broker --detail
       args:
