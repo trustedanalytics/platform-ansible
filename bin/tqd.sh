@@ -22,6 +22,7 @@ kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}
 arcadia_url=${ARCADIA_URL}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://github.com/trustedanalytics/platform-ansible/archive/master.tar.gz'}
+atk_yum_repository=${ATK_YUM_REPOSITORY:-'https://s3.amazonaws.com/trustedanalytics/v0.7.0/analytics-tool-kit/'}
 tmpdir=$(mktemp -d)
 
 apt-get install -y python-dev python-pip python-virtualenv unzip
