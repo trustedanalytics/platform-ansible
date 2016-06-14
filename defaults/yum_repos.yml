@@ -29,7 +29,7 @@ yum_repos:
     gpgcheck: 1
   trustedanalytics:
     name: trustedanalytics
-    baseurl: "{{ atk_yum_repository }}"
+    baseurl: https://s3.amazonaws.com/trustedanalytics/v0.7.0/analytics-tool-kit/
     gpgcheck: 0
     priority: 1
     enabled: 1
