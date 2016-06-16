@@ -17,11 +17,12 @@
 
 set -e
 
+release_version=${RELEASE_VERSION:-'v0.7.1'}
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}
 arcadia_url=${ARCADIA_URL}
-platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-'https://github.com/trustedanalytics/platform-ansible/archive/master.tar.gz'}
+platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
 tmpdir=$(mktemp -d)
 
 apt-get install -y python-dev python-pip python-virtualenv unzip
@@ -79,7 +80,7 @@ instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "st
 EOF
 
   ansible-playbook -i ec2.py --skip-tags=one_node_install_only -s tqd.yml \
-    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region}"
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region} release_version=${release_version}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
     ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
@@ -140,7 +141,7 @@ elif [ ${provider} == 'openstack' ];then
   fi
 
   ansible-playbook -i openstack.py --skip-tags=one_node_install_only ${hybrid_skip_tags} -s tqd.yml \
-    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id}"
+    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} release_version=${release_version} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
     ansible-playbook arcadia.yml -i openstack.py -s \
@@ -156,7 +157,7 @@ fi
 
 if [[ ${push_apps,,} == "true" ]]; then
   ansible-playbook -s apployer.yml \
-    -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain}"
+    -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain} release_version=${release_version}"
 fi
 
 popd
