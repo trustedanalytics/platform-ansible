@@ -14,7 +14,7 @@
 
 ---
 
-instance_type_large_cpu: c3.large
+instance_type_large_cpu: c4.large
 instance_type_large: m3.large
 instance_type_medium: m3.medium
 stemcell: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
