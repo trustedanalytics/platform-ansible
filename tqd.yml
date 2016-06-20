@@ -15,9 +15,26 @@
 
 ---
 
+- hosts: localhost
+  vars:
+    bosh_vms_output_pattern: '^\| (?P<vm>.*) \| (?P<state>.*) \| (?P<az>.*) \| (?P<vm_type>.*) \| (?P<ips>.*) \| (?P<cid>.*) \| (?P<agent_id>.*) \| (?P<ressurection>.*) \|$'
+    docker_broker_manifest: "{{ ansible_env['HOME'] }}/docker-broker.yml"
+  tasks:
+    - name: Return detailed VM information
+      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n vms docker-broker --detail
+      args:
+        executable: /bin/bash
+      register: shell_result
+    - name: Get the IP of the Docker Broker VM
+      set_fact: broker_0_ip={{ item | regex_replace(bosh_vms_output_pattern, '\\g<ips>') }}
+      when: "{{ item | search('broker/0') }}"
+      with_items: "{{ shell_result.stdout_lines }}"
+
 - include: create-inventory.yml
 
 - include: site.yml
+  vars:
+    broker_0_ip: "{{ hostvars['localhost'][\"broker_0_ip\"] }}"
 
 - include: kerberos-token.yml
 
