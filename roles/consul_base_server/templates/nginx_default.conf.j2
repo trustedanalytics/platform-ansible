@@ -8,6 +8,7 @@ server {
   satisfy any;
   allow 10.10.5.11/32;
   allow 192.168.5.201/32;
+  allow {{ broker_0_ip }}/32;
   deny all;
   auth_basic           "closed site";
   auth_basic_user_file conf.d/htpasswd;
