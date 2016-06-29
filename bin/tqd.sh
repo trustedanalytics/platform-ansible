@@ -38,7 +38,7 @@ wget --header 'Cookie: oraclelicense=accept-securebackup-cookie' \
   && unzip -u ${tmpdir}/UnlimitedJCEPolicyJDK8.zip \
   -d roles/kerberos_base_common/files/
 
-wget --header 'Cookie: oraclelicense=accept-securebackup-cookie' \
+wget -c --header 'Cookie: oraclelicense=accept-securebackup-cookie' \
   -O roles/cloudera_base_common/files/java-jdk-1.8.0_72.rpm \
   'http://download.oracle.com/otn-pub/java/jdk/8u72-b15/jdk-8u72-linux-x64.rpm'
 
@@ -61,9 +61,11 @@ virtualenv venv
 source venv/bin/activate
 pip install pytz ansible==1.9.4 boto six shade==1.8.0
 
-if [ ${provider} == 'aws' ];then
-   wget -O ec2.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py' \
-     && chmod +x ec2.py
+if [ ${provider} == 'aws' ]; then
+  if [ ! -f ec2.py ]; then
+    wget -O ec2.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py' \
+      && chmod +x ec2.py
+  fi
 
 cat <<EOF >ec2.ini
 [ec2]
@@ -133,8 +135,10 @@ elif [ ${provider} == 'openstack' ];then
 
   echo "ntp_servers: [$ntpServers]" > group_vars/cdh-all
 
-  wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
-    && chmod +x openstack.py
+  if [ ! -f openstack.py ]; then
+    wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
+      && chmod +x openstack.py
+  fi
 
   if [ -n "${cloudera_masters}" ]; then
     hybrid_skip_tags="--skip-tags=skip_on_bare_metal"
