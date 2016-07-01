@@ -20,6 +20,9 @@
 - name: include zookeeper role creation
   include: zookeeper.yml
 
+- name: include anaconda role creation
+  include: anaconda.yml
+
 - name: include hadoop groups mapping role creation
   include: hadoopgroupsmapping.yml
 
