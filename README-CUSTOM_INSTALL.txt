@@ -24,7 +24,7 @@ I. One node (all in one) installation
 3. Configure 2 paths for data:
  - should be separate mountpoints for better performance 
  - if not, may be any dir, but separate for each datapath
-4. Format with ext3 and mount datapaths (add to /etc/fstab as well)
+4. Format with ext4 and mount datapaths (add to /etc/fstab as well)
 5. Set proper options at defaults/cdh.yml:
  - data paths
 6. Set your host on _each_ CDH hostgroup at inventory/cdh
