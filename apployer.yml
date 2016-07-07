@@ -43,7 +43,7 @@
         - latest-events-service
         - metadata-parser
         - metrics-provider
-        - model-catalog
+        - h2o-model-catalog
         - platform-context
         - platform-operations
         - platform-snapshot
