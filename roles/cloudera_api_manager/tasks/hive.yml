@@ -27,6 +27,7 @@
     - { name: 'hive_metastore_database_type', value: 'mysql' }
     - { name: 'mapreduce_yarn_service', value: 'YARN' }
     - { name: 'zookeeper_service', value: 'ZOOKEEPER' }
+    - { name: 'spark_on_yarn_service', value: 'SPARK_ON_YARN' }
 
 - name: set hive metastore role properties
   cdh: action=set_config entity=role service=hive role=metastore name={{ item.name }} value={{ item.value }}

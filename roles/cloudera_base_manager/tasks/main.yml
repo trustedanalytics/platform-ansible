@@ -65,13 +65,13 @@
     login_user=root login_password={{ hive_mysql_root_password }}
   when: "MetastoreCreationStatus.changed == True and '5.3' in cdh_packages_version"
 
-- name: restore hive database for 5.4 and 5.5
+- name: restore hive database for 5.4, 5.5 and 5.7
   mysql_db: name=metastore target=/tmp/{{ item }} state=import
     login_user=root login_password={{ hive_mysql_root_password }}
   with_items:
     - hive-schema-1.1.0.mysql.sql 
     - hive-txn-schema-0.13.0.mysql.sql 
-  when: "MetastoreCreationStatus.changed == True and ('5.4' in cdh_packages_version or '5.5' in cdh_packages_version)"
+  when: "MetastoreCreationStatus.changed == True and ('5.4' in cdh_packages_version or '5.5' in cdh_packages_version or '5.7' in cdh_packages_version)"
 
 
 - name: Grant privileges to hive
