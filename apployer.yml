@@ -34,6 +34,7 @@
         - gateway
         - gearpump-broker
         - gearpump-dashboard
+        - h2o-scoring-engine-publisher
         - hbase-broker
         - hdfs-broker
         - hive-broker
