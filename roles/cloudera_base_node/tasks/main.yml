@@ -16,7 +16,7 @@
 #this playbook installs all of the dependencies required by cloudera nodes
 #configures the CDH agent and formats & mounts AWS ephemeral disks
 - name: format ephemeral disks
-  filesystem: fstype=ext4 dev=/dev/{{ item }}
+  filesystem: fstype=ext3 dev=/dev/{{ item }}
   with_items: "{{ ansible_local.device_info.non_root_block_devs }}"
   tags:
   - skip_on_packer
@@ -50,7 +50,7 @@
   - skip_on_bare_metal
 
 - name: mount ephemeral disks
-  mount: name=/{{ item.0 }} src=/dev/{{ item.1 }} fstype=ext4 state=mounted
+  mount: name=/{{ item.0 }} src=/dev/{{ item.1 }} fstype=ext3 state=mounted
   with_together:
     - "{{ ansible_local.device_info.data_mount_points }}"
     - "{{ ansible_local.device_info.non_root_block_devs }}"
