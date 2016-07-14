@@ -42,7 +42,7 @@
   - skip_on_bare_metal
 
 - name: umount ephemeral disks mounted by cloud-config
-  mount: name=/mnt src=/dev/xvdb state=unmounted
+  mount: name=/mnt fstype=ext3 src=/dev/xvdb state=unmounted
   tags:
   - skip_on_packer
   - skip_on_vagrant
