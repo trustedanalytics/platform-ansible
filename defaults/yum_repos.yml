@@ -57,9 +57,3 @@ yum_repos:
     gpgcheck: 0
     priority: 1
     enabled: 0
-  atk-config-tool:
-    name: atk-config-tool
-    baseurl: https://s3.amazonaws.com/trustedanalytics/atk-config-tool/
-    gpgcheck: 0
-    priority: 1
-    enabled: 1
