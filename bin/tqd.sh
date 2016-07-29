@@ -113,24 +113,13 @@ elif [ ${provider} == 'openstack' ];then
   fi
 
   stack=$(awk -F = '/stack=/ { print $2 }' /etc/ansible/hosts)
-  openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts)
-  openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $4 }' /etc/ansible/hosts)
+  openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts|cut -f1 -d,)
+  openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts|cut -f2 -d,)
   if [ -z "${openstack_dns2}" ]; then
     openstack_dns2=$openstack_dns1
   fi
 
   ntpServers=$(awk -F\' '/ntp_server/ { print $2 }' /etc/ansible/hosts)
-  ntp_server2=$(awk -F\' '/ntp_server/ { print $4 }' /etc/ansible/hosts)
-  ntp_server3=$(awk -F\' '/ntp_server/ { print $6 }' /etc/ansible/hosts)
-
-  if [ -n "$ntp_server2" ]; then
-    ntpServers=${ntpServers},${ntp_server2}
-    echo ${ntp_server2}
-  fi
-  if [ -n "${ntp_server3}" ]; then
-    ntpServers=${ntpServers},${ntp_server3}
-  fi
-
   echo "ntp_servers: [$ntpServers]" > group_vars/cdh-all
 
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
