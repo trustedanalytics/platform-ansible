@@ -1,0 +1,52 @@
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+
+- git:
+    repo=https://github.com/trustedanalytics/{{ item.repo }}.git
+    version={{ item.id }}
+    dest={{ ansible_env['HOME'] }}/{{ item.repo }}
+  with_items:
+    - { repo: 'jupyter-base', id: 'eebe39e1818df2f720821f4b8e221fe936215d40' }
+    - { repo: 'jupyter', id: 'ca35be5fcf8c9479c1da1408c0bc5b9d266be56c' }
+    - { repo: 'trustedanalytics-mosquitto', id: '337d3b3039b71afbb0aca752e2fae545ce066511' }
+  when: not quay_io_username or not quay_io_password
+
+# TODO: Rewrite the following using native ansible modules
+# Reasons it can't be currently done:
+# - Build_args not supported (https://github.com/ansible/ansible-modules-core/issues/2408)
+# - Pulling all images is hardcoded in Ansible 2.0, this prevents the build of jupyter
+#   since it uses jupyter-base which is available only locally (this changes in 2.1)
+
+- shell: >-
+    docker build
+    --build-arg http_proxy={{ http_proxy }}
+    --build-arg https_proxy={{ https_proxy }}
+    --build-arg no_proxy={{ no_proxy }}
+    --build-arg HTTP_PROXY={{ http_proxy }}
+    --build-arg HTTPS_PROXY={{ https_proxy }}
+    --build-arg NO_PROXY={{ no_proxy }}
+    --tag=quay.io/trustedanalytics/{{ item }} .
+  environment:
+    DOCKER_HOST: "{{ docker_url }}"
+  args:
+    chdir: "{{ ansible_env['HOME'] }}/{{ item }}"
+  with_items:
+    - jupyter-base
+    - jupyter
+    - trustedanalytics-mosquitto
+  when: not quay_io_username or not quay_io_password
+

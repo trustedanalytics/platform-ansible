@@ -1,0 +1,13 @@
+{{range service "trustedanalytics-mosquitto-9001"}}
+
+upstream backend-{{.Name}}-{{.Port}} {
+    server {{.Address}}:{{.Port}};
+}
+
+server {
+    listen 0.0.0.0:{{.Port}} ssl so_keepalive=30m::10;
+    proxy_connect_timeout 1s;
+    proxy_pass backend-{{.Name}}-{{.Port}};
+}
+
+{{end}}
