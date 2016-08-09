@@ -92,12 +92,12 @@ elif [ ${provider} == 'openstack' ];then
   cf_elastic_ip=$(awk -F = '/cf_elastic_ip/ { print $2 }' /etc/ansible/hosts)
   cloudera_masters=$(awk -F = '/cloudera_masters/ { print $2 }' /etc/ansible/hosts)
   cloudera_workers=$(awk -F = '/cloudera_workers/ { print $2 }' /etc/ansible/hosts)
-  cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts)
+  cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts|sed -e s/,/\',\'/g)
   docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
   docker_subnet_id=$(awk -F = '/docker_subnet_id/ { print $2 }' /etc/ansible/hosts)
 
   if [ -n "${cloudera_storage_paths}" ]; then
-    echo "cdh_storage_paths: ${cloudera_storage_paths}" >> defaults/cdh.yml
+    echo "cdh_storage_paths: ['${cloudera_storage_paths}']" >> defaults/cdh.yml
   fi
 
   echo "${cf_elastic_ip} login.${cf_domain} api.${cf_domain} cf-api.${cf_domain}" \
