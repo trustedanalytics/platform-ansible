@@ -47,8 +47,6 @@ cat /root/.ssh/id_rsa.pub >>~ubuntu/.ssh/authorized_keys
 provider=$(awk -F = '/provider/ { print $2 }' /etc/ansible/hosts)
 cf_password=$(awk -F = '{ if ($1 == "cf_password") print $2 }' /etc/ansible/hosts)
 cf_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/ansible/hosts)
-stack=$(awk -F = '{ if ($1 == "stack") print $2 }' /etc/ansible/hosts)
-region=$(awk -F = '{ if ($1 == "region") print $2 }' /etc/ansible/hosts)
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 
@@ -79,8 +77,12 @@ cache_max_age = 300
 instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "stack")  print $2 }' /etc/cfn/cfn-hup.conf)
 EOF
 
+  stack=$(awk -F = '{ if ($1 == "stack") print $2 }' /etc/ansible/hosts)
+  region=$(awk -F = '{ if ($1 == "region") print $2 }' /etc/ansible/hosts)
+  vpc_id=$(awk -F = '{ if ($1 == "vpc_id") print $2 }' /etc/ansible/hosts)
+
   ansible-playbook -i ec2.py --skip-tags=one_node_install_only -s tqd.yml \
-    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region} release_version=${release_version}"
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region} release_version=${release_version} vpc_id=${vpc_id}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
     ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
