@@ -147,7 +147,7 @@ elif [ ${provider} == 'openstack' ];then
 fi
 
 if [[ ${push_apps,,} == "true" ]]; then
-  ansible-playbook -s apployer.yml \
+  ansible-playbook -i /dev/null -s apployer.yml \
     -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} cf_password=${cf_password} cf_domain=${cf_domain} release_version=${release_version}"
 fi
 
