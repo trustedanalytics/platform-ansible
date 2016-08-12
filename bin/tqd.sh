@@ -78,24 +78,25 @@ cache_max_age = 300
 instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "stack")  print $2 }' /etc/cfn/cfn-hup.conf)
 EOF
 
-  stack=$(awk -F = '{ if ($1 == "stack") print $2 }' /etc/ansible/hosts)
-  region=$(awk -F = '{ if ($1 == "region") print $2 }' /etc/ansible/hosts)
-  vpc_id=$(awk -F = '{ if ($1 == "vpc_id") print $2 }' /etc/ansible/hosts)
+  stack=$(awk -F= '/^stack=/{print $2}' /etc/ansible/hosts)
+  region=$(awk -F= '/^region=/{print $2}' /etc/ansible/hosts)
+  vpc_id=$(awk -F= '/^vpc_id=/{print $2}' /etc/ansible/hosts)
+  docker_subnet_id=$(awk -F= '/^docker_subnet_id=/{print $2}' /etc/ansible/hosts)
 
   ansible-playbook -i ec2.py --skip-tags=one_node_install_only -s tqd.yml \
-    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region} release_version=${release_version} vpc_id=${vpc_id}"
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} install_nginx=False cf_domain=${cf_domain} cf_password=${cf_password} stack=${stack} region=${region} release_version=${release_version} vpc_id=${vpc_id} docker_subnet_id=${docker_subnet_id}"
 
   if [[ -n ${arcadia_url} && ${kerberos_enabled,,} == "false" ]]; then
     ansible-playbook arcadia.yml -i ec2.py -s -e "arcadia_url=${arcadia_url} provider=${provider}"
   fi
 
 elif [ ${provider} == 'openstack' ];then
-  cf_elastic_ip=$(awk -F = '/cf_elastic_ip/ { print $2 }' /etc/ansible/hosts)
-  cloudera_masters=$(awk -F = '/cloudera_masters/ { print $2 }' /etc/ansible/hosts)
-  cloudera_workers=$(awk -F = '/cloudera_workers/ { print $2 }' /etc/ansible/hosts)
-  cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts|sed -e s/,/\',\'/g)
-  docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
-  docker_subnet_id=$(awk -F = '/docker_subnet_id/ { print $2 }' /etc/ansible/hosts)
+  cf_elastic_ip=$(awk -F= '/^cf_elastic_ip=/{print $2}' /etc/ansible/hosts)
+  cloudera_masters=$(awk -F= '/^cloudera_masters=/{print $2}' /etc/ansible/hosts)
+  cloudera_workers=$(awk -F= '/^cloudera_workers=/{print $2}' /etc/ansible/hosts)
+  cloudera_storage_paths=$(awk -F= '/^cloudera_storage_paths=/{print $2}' /etc/ansible/hosts|sed -e s/,/\',\'/g)
+  docker_fp=$(awk -F= '/^docker_fp=/{print $2}' /etc/ansible/hosts)
+  docker_subnet_id=$(awk -F= '/^docker_subnet_id=/{print $2}' /etc/ansible/hosts)
 
   if [ -n "${cloudera_storage_paths}" ]; then
     echo "cdh_storage_paths: ['${cloudera_storage_paths}']" >> defaults/cdh.yml
@@ -116,8 +117,8 @@ elif [ ${provider} == 'openstack' ];then
   fi
 
   stack=$(awk -F = '/stack=/ { print $2 }' /etc/ansible/hosts)
-  openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts|cut -f1 -d,)
-  openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts|cut -f2 -d,)
+  openstack_dns1=$(awk -F\' '/^bosh_dns=/{print $2}' /etc/ansible/hosts|cut -f1 -d,)
+  openstack_dns2=$(awk -F\' '/^bosh_dns=/{print $2}' /etc/ansible/hosts|cut -f2 -d,)
   if [ -z "${openstack_dns2}" ]; then
     openstack_dns2=$openstack_dns1
   fi

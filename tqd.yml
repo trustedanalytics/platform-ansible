@@ -93,10 +93,10 @@
       set_fact: broker_0_cid={{ item | regex_replace(bosh_vms_output_pattern, '\\g<cid>') }}
       when: "{{ item | search('broker/0') }}"
       with_items: "{{ shell_result.stdout_lines }}"
-    - shell: aws --output text --region {{ region }} ec2 describe-route-tables --filters 'Name=vpc-id,Values={{ vpc_id }}' 'Name=tag:aws:cloudformation:logical-id,Values=PrivateRouteTable'
-      register: shell_result
+    - shell: aws --output text --region {{ region }} ec2 describe-route-tables --filters 'Name=vpc-id,Values={{ vpc_id }}' 'Name=association.subnet-id,Values={{ docker_subnet_id }}'
+      register: private_route_table_result
       when: "{{ provider == 'aws' }}"
-    - set_fact: private_route_table_id={{ shell_result.stdout_lines[0] | regex_replace('^ROUTETABLES\t([a-z0-9-]+)\t([a-z0-9-]+)', '\\1') }}
+    - set_fact: private_route_table_id={{ private_route_table_result.stdout_lines[0] | regex_replace('^ROUTETABLES\t([a-z0-9-]+)\t([a-z0-9-]+)', '\\1') }}
       when: "{{ provider == 'aws' }}"
     - shell: "{{ item }}"
       with_items:
