@@ -25,6 +25,7 @@ arcadia_url=${ARCADIA_URL}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
 tmpdir=$(mktemp -d)
 
+apt-get update
 apt-get install -y python-dev python-pip python-virtualenv unzip
 
 rm -fr platform-ansible && mkdir -p platform-ansible
