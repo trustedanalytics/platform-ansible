@@ -35,6 +35,7 @@
         - gearpump-broker
         - gearpump-dashboard
         - h2o-broker
+        - h2o-model-catalog
         - h2o-scoring-engine-publisher
         - hbase-broker
         - hdfs-broker
@@ -43,7 +44,7 @@
         - latest-events-service
         - metadata-parser
         - metrics-provider
-        - h2o-model-catalog
+        - orientdb-dashboard
         - platform-context
         - platform-operations
         - platform-snapshot
