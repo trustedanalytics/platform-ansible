@@ -78,6 +78,13 @@
       args:
         executable: /bin/bash
 
+    - name: wait for docker broker
+      wait_for:
+        host: "{{ docker_ip }}"
+        port: 4243
+        delay: 30
+        connection_timeout: 10
+
     - shell: "docker login -u {{ quay_io_username }} -p {{ quay_io_password }} -e test@test quay.io"
       ignore_errors: True
       register: docker_login
@@ -174,7 +181,6 @@
           KRB_PASSWORD: cf1
         docker_api_version: 1.21
         docker_url: "{{ docker_url }}"
-      when: quay_io_username and quay_io_password
 
 - hosts: cdh-master[0]
   tasks:
