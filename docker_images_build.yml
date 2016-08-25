@@ -45,16 +45,30 @@
     --build-arg HTTP_PROXY={{ http_proxy }}
     --build-arg HTTPS_PROXY={{ https_proxy }}
     --build-arg NO_PROXY={{ no_proxy }}
-    --tag=quay.io/trustedanalytics/{{ item.name }}
-    -f {{ item.path }} .
+    --tag=quay.io/trustedanalytics/h2o-provisioner:0.7.2
+    -f src/main/docker/Dockerfile .
   environment:
     DOCKER_HOST: "{{ docker_url }}"
   args:
-    chdir: "{{ ansible_env['HOME'] }}/{{ item.name }}"
+    chdir: "{{ ansible_env['HOME'] }}/h2o-provisioner"
+  when: not quay_io_username or not quay_io_password
+
+- shell: >-
+    docker build
+    --build-arg http_proxy={{ http_proxy }}
+    --build-arg https_proxy={{ https_proxy }}
+    --build-arg no_proxy={{ no_proxy }}
+    --build-arg HTTP_PROXY={{ http_proxy }}
+    --build-arg HTTPS_PROXY={{ https_proxy }}
+    --build-arg NO_PROXY={{ no_proxy }}
+    --tag=quay.io/trustedanalytics/{{ item }} .
+  environment:
+    DOCKER_HOST: "{{ docker_url }}"
+  args:
+    chdir: "{{ ansible_env['HOME'] }}/{{ item }}"
   with_items:
-    - { name: 'jupyter-base', path: 'Dockerfile' }
-    - { name: 'jupyter', path: 'Dockerfile' }
-    - { name: 'trustedanalytics-mosquitto', path: 'Dockerfile' }
-    - { name: 'h2o-provisioner', path: 'src/main/docker/Dockerfile' }
+    - 'jupyter-base'
+    - 'jupyter'
+    - 'trustedanalytics-mosquitto'
   when: not quay_io_username or not quay_io_password
 
