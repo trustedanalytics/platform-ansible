@@ -114,6 +114,8 @@
         - plans
       when: quay_io_username and quay_io_password
 
+    - include: docker_images_build.yml
+
     - docker:
         name: registrator
         image: gliderlabs/registrator:v6
@@ -173,8 +175,6 @@
         docker_api_version: 1.21
         docker_url: "{{ docker_url }}"
       when: quay_io_username and quay_io_password
-
-    - include: docker_images_build.yml
 
 - hosts: cdh-master[0]
   tasks:

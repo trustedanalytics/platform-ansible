@@ -23,6 +23,7 @@
     - { repo: 'jupyter-base', id: 'eebe39e1818df2f720821f4b8e221fe936215d40' }
     - { repo: 'jupyter', id: 'ca35be5fcf8c9479c1da1408c0bc5b9d266be56c' }
     - { repo: 'trustedanalytics-mosquitto', id: '337d3b3039b71afbb0aca752e2fae545ce066511' }
+    - { repo: 'h2o-provisioner', id: '9bec95eb914cc3f45f7d3e0e2c79c04ae4ffdfab' }
   when: not quay_io_username or not quay_io_password
 
 # TODO: Rewrite the following using native ansible modules
@@ -30,6 +31,11 @@
 # - Build_args not supported (https://github.com/ansible/ansible-modules-core/issues/2408)
 # - Pulling all images is hardcoded in Ansible 2.0, this prevents the build of jupyter
 #   since it uses jupyter-base which is available only locally (this changes in 2.1)
+
+- set_fact:
+    http_proxy: "{{ proxy_env.http_proxy | default() }}"
+    https_proxy: "{{ proxy_env.https_proxy | default() }}"
+    no_proxy: "{{ no_proxy | default() }}"
 
 - shell: >-
     docker build
@@ -39,14 +45,16 @@
     --build-arg HTTP_PROXY={{ http_proxy }}
     --build-arg HTTPS_PROXY={{ https_proxy }}
     --build-arg NO_PROXY={{ no_proxy }}
-    --tag=quay.io/trustedanalytics/{{ item }} .
+    --tag=quay.io/trustedanalytics/{{ item.name }}
+    -f {{ item.path }} .
   environment:
     DOCKER_HOST: "{{ docker_url }}"
   args:
-    chdir: "{{ ansible_env['HOME'] }}/{{ item }}"
+    chdir: "{{ ansible_env['HOME'] }}/{{ item.name }}"
   with_items:
-    - jupyter-base
-    - jupyter
-    - trustedanalytics-mosquitto
+    - { name: 'jupyter-base', path: 'Dockerfile' }
+    - { name: 'jupyter', path: 'Dockerfile' }
+    - { name: 'trustedanalytics-mosquitto', path: 'Dockerfile' }
+    - { name: 'h2o-provisioner', path: 'src/main/docker/Dockerfile' }
   when: not quay_io_username or not quay_io_password
 

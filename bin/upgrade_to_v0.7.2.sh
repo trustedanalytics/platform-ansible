@@ -93,29 +93,11 @@ elif [ ${provider} == 'openstack' ];then
     openstack_dns2=$openstack_dns1
   fi
 
-  ntpServers=$(awk -F\' '/ntp_server/ { print $2 }' /etc/ansible/hosts)
-  ntp_server2=$(awk -F\' '/ntp_server/ { print $4 }' /etc/ansible/hosts)
-  ntp_server3=$(awk -F\' '/ntp_server/ { print $6 }' /etc/ansible/hosts)
-
-  if [ -n "$ntp_server2" ]; then
-    ntpServers=${ntpServers},${ntp_server2}
-    echo ${ntp_server2}
-  fi
-  if [ -n "${ntp_server3}" ]; then
-    ntpServers=${ntpServers},${ntp_server3}
-  fi
-
-  echo "ntp_servers: [$ntpServers]" > group_vars/cdh-all
-
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
     && chmod +x openstack.py
 
-  if [ -n "${cloudera_masters}" ]; then
-    hybrid_skip_tags="--skip-tags=skip_on_bare_metal"
-  fi
-
   ansible-playbook -i openstack.py -s upgrade_to_v0.7.2.yml \
-    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} release_version=${release_version} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id}"
+    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} release_version=${release_version} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id} quay_io_username=${quay_io_username} quay_io_password=${quay_io_password} no_proxy=${no_proxy}"
 
 fi
 
