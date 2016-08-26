@@ -23,7 +23,7 @@
     - { repo: 'jupyter-base', id: 'eebe39e1818df2f720821f4b8e221fe936215d40' }
     - { repo: 'jupyter', id: 'ca35be5fcf8c9479c1da1408c0bc5b9d266be56c' }
     - { repo: 'trustedanalytics-mosquitto', id: '337d3b3039b71afbb0aca752e2fae545ce066511' }
-    - { repo: 'h2o-provisioner', id: '9bec95eb914cc3f45f7d3e0e2c79c04ae4ffdfab' }
+    - { repo: 'h2o-provisioner', id: '7de40d9353771158ac2436657918cb74a8d31cf9' }
   when: not quay_io_username or not quay_io_password
 
 # TODO: Rewrite the following using native ansible modules
