@@ -73,18 +73,6 @@
         - { regexp: "image: 'trustedanalytics/mosquitto'", replace: "image: 'quay.io/trustedanalytics/trustedanalytics-mosquitto'" }
         - { regexp: "image: 'orientdb/orientdb'\n([ ]*)tag: 'latest'", replace: "image: 'orientdb'\n\\1tag: '2.1.16'" }
 
-    - name: deploy docker changes
-      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ ansible_env['HOME'] }}/docker-broker.yml deploy
-      args:
-        executable: /bin/bash
-
-    - name: wait for docker broker
-      wait_for:
-        host: "{{ docker_ip }}"
-        port: 4243
-        delay: 30
-        connection_timeout: 10
-
     - shell: "docker login -u {{ quay_io_username }} -p {{ quay_io_password }} -e test@test quay.io"
       ignore_errors: True
       register: docker_login
@@ -181,6 +169,11 @@
           KRB_PASSWORD: cf1
         docker_api_version: 1.21
         docker_url: "{{ docker_url }}"
+
+    - name: deploy docker changes
+      shell: source /usr/local/rvm/scripts/rvm && bosh --no-color -n -d {{ ansible_env['HOME'] }}/docker-broker.yml deploy
+      args:
+        executable: /bin/bash
 
 - hosts: cdh-master[0]
   tasks:
