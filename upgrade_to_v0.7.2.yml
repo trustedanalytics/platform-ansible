@@ -63,6 +63,12 @@
 
     - name: deploy bosh director
       shell: bosh-init deploy ./bosh.yml chdir={{ bosh_deployment_directory }}
+      ignore_errors: yes
+      register: bosh_init_result
+
+    - name: retry bosh director deployment if failed
+      shell: bosh-init deploy ./bosh.yml chdir={{ bosh_deployment_directory }}
+      when: "{{ bosh_init_result|failed }}"
 
     - name: change docker images
       replace:
