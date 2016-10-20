@@ -203,6 +203,32 @@
       with_items:
         - { name: 'spark_on_yarn_service', value: 'SPARK_ON_YARN' }
 
+- hosts: cdh-worker
+  vars_files:
+    - defaults/proxy.yml
+  tasks:
+    - name: install the python27-pip
+      yum: pkg={{ item }} state=installed
+      environment: proxy_env
+      with_items:
+        - libxslt-devel
+        - libxml2-devel
+        - python27-pip
+
+    - name: install dependencies for spark-tk
+      pip:
+        name: "{{ item }}"
+        executable: pip2.7
+      environment: proxy_env
+      with_items:
+        - glob2
+        - decorator
+        - python-dateutil
+        - importlib
+        - pytz
+        - pydicom
+        - lxml
+
 - hosts: consul-master
   become: true
   vars_files:

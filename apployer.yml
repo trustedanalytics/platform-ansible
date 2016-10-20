@@ -50,6 +50,7 @@
         - platform-snapshot
         - platform-tests
         - router-metrics-provider
+        - scoring-engine-spark-tk
         - scoring-engine
         - scoring-pipelines
         - service-catalog

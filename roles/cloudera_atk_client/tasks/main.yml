@@ -19,12 +19,9 @@
   environment: proxy_env
   with_items:
     - trustedanalytics-python-client
-
-- name: install the ATK client libraries
-  yum: pkg={{ item }} state=installed
-  environment: proxy_env
-  with_items:
-    - trustedanalytics-python-client
+    - libxslt-devel
+    - libxml2-devel
+    - python27-pip
 
 #versions prior to 2.0 don't support the find module
 #http://stackoverflow.com/questions/34788520/ansible-get-files-list-from-local-directory
@@ -40,3 +37,17 @@
     dest: /opt/cloudera/parcels/CDH/lib/spark/python/lib
     copy: no
   with_items: pyspark_zips.stdout_lines
+
+- name: install dependencies for spark-tk
+  pip:
+    name: "{{ item }}"
+    executable: pip2.7
+  environment: proxy_env
+  with_items:
+    - glob2
+    - decorator
+    - python-dateutil
+    - importlib
+    - pytz
+    - pydicom
+    - lxml
