@@ -105,7 +105,7 @@ virtualenv venv
 source venv/bin/activate
 pip install pycparser==2.14 pytz ansible==1.9.4 boto six shade==1.8.0
 
-ansible-playbook -s apployer.yml \
+ansible-playbook -s -i /dev/null apployer.yml \
           -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version} cf_domain=${cf_domain} cf_password=${cf_password}"
 
 cf set-env platform-context PLATFORM_VERSION 0.7.3
