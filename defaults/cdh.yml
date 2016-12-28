@@ -54,3 +54,5 @@ atk_config_tool_enabled: true
 
 ## CHANGE THIS FOR PROPER ONES ON ONE NODE  / BARE-METAL INSTALL
 cdh_storage_paths:  ['mnt/data0','mnt/data1']
+
+daal_parcel_version: 0.7.4-27

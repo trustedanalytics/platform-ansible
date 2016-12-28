@@ -53,6 +53,9 @@
 #- name: include gearpump role creation
 #  include: gearpump.yml
 
+- name: include daal parcel
+  include: daal.yml
+
 - name: include kerberos configuration
   include: kerberos.yml
   when: kerberos_enabled|bool

@@ -17,7 +17,7 @@
 
 set -e
 
-release_version='v0.7.3'
+release_version='v0.7.4'
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
@@ -57,7 +57,7 @@ cache_max_age = 300
 instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "stack")  print $2 }' /etc/cfn/cfn-hup.conf)
 EOF
 
-  ansible-playbook -s upgrade_to_v0.7.3.yml -i ec2.py \
+  ansible-playbook -s upgrade_to_v0.7.4.yml -i ec2.py \
            -e "provider=${provider} stack=${stack} quay_io_username=${quay_io_username} quay_io_password=${quay_io_password} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password}"
 
 elif [ ${provider} == 'openstack' ];then
@@ -96,7 +96,7 @@ elif [ ${provider} == 'openstack' ];then
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
     && chmod +x openstack.py
 
-  ansible-playbook -i openstack.py -s upgrade_to_v0.7.3.yml \
+  ansible-playbook -i openstack.py -s upgrade_to_v0.7.4.yml \
     -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} release_version=${release_version} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id} quay_io_username=${quay_io_username} quay_io_password=${quay_io_password} no_proxy=${no_proxy}"
 
 fi
