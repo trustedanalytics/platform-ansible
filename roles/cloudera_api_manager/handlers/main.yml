@@ -19,5 +19,8 @@
 - name: restart hdfs
   cdh: action=service service=hdfs state=restarted
 
+- name: restart yarn
+  cdh: action=service service=yarn state=restarted
+
 - name: restart cm
   cdh: action=service service=cm state=restarted
