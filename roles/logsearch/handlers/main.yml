@@ -35,3 +35,4 @@
     url: http://{{ logsearch_cidr | nthhost(10) }}:9200/.kibana/_settings
     method: PUT
     body: "{ \"index\" : { \"max_result_window\" : 2147483647 } }"
+  environment: "{{ proxy_nul }}"
