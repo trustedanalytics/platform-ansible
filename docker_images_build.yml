@@ -21,7 +21,7 @@
     dest={{ ansible_env['HOME'] }}/{{ item.repo }}
   with_items:
     - { repo: 'jupyter-base', id: 'a92dab46e5bf00598e4fae4f8f5586ac2317368e' }
-    - { repo: 'jupyter', id: 'b0dae644433894cd20889da7f696a692fb40d174' }
+    - { repo: 'jupyter', id: '62ad6918c27a2cc4636ad91ca57ee0b7f447fede' }
     - { repo: 'trustedanalytics-mosquitto', id: '337d3b3039b71afbb0aca752e2fae545ce066511' }
     - { repo: 'h2o-provisioner', id: '7de40d9353771158ac2436657918cb74a8d31cf9' }
   when: not quay_io_username or not quay_io_password
