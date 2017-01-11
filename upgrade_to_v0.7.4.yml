@@ -1,0 +1,898 @@
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+
+- name: Fetch instance facts
+  hosts: localhost
+  any_errors_fatal: True
+  vars: 
+    bosh_cfg: /root/.bosh_config
+    cdh_lib: /root/platform-ansible/library/cdh.py
+    cf_elk_space: elk-for-pcf
+    cf_tap_organization: trustedanalytics
+    cf_tap_space: platform
+    logsearch_boshrelease_version: 200.0.0
+    logsearch_for_cloudfoundry_version: 200.0.0
+    lookup_file: /etc/ansible/hosts
+    lookup_keys:
+      - availability_zone
+      - bosh_default_security_groups
+      - bosh_dns
+      - cf_system_domain
+      - cf_password
+      - cf_private_subnet_id
+      - cf_system_domain
+      - install_logsearch
+      - logsearch_deployment_size
+      - logsearch_subnet_id
+      - ntp_server
+      - quay_io_password
+      - quay_io_username
+      - region
+      - stack
+      - vpc_id
+    os_packages:
+      redhat:
+        - kernel
+        - kernel-devel
+        - kernel-firmware
+        - kernel-headers
+        - perf
+      ubuntu:
+        - linux-image-virtual
+        - linux-image-extra-virtual
+        - linux-headers-virtual
+    release_version: v0.7.4
+    aws:
+      hostgroup_names:
+        jumpbox: tag_Name_Jump_Box
+        nginx: tag_Name_NGINX
+      stemcell:
+        url: https://d26ekeud912fhb.cloudfront.net/bosh-stemcell/aws/light-bosh-stemcell-3263.8-aws-xen-hvm-ubuntu-trusty-go_agent.tgz
+        sha1: 95ecc2709ac62f21d0a1c6cac023585c3919b825
+    openstack:
+      hostgroup_names:
+        jumpbox: Jump Box
+        nginx: NGINX
+      stemcell:
+        url: http://d26ekeud912fhb.cloudfront.net/bosh-stemcell/openstack/bosh-stemcell-3263.8-openstack-kvm-ubuntu-trusty-go_agent.tgz
+        sha1: 3585a7d5239107a4728c8601517dbba0a416378a
+
+  tasks:
+    - name: CDH admin username
+      command: awk -F" = " '/^ADMIN_USER =/{gsub("\"",""); print $2}' {{ cdh_lib }}
+      register: cdh_user_lookup
+      changed_when: False
+
+    - name: CDH admin password
+      command: awk -F" = " '/^ADMIN_PASS =/{gsub("\"",""); print $2}' {{ cdh_lib }}
+      register: cdh_pass_lookup
+      changed_when: False
+
+    - name: CDH cluster name
+      command: awk -F" = " '/^CLUSTER_NAME =/{gsub("\"",""); print $2}' {{ cdh_lib }}
+      register: cdh_cluster_lookup
+      changed_when: False
+
+    - name: Settle lookup section (AWS)
+      set_fact:
+        lookup_section: jump-boxes:vars
+      when: provider == "aws"
+
+    - name: Settle lookup section (OpenStack)
+      set_fact:
+        lookup_section: tqd:vars
+      when: provider == "openstack"
+
+    - name: Prepare lookup parameters
+      set_fact:
+        lookups: "{{ lookups|default([]) }} + [ '{{ item }} section={{ lookup_section }} file={{ lookup_file }}' ]"
+      with_items: "{{ lookup_keys }}"
+
+    - name: Lookup external facts
+      set_fact:
+        "{{ item.0 }}": "{{ lookup('ini', item.1) }}"
+      with_together:
+        - "{{ lookup_keys }}"
+        - "{{ lookups }}"
+
+    - name: Fetch Cloud provider and CDH parameters
+      set_fact: 
+        bosh_config: "{{ lookup('file', bosh_cfg) | from_yaml }}"
+        bosh_manifest: "{{ ansible_env.HOME }}/{{ stack }}-bosh/bosh.yml"
+        cdh_user: "{{ cdh_user_lookup.stdout }}"
+        cdh_pass: "{{ cdh_pass_lookup.stdout }}"
+        cdh_cluster: "{{ cdh_cluster_lookup.stdout }}"
+        cf_bosh_security_group: "{{ bosh_default_security_groups | first }}"
+        cf_elk_space: "{{ cf_elk_space }}"
+        cf_domain: "{{ cf_system_domain }}"
+        cf_manifest: "{{ ansible_env.HOME }}/cf.yml"
+        cf_tap_organization: "{{ cf_tap_organization }}"
+        cf_tap_space: "{{ cf_tap_space }}"
+        docker_manifest: "{{ ansible_env.HOME }}/docker-broker.yml"
+        geturl_headers: Connection:keep-alive
+        logsearch_boshrelease_version: "{{ logsearch_boshrelease_version }}"
+        logsearch_for_cloudfoundry_version: "{{ logsearch_boshrelease_version }}"
+        os_packages: "{{ os_packages }}"
+        proxy_env:
+          placeholder: none
+          http_proxy: "{{ lookup('env', 'http_proxy') }}"
+          https_proxy: "{{ lookup('env', 'https_proxy') }}"
+          socks_proxy: "{{ lookup('env', 'socks_proxy') }}"
+        proxy_nul:
+          http_proxy: ""
+          https_proxy: ""
+          socks_proxy: ""
+        resolv_conf_domain: null
+        resolv_conf_search:
+          - service.consul
+          - node.consul
+        release_version: "{{ release_version }}"
+        tap_version: "{{ release_version[1:] }}"
+  
+    - name: Fetch reduntant parameters
+      set_fact: 
+        cf_director_uuid: "{{ bosh_config.target_uuid }}"
+        docker_config: "{{ lookup('file', docker_manifest) | from_yaml }}"
+
+    - block:
+
+      - name: Fetch CF subnet metadata
+        ec2_vpc_subnet_facts:
+          region: "{{ region | mandatory }}"
+          filters:
+            subnet-id: "{{ cf_private_subnet_id | mandatory }}"
+        register: cf_private_subnet_id_result
+
+      - name: Fetch Logsearch subnet metadata
+        ec2_vpc_subnet_facts:
+          region: "{{ region | mandatory }}"
+          filters:
+            subnet-id: "{{ logsearch_subnet_id | mandatory }}"
+        register: logsearch_subnet_id_result
+
+      - name: Set upgrade parameters (AWS)
+        set_fact: 
+          availability_zone: "{{ logsearch_subnet_id_result.subnets.0.availability_zone }}"
+          bosh_stemcell: "{{ aws.stemcell }}"
+          bosh_manifests:
+            - dest: "{{ cf_manifest }}"
+              changes:
+                - regexp: '(version:) \"{0,1}3104\"{0,1}'
+                  replace: '\1 3263.8'
+            - dest: "{{ docker_manifest }}"
+              changes:
+                - regexp: '(version:) \"{0,1}3104\"{0,1}'
+                  replace: '\1 3263.8'
+            - dest: "{{ bosh_manifest }}"
+              changes:
+                - regexp: '(bosh-aws-xen-hvm-ubuntu-trusty-go_agent\?v)=3104'
+                  replace: '\1=3263.8'
+                - regexp: '624c3ea55cbdb7143ffecf36d7e8c0275926a824'
+                  replace: '{{ aws.stemcell.sha1 }}'
+          cf_private_subnet_cidr: "{{ cf_private_subnet_id_result.subnets.0.cidr_block }}"
+          hostgroup_names: "{{ aws.hostgroup_names }}"
+          logsearch_subnet: "{{ logsearch_subnet_id_result.subnets | first }}"
+          logsearch_cidr: "{{ logsearch_subnet_id_result.subnets.0.cidr_block }}"
+          proxy_env: "{{ proxy_nul }}"
+          use_proxy: no
+
+      when: provider == "aws"
+
+    - block:
+
+      - name: Fetch CF subnet metadata
+        os_subnets_facts:
+          cloud: TAP
+          filters:
+            network_id: "{{ cf_private_subnet_id | mandatory }}"
+        register: cf_private_subnet_id_result
+
+      - name: Fetch Logsearch subnet metadata
+        os_subnets_facts:
+          cloud: TAP
+          filters:
+            network_id: "{{ logsearch_subnet_id | mandatory }}"
+        register: logsearch_subnet_id_result
+
+      - name: Set upgrade parameters (OpenStack)
+        set_fact:
+          bosh_stemcell: "{{ openstack.stemcell }}"
+          bosh_manifests:
+            - dest: "{{ cf_manifest }}"
+              changes:
+                - regexp: '(version:) \"{0,1}3104\"{0,1}'
+                  replace: '\1 3263.8'
+            - dest: "{{ docker_manifest }}"
+              changes:
+                - regexp: '(version:) \"{0,1}3104\"{0,1}'
+                  replace: '\1 3263.8'
+            - dest: "{{ bosh_manifest }}"
+              changes:
+                - regexp: '(bosh-openstack-kvm-ubuntu-trusty-go_agent\?v)=3104'
+                  replace: '\1=3263.8'
+                - regexp: '0e0f48f064663b13990c77092e265ae185db1db2'
+                  replace: "{{ openstack.stemcell.sha1 }}"
+          cf_private_subnet_cidr: "{{ cf_private_subnet_id_result.ansible_facts.openstack_subnets[0].cidr }}"
+          hostgroup_names: "{{ openstack.hostgroup_names }}"
+          logsearch_subnet: "{{ logsearch_subnet_id_result.ansible_facts.openstack_subnets | first }}"
+          logsearch_cidr: "{{ logsearch_subnet_id_result.ansible_facts.openstack_subnets[0].cidr }}"
+          use_proxy: yes
+
+      when: provider == "openstack"
+
+- include: create-inventory.yml
+
+- name: Set ansible inventory
+  hosts: localhost
+  any_errors_fatal: True
+  tasks:
+    - name: Add nginx host
+      add_host:
+        name: nginx
+        groups: nginx
+        ansible_ssh_host: "{{ hostvars[item.1]['ansible_ssh_host'] }}"
+        ansible_ssh_user: ubuntu
+      with_indexed_items: "{{ groups[hostgroup_names.nginx] | default([]) }}"
+      changed_when: False
+
+    - name: Add jumpbox host
+      add_host:
+        name: jumpbox
+        groups: jumpbox
+        ansible_ssh_host: "{{ hostvars[item.1]['ansible_ssh_host'] }}"
+        ansible_ssh_user: ubuntu
+      with_indexed_items: "{{ groups[hostgroup_names.jumpbox] | default([]) }}"
+      changed_when: False
+
+- name: Fix resolver configuration
+  hosts: nginx,jumpbox
+  any_errors_fatal: True
+  tasks:
+    - name: Prepare nameservers list
+      set_fact:
+        resolv_conf_nameservers: "{{ resolv_conf_nameservers|default([]) }} + [ '{{ hostvars[item].ansible_ssh_host }}' ]"
+      with_items: "{{ groups['cdh-master'] }}"
+
+    - name: Set resolver options
+      set_fact:
+        resolv_conf_domain: "{{ hostvars.localhost.resolv_conf_domain }}"
+        resolv_conf_search: "{{ hostvars.localhost.resolv_conf_search }}"
+
+    - name: Fix resolver configuration file
+      template:
+        src: roles/resolv_conf/templates/resolv.conf.j2
+        dest: /etc/resolv.conf
+      become: yes
+
+    - name: Disable dhclient resolver updates
+      blockinfile:
+        dest: /etc/dhcp/dhclient-enter-hooks.d/nodnsupdate
+        create: yes
+        mode: 0755
+        block: |
+          #!/bin/sh
+          make_resolv_conf() {
+              :
+          }
+        validate: "bash -n %s"
+      become: yes
+
+- name: Patch BOSH releases
+  hosts: localhost
+  any_errors_fatal: True
+  tasks:
+    - name: Download BOSH stemcell
+      get_url: 
+        url: "{{ bosh_stemcell.url }}"
+        dest: "{{ ansible_env.HOME }}"
+        checksum: "sha1:{{ bosh_stemcell.sha1 }}"
+        headers: "{{ geturl_headers }}"
+        use_proxy: "{{ use_proxy }}"
+      environment: "{{ proxy_env }}"
+      register: downloaded_stemcell
+
+    - name: Upload stemcell to BOSH
+      command: "bosh upload stemcell {{ downloaded_stemcell.dest }} --skip-if-exists"
+      register: upload_stemcell
+      changed_when: "'Skipping upload' not in upload_stemcell.stdout"
+
+    - name: Patch cf, docker and director manifests
+      replace:
+        dest: "{{ item.0.dest }}"
+        regexp: "{{ item.1.regexp }}"
+        replace: "{{ item.1.replace }}"
+        backup: yes
+      with_subelements:
+        - "{{ bosh_manifests }}"
+        - changes
+
+    - name: Fetch BOSH deployments state
+      uri:
+        url: "{{ bosh_config.target }}/deployments"
+        user: "{{ bosh_config.auth[bosh_config.target].username }}"
+        password: "{{ bosh_config.auth[bosh_config.target].password }}"
+        validate_certs: no
+        return_content: yes
+      register: bosh_deployments
+
+    - name: Fetch BOSH stemcells state
+      set_fact:
+        bosh_stemcells: "{{ bosh_stemcells|default({}) | combine( {item.name|replace('-','_'): item.stemcells[0].version} ) }}"
+      with_items: "{{ bosh_deployments.content | from_json }}"
+
+    - name: Fetch BOSH vms state
+      shell: bosh --no-color vms {{ item }} |awk '/^\|.*\-/{print $5}' |grep -v running
+      register: bosh_vms
+      failed_when: False
+      changed_when: bosh_vms.rc == 0
+      with_items: "{{ bosh_deployments.content | from_json | map(attribute='name') | list }}"
+
+    - name: Fetch BOSH deployment status
+      set_fact:
+        deployment_failed: "{{ deployment_failed|default({}) | combine( {item.item|replace('-','_'): item.changed} ) }}"
+      with_items: "{{ bosh_vms.results }}"
+
+    - name: Deploy patched CF
+      command: "bosh -n -d {{ cf_manifest }} deploy"
+      ignore_errors: True
+      register: cf_deploy
+      until: cf_deploy|success
+      delay: "30"
+      retries: "40"
+      when: bosh_stemcells.cf != "3263.8" or
+            deployment_failed.cf
+
+    - name: Fix broken UAAC memberships
+      command: "{{ item }}"
+      environment: "{{ proxy_nul }}"
+      become: yes
+      with_items: 
+        - "uaac target https://uaa.{{ cf_system_domain }}/ --skip-ssl-validation"
+        - "uaac token client get admin -s {{ cf_password }}"
+        - "uaac member add console.admin admin"
+      when: cf_deploy.changed
+
+    - name: Fetch required docker_url fact
+      set_fact:
+        docker_url: "tcp://{{ docker_config.networks.0.subnets.0.static.0 }}:4243"
+      changed_when: False
+
+    - name: Test for quay.io credentials existence
+      shell: "docker login -u {{ quay_io_username }} -p {{ quay_io_password }} -e test@test quay.io"
+      ignore_errors: True
+      register: docker_login
+      environment:
+        DOCKER_HOST: "{{ docker_url }}"
+      changed_when: False
+      when: quay_io_username and quay_io_password
+
+    - name: Fall back to image compilation
+      set_fact:
+        quay_io_username: ""
+        quay_io_password: ""
+      when: docker_login|failed
+
+    - name: Download non-quay images when no quay username provided
+      shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
+      environment:
+        DOCKER_HOST: "{{ docker_url }}"
+      changed_when: not non_quay_images_download.stdout | search("Image is up to date")
+      with_subelements:
+        - "{{ docker_config.properties.broker.services }}"
+        - plans
+      register: non_quay_images_download
+      when: (not quay_io_username or not quay_io_password) and not "quay" in item.1.container.image
+
+    - name: Download all images when quay username provided
+      shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
+      environment:
+        DOCKER_HOST: "{{ docker_url }}"
+      changed_when: not quay_images_download.stdout | search("Image is up to date")
+      with_subelements:
+        - "{{ docker_config.properties.broker.services }}"
+        - plans
+      register: quay_images_download
+      when: quay_io_username and quay_io_password
+
+    - include: docker_images_build.yml
+
+    - name: Deploy patched docker
+      command: "bosh -n -d {{ docker_manifest }} deploy"
+      ignore_errors: True
+      register: docker_deploy
+      until: docker_deploy|success
+      delay: "30"
+      retries: "40"
+      when: bosh_stemcells.docker_broker != "3263.8" or
+            deployment_failed.docker_broker or
+            non_quay_images_download.changed or
+            quay_images_download.changed
+
+    - name: Patch BOSH director
+      command: "bosh-init deploy {{ bosh_manifest }}"
+      register: boshinit_deploy
+      changed_when: "'Skipping deploy' not in boshinit_deploy.stdout"
+
+
+    - block:
+
+      - name: Download logsearch-for-cloudfoundry release
+        get_url:
+          url: "https://github.com/cloudfoundry-community/logsearch-for-cloudfoundry/archive/v{{ logsearch_for_cloudfoundry_version }}.tar.gz"
+          dest: "{{ ansible_env.HOME }}"
+          headers: "{{ geturl_headers }}"
+          use_proxy: "{{ use_proxy }}"
+        environment: "{{ proxy_env }}"
+        register: logsearch_for_cloudfoundry_archive
+
+      - name: Prepare logsearch-for-cloudfoundry release
+        unarchive:
+          src: "{{ logsearch_for_cloudfoundry_archive.dest }}"
+          dest: "{{ ansible_env.HOME }}"
+
+      - name: Download logsearch-boshrelease
+        get_url:
+          url: "https://bosh.io/d/github.com/logsearch/logsearch-boshrelease?v={{ logsearch_boshrelease_version }}"
+          dest: "{{ ansible_env.HOME }}/logsearch-boshrelease-{{ logsearch_boshrelease_version }}.tgz"
+          headers: "{{ geturl_headers }}"
+          use_proxy: "{{ use_proxy }}"
+        environment: "{{ proxy_env }}"
+        register: logsearch_boshrelease_archive
+
+      - name: Bosh upload logsearch releases
+        shell: bosh --no-color -n upload release {{ item.file }} --name {{ item.name }} --version {{ item.version }}
+        register: shell_result
+        changed_when: shell_result.stdout | search('Release uploaded')
+        failed_when: shell_result.rc != 0 and not shell_result.stdout | search('Release `.*\' already exists')
+        with_items:
+          - file: "{{ ansible_env.HOME }}/logsearch-for-cloudfoundry-{{ logsearch_for_cloudfoundry_version }}/releases/logsearch-for-cloudfoundry/logsearch-for-cloudfoundry-{{ logsearch_for_cloudfoundry_version }}.yml"
+            name: logsearch-for-cloudfoundry
+            version: "{{ logsearch_for_cloudfoundry_version }}"
+          - file: "{{ logsearch_boshrelease_archive.dest }}"
+            name: logsearch
+            version: "{{ logsearch_boshrelease_version }}"
+    
+      when: install_logsearch|bool
+
+    - block:
+      - name: Fetch Logsearch variables
+        include_vars: roles/logsearch/vars/aws.yml
+
+      - name: Get Bosh security group name 
+        ec2_remote_facts:
+          region: "{{ region }}"
+          filters:
+            vpc-id: "{{ vpc_id }}"
+            "tag:Name": bosh/0
+        register: vpc_instances
+     
+      - name: Add elasticsearch ingress rule
+        ec2_group:             
+          name: "{{ vpc_instances.instances.0.groups.0.name }}"
+          description: an example EC2 group
+          region: "{{ region }}"
+          vpc_id: "{{ vpc_id }}"
+          purge_rules: no
+          purge_rules_egress: no
+          rules:
+          - proto: tcp
+            from_port: 9200
+            to_port: 9200
+            group_name: "{{ hostvars[groups[hostgroup_names.jumpbox].0].ec2_security_group_names }}"
+
+      when: provider == "aws" and
+            install_logsearch|bool
+
+    - block:
+
+      - name: Fetch Logsearch variables
+        include_vars: roles/logsearch/vars/openstack.yml 
+
+      - name: Add elasticsearch ingress rule
+        os_security_group_rule:
+          cloud: TAP
+          security_group: "{{ cf_bosh_security_group }}"
+          protocol: tcp
+          port_range_min: 9200
+          port_range_max: 9200
+          remote_group: "{{ hostvars[groups[hostgroup_names.jumpbox].0].openstack.security_groups.0.id }}"
+
+      when: provider == "openstack" and
+            install_logsearch|bool
+
+    - block:
+
+      - name: Create Logsearch Manifest
+        template: 
+          src: roles/logsearch/templates/logsearch.yml.j2
+          dest: "{{ ansible_env.HOME }}/logsearch-manifest.yml"
+          validate: "python -c \"import yaml; yaml.load(file('%s', 'r'))\""
+        register: logsearch_manifest
+ 
+      - name: Fetch Logsearch parameters
+        set_fact:
+          logsearch_config: "{{ lookup('file', logsearch_manifest.path) | from_yaml }}"
+        when: logsearch_manifest.changed
+
+      - name: Disable index autocreation
+        uri:
+          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/_cluster/settings"
+          method: PUT
+          body: "{ \"transient\" : { \"action.auto_create_index\" : false } }"
+        environment: "{{ proxy_nul }}"
+        when: logsearch_manifest.changed
+
+      - name: Delete all indices
+        uri:
+          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/_all/"
+          method: DELETE
+        environment: "{{ proxy_nul }}"
+        when: logsearch_manifest.changed
+
+      - name: Deploy Logsearch
+        shell: bosh -d {{ ansible_env.HOME }}/logsearch-manifest.yml -n deploy
+        ignore_errors: True
+        register: logsearch_deploy
+        until: logsearch_deploy|success
+        delay: "30"
+        retries: "40"
+        when: bosh_stemcells.logsearch != "3263.8" or
+              deployment_failed.logsearch or
+              logsearch_manifest.changed
+
+      - name: Deploy Kibana
+        shell: "bosh -d {{ ansible_env.HOME }}/logsearch-manifest.yml run errand push-kibana"
+        register: kibana_deployment
+        when: logsearch_deploy.changed
+
+      - name: Setup CF CLI
+        shell: "cf login -a https://api.{{ cf_domain }} -u admin -p {{ cf_password }} -o {{ cf_tap_organization }} -s {{ cf_elk_space }} --skip-ssl-validation"
+        when: kibana_deployment.changed
+
+      - name: Scale Kibana
+        shell: cf scale logs -i 1
+        when: kibana_deployment.changed
+
+      - name: Close kibana index
+        uri:
+          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/.kibana/_close"
+          method: POST
+        environment: "{{ proxy_nul }}"
+        when: kibana_deployment.changed
+
+      - name: Increase max_result_window for kibana
+        uri:
+          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/.kibana/_settings"
+          method: PUT
+          body: "{ \"index\" : { \"max_result_window\" : 2147483647 } }"
+        environment: "{{ proxy_nul }}"
+        when: kibana_deployment.changed
+
+      - name: Reopen kibana index
+        uri:
+          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/.kibana/_open"
+          method: POST
+        environment: "{{ proxy_nul }}"
+        when: kibana_deployment.changed
+
+      when: install_logsearch|bool
+
+- name: Install NTP client
+  hosts: nginx,jumpbox
+  any_errors_fatal: True
+  tasks:
+    - name: Install OS packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python-passlib
+        - ntp
+      become: yes
+
+    - name: Reset public NTP servers
+      lineinfile:
+        dest: /etc/ntp.conf
+        state: absent
+        regexp: '^server'
+      become: yes
+      when: hostvars.localhost.provider == 'openstack'
+
+    - name: Set custom NTP servers
+      lineinfile:
+        dest: /etc/ntp.conf
+        line: "server {{ item }}"
+      with_items: "{{ hostvars.localhost.ntp_server }}"
+      become: yes
+      when: hostvars.localhost.provider == 'openstack'
+
+    - name: Start NTP client service
+      service:
+        name: ntp
+        state: started
+        enabled: yes
+      become: yes
+
+- hosts: cdh-manager
+  any_errors_fatal: True
+  tasks:
+    - include_vars: "defaults/cloudera_parcels.yml"
+    - include_vars: "defaults/cdh.yml"
+
+    - name: Add parcel mirror URL
+      cdh:
+        action: set_config
+        entity: service
+        service: cm
+        name: REMOTE_PARCEL_REPO_URLS
+        value: '{{ cloudera_parcels | join(",") }}'
+      register: parcels_deployed
+
+    - name: Deploy DAAL parcel to all CDH nodes
+      cdh:
+        action: deploy_parcel
+        name: DAAL_LIB
+        version: "{{ daal_parcel_version }}"
+      register: daal_deployed
+      ignore_errors: True
+      until: daal_deployed|success
+      delay: "30"
+      retries: "40"
+
+    - name: Deploy CDH cluster client config
+      cdh:
+        action: deploy_configuration
+        service: "{{ item }}"
+      with_items:
+        - yarn
+        - yarnspark
+      when: daal_deployed.changed
+
+- hosts: cdh-all,nginx,jumpbox
+  any_errors_fatal: True
+  tasks:
+    - name: Install ubuntu kernel packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      become: yes
+      with_items: "{{ hostvars.localhost.os_packages.ubuntu }}"
+      register: install_kernel
+      when: ansible_lsb.id == "Ubuntu" and
+            ansible_lsb.major_release | int == 14
+
+    - name: Install redhat kernel packages
+      shell: "yum -y upgrade {{ hostvars.localhost.os_packages.redhat | join(' ') }}"
+      args:
+        warn: no
+      become: yes
+      changed_when: "{{ install_kernel.stdout | search('Complete') }}"
+      register: install_kernel
+      when: ansible_lsb.id == "RedHatEnterpriseServer" and
+            ansible_lsb.major_release | int == 6
+
+- hosts: nginx
+  any_errors_fatal: True
+  tasks:
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot NGINX instance
+      command: reboot
+      become: yes
+      when: reboot_required.stat.exists
+
+- hosts: cdh-all
+  any_errors_fatal: True
+  tasks:
+    - name: Detect CDH nodes requiring reboot
+      set_fact:
+        post_patch: "need_reboot"
+      when: install_kernel.changed
+
+    - name: Detect CDH nodes not requiring reboot
+      set_fact:
+        post_patch: "no_reboot"
+      when: not install_kernel.changed
+
+    - name: Group CDH nodes requiring reboot
+      group_by:
+        key: "{{ post_patch }}"
+
+- hosts: need_reboot
+  any_errors_fatal: True
+  vars:
+    cdh_user: "{{ hostvars.localhost.cdh_user }}"
+    cdh_pass: "{{ hostvars.localhost.cdh_pass }}"
+    cdh_cluster: "{{ hostvars.localhost.cdh_cluster }}"
+  tasks: 
+    - name: Stop CDH cluster
+      uri:
+        url: "http://localhost:7180/api/v9/clusters/{{ cdh_cluster }}/commands/stop"
+        method: POST
+        HEADER_Content-Type: "application/json"
+        user: "{{ cdh_user }}"
+        password: "{{ cdh_pass }}"
+      delegate_to: "{{ groups['cdh-manager'].0 }}"
+      run_once: True
+
+    - name: Wait for CDH cluster stop
+      uri: 
+        url: "http://localhost:7180/api/v9/clusters/{{ cdh_cluster }}/commands"
+        user: "{{ cdh_user }}"
+        password: "{{ cdh_pass }}"
+      register: "command_queue"
+      until: command_queue.json['items']|length == 0
+      delay: "10"
+      retries: "100"
+      delegate_to: "{{ groups['cdh-manager'].0 }}"
+      run_once: True
+
+    - name: Stop Consul cluster
+      service:
+        name: consul
+        state: stopped
+      become: yes
+      delegate_to: "{{ item }}"
+      with_items: "{{ groups['cdh-master'] }}"
+      run_once: True
+
+    - name: Prepare Consul cluster clean start
+      shell: rm -rf /var/consul/*
+      become: yes
+      delegate_to: "{{ item }}"
+      with_items: "{{ groups['cdh-master'] }}"
+      run_once: True
+
+    - name: Reboot CDH nodes
+      command: reboot
+      become: yes
+
+    - name: Wait for rebooted CDH nodes port 22 to become accessible
+      wait_for:
+        host: "{{ ansible_ssh_host }}"
+        port: 22
+        delay: 10
+        timeout: 900
+      connection: local
+
+- hosts: cdh-all
+  any_errors_fatal: True
+  tasks: 
+    - name: Restart Consul cluster
+      service:
+        name: consul
+        state: restarted
+      become: yes
+      when: groups['need_reboot'] is defined
+
+- hosts: localhost
+  any_errors_fatal: True
+  tasks: 
+    - name: Wait for CDH manager port 7180 to become accessible
+      wait_for:
+        host: "{{ hostvars[groups['cdh-manager'].0].ansible_ssh_host }}"
+        port: 7180
+        delay: 10
+        timeout: 900
+      connection: local
+
+    - name: Get HDFS state
+      uri:
+        url: "http://localhost:7180/api/v9/clusters/{{ cdh_cluster }}/services/HDFS"
+        user: "{{ cdh_user }}"
+        password: "{{ cdh_pass }}"
+      delegate_to: "{{ groups['cdh-manager'].0 }}"
+      register: hdfs_state
+
+    - block: 
+
+      - name: Restart Cloudera Manager service
+        cdh:
+          action: service
+          service: cm
+          state: restarted
+        delegate_to: "{{ groups['cdh-manager'].0 }}"
+
+      - name: Start CDH cluster
+        uri:
+          url: "http://localhost:7180/api/v9/clusters/{{ cdh_cluster }}/commands/start"
+          method: POST
+          HEADER_Content-Type: "application/json"
+          user: "{{ cdh_user }}"
+          password: "{{ cdh_pass }}"
+        delegate_to: "{{ groups['cdh-manager'].0 }}"
+
+      - name: Wait for CDH cluster start
+        uri:
+          url: "http://localhost:7180/api/v9/clusters/{{ cdh_cluster }}/commands"
+          user: "{{ cdh_user }}"
+          password: "{{ cdh_pass }}"
+        register: "command_queue"
+        until: command_queue.json['items']|length == 0
+        delay: "10"
+        retries: "100"
+        delegate_to: "{{ groups['cdh-manager'].0 }}"
+
+      when: hdfs_state.json.serviceState != "STARTED"
+
+    - name: Install virtualenv packages for apployer
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python-dev
+        - python-pip
+        - python-virtualenv
+        - unzip
+      become: yes
+
+    - name: Clean up apployer archive and working directory
+      file:
+        path: "{{ ansible_env.HOME }}/{{ item }}"
+        state: absent
+      with_items:
+        - apployer.zip
+        - apployer
+      changed_when: False
+
+- include: apployer.yml
+
+- hosts: localhost
+  any_errors_fatal: True
+  tasks: 
+    - name: Setup CF CLI
+      shell: "cf login -a https://api.{{ cf_domain }} -u admin -p {{ cf_password }} -o {{ cf_tap_organization }} -s {{ cf_tap_space }} --skip-ssl-validation"
+      changed_when: False
+
+    - name: Check platform version
+      shell: cf env platform-context |awk '/PLATFORM_VERSION/{print $2}'
+      changed_when: False
+      register: platform_version_result
+
+    - name: Set platform version
+      shell: "cf set-env platform-context PLATFORM_VERSION {{ tap_version }}"
+      when: platform_version_result.stdout != tap_version
+
+    - name: Restart platform context
+      shell: cf restart platform-context
+      when: platform_version_result.stdout != tap_version
+
+    - name: Fetch CF OAuth token
+      shell: cf oauth-token |grep bearer
+      register: cf_oauth_token
+      when: platform_version_result.stdout != tap_version
+
+    - name: Trigger platform snapshot
+      uri:
+        url: "http://platform-snapshot.{{ cf_domain }}/rest/v1/snapshots/trigger"
+        method: GET
+        HEADER_Authorization: "{{ cf_oauth_token.stdout }}"
+      when: platform_version_result.stdout != tap_version
+
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot JumpBox instance
+      command: reboot
+      become: yes
+      when: reboot_required.stat.exists

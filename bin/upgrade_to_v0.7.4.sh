@@ -15,33 +15,41 @@
 # limitations under the License.
 #
 
+# !!! READ THIS !!!
+#
+# Applying this upgrade will stop and reboot your
+# nodes, therefore it requires a proper maintenance
+# window of at least 3 hours.
+#
+# Usage:
+# - make sure CDH cluster state is "green"
+# - backup any mission-critical data (i.e. HDFS, docker DBMS)
+# - login to JumpBox machine and become root
+# - use any kind of terminal virtualization, i.e. tmux, screen
+# - copy this very upgrade script to /root/upgrade_to_v0.7.4.sh
+# - run as root:
+#          chmod +x /root/upgrade_to_v0.7.4.sh; /root/upgrade_to_v0.7.4.sh
+# - monitor the progress, if the command fails, repeat it
+# - as a result, all your nodes, including JumpBox, will be rebooted
+
 set -e
-
-release_version='v0.7.4'
-kerberos_enabled=${KERBEROS_ENABLED:-'False'}
-kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
-platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
-
-apt-get install -y python-dev python-pip python-virtualenv unzip
-
-rm -fr apployer.zip apployer
-rm -fr platform-ansible && mkdir -p platform-ansible
-pushd platform-ansible
-
-curl -L ${platform_ansible_archive} | tar -xz --strip-components=1
-
-cf_password=$(awk -F = '{ if ($1 == "cf_password") print $2 }' /etc/ansible/hosts)
-cf_domain=$(awk -F = '{ if ($1 == "cf_system_domain") print $2 }' /etc/ansible/hosts)
-provider=$(awk -F = '{ if ($1 == "provider") print $2 }' /etc/ansible/hosts)
-stack=$(awk -F = '{ if ($1 == "stack") print $2 }' /etc/ansible/hosts)
-quay_io_username=$(awk -F = '{ if ($1 == "quay_io_username") print $2 }' /etc/ansible/hosts)
-quay_io_password=$(awk -F = '{ if ($1 == "quay_io_password") print $2 }' /etc/ansible/hosts)
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 
-if [ ${provider} == 'aws' ];then
-   wget -O ec2.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py' \
-     && chmod +x ec2.py
+release_version='v0.7.4'
+platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
+kerberos_enabled=${KERBEROS_ENABLED:-'False'}
+kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
+provider=$(awk -F= '/^provider/{print $2}' /etc/ansible/hosts)
+
+cd /root
+rm -fr platform-ansible && mkdir -p platform-ansible
+pushd platform-ansible
+curl -L ${platform_ansible_archive} |tar -xz --strip-components=1
+
+if [ ${provider} == 'aws' ]; then
+  wget -O ec2.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py' \
+	  && chmod +x /root/platform-ansible/ec2.py
 
 cat <<EOF >ec2.ini
 [ec2]
@@ -54,26 +62,16 @@ rds = False
 elasticache = False
 cache_path = ~/.ansible/tmp
 cache_max_age = 300
-instance_filters = tag:aws:cloudformation:stack-name=$(awk -F = '{ if ($1 == "stack")  print $2 }' /etc/cfn/cfn-hup.conf)
+instance_filters = tag:aws:cloudformation:stack-name=$(awk -F= '/^stack/{print $2}' /etc/cfn/cfn-hup.conf)
 EOF
 
-  ansible-playbook -s upgrade_to_v0.7.4.yml -i ec2.py \
-           -e "provider=${provider} stack=${stack} quay_io_username=${quay_io_username} quay_io_password=${quay_io_password} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password}"
+  ansible-playbook -i ec2.py -s upgrade_to_${release_version}.yml \
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version}"
 
-elif [ ${provider} == 'openstack' ];then
-  cf_elastic_ip=$(awk -F = '/cf_elastic_ip/ { print $2 }' /etc/ansible/hosts)
-  cloudera_masters=$(awk -F = '/cloudera_masters/ { print $2 }' /etc/ansible/hosts)
-  cloudera_workers=$(awk -F = '/cloudera_workers/ { print $2 }' /etc/ansible/hosts)
-  cloudera_storage_paths=$(awk -F = '/cloudera_storage_paths/ { print $2 }' /etc/ansible/hosts)
-  docker_fp=$(awk -F = '/docker_fp/ { print $2 }' /etc/ansible/hosts)
-  docker_subnet_id=$(awk -F = '/docker_subnet_id/ { print $2 }' /etc/ansible/hosts)
+elif [ ${provider} == 'openstack' ]; then
 
-  if [ -n "${cloudera_storage_paths}" ]; then
-    echo "cdh_storage_paths: ${cloudera_storage_paths}" >> defaults/cdh.yml
-  fi
-
-  echo "${cf_elastic_ip} login.${cf_domain} api.${cf_domain} cf-api.${cf_domain}" \
-    >> /etc/hosts
+  cloudera_masters=$(awk -F= '/^cloudera_masters/{print $2}' /etc/ansible/hosts)
+  cloudera_workers=$(awk -F= '/^cloudera_workers/{print $2}' /etc/ansible/hosts)
 
   if [ -n "${no_proxy}" ]; then
     if [ -z "${cloudera_masters}" ]; then
@@ -86,32 +84,12 @@ elif [ ${provider} == 'openstack' ];then
     fi
   fi
 
-  stack=$(awk -F = '/stack=/ { print $2 }' /etc/ansible/hosts)
-  openstack_dns1=$(awk -F\' '/bosh_dns=/ { print $2 }' /etc/ansible/hosts)
-  openstack_dns2=$(awk -F\' '/bosh_dns=/ { print $4 }' /etc/ansible/hosts)
-  if [ -z "${openstack_dns2}" ]; then
-    openstack_dns2=$openstack_dns1
-  fi
-
   wget -O openstack.py 'https://raw.github.com/ansible/ansible/devel/contrib/inventory/openstack.py' \
-    && chmod +x openstack.py
+	   && chmod +x /root/platform-ansible/openstack.py
 
-  ansible-playbook -i openstack.py -s upgrade_to_v0.7.4.yml \
-    -e "cloudera_masters=${cloudera_masters} cloudera_workers=${cloudera_workers} provider=${provider} openstack_dns1=${openstack_dns1} openstack_dns2=${openstack_dns2} stack=${stack} release_version=${release_version} kerberos_enabled=${kerberos_enabled} cf_domain=${cf_domain} cf_password=${cf_password} docker_subnet_id=${docker_subnet_id} quay_io_username=${quay_io_username} quay_io_password=${quay_io_password} no_proxy=${no_proxy}"
+  ansible-playbook -i openstack.py -s upgrade_to_${release_version}.yml \
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version}"
 
 fi
 
-virtualenv venv
-source venv/bin/activate
-pip install pycparser==2.14 pytz ansible==1.9.4 boto six shade==1.8.0
-
-ansible-playbook -s -i /dev/null apployer.yml \
-          -e "kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version} cf_domain=${cf_domain} cf_password=${cf_password}"
-
-cf set-env platform-context PLATFORM_VERSION 0.7.3
-cf restart platform-context
-
-curl -H "Authorization: `cf oauth-token | grep bearer`" -X GET  http://platform-snapshot.${cf_domain}/rest/v1/snapshots/trigger
-
 popd
-
