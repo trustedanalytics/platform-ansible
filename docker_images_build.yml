@@ -15,15 +15,37 @@
 
 ---
 
-- git:
-    repo=https://github.com/trustedanalytics/{{ item.repo }}.git
-    version={{ item.id }}
-    dest={{ ansible_env['HOME'] }}/{{ item.repo }}
-  with_items:
-    - { repo: 'jupyter-base', id: 'a92dab46e5bf00598e4fae4f8f5586ac2317368e' }
-    - { repo: 'jupyter', id: '62ad6918c27a2cc4636ad91ca57ee0b7f447fede' }
-    - { repo: 'trustedanalytics-mosquitto', id: '337d3b3039b71afbb0aca752e2fae545ce066511' }
-    - { repo: 'h2o-provisioner', id: '7de40d9353771158ac2436657918cb74a8d31cf9' }
+- name: Set docker image compilation parameters
+  set_fact:
+    docker_images:
+      - name: jupyter-base
+        tag: latest
+        commit_id: a92dab46e5bf00598e4fae4f8f5586ac2317368e
+        build_params:
+      - name: jupyter
+        tag: latest
+        commit_id: 4b04ef159a9efb2532cf14d3018d0b84328489b4
+        build_params:
+      - name: trustedanalytics-mosquitto
+        tag: latest
+        commit_id: 337d3b3039b71afbb0aca752e2fae545ce066511
+        build_params:
+      - name: h2o-provisioner
+        tag: 0.7.2
+        commit_id: 7de40d9353771158ac2436657918cb74a8d31cf9
+        build_params: -f src/main/docker/Dockerfile
+    http_proxy: "{{ proxy_env.http_proxy | default() }}"
+    https_proxy: "{{ proxy_env.https_proxy | default() }}"
+    no_proxy: "{{ no_proxy | default() }}"
+
+- name: Clone docker images code
+  git:
+    repo: "https://github.com/trustedanalytics/{{ item.name }}.git"
+    version: "{{ item.commit_id }}"
+    dest: "{{ ansible_env['HOME'] }}/{{ item.name }}"
+    force: yes
+  with_items: "{{ docker_images }}"
+  register: docker_images_clone
   when: not quay_io_username or not quay_io_password
 
 # TODO: Rewrite the following using native ansible modules
@@ -32,12 +54,8 @@
 # - Pulling all images is hardcoded in Ansible 2.0, this prevents the build of jupyter
 #   since it uses jupyter-base which is available only locally (this changes in 2.1)
 
-- set_fact:
-    http_proxy: "{{ proxy_env.http_proxy | default() }}"
-    https_proxy: "{{ proxy_env.https_proxy | default() }}"
-    no_proxy: "{{ no_proxy | default() }}"
-
-- shell: >-
+- name: Build docker images
+  shell: >-
     docker build
     --build-arg http_proxy={{ http_proxy }}
     --build-arg https_proxy={{ https_proxy }}
@@ -45,30 +63,12 @@
     --build-arg HTTP_PROXY={{ http_proxy }}
     --build-arg HTTPS_PROXY={{ https_proxy }}
     --build-arg NO_PROXY={{ no_proxy }}
-    --tag=quay.io/trustedanalytics/h2o-provisioner:0.7.2
-    -f src/main/docker/Dockerfile .
+    --tag=quay.io/trustedanalytics/{{ item.name }}:{{ item.tag }}
+    {{ item.build_params }} .
   environment:
     DOCKER_HOST: "{{ docker_url }}"
   args:
-    chdir: "{{ ansible_env['HOME'] }}/h2o-provisioner"
-  when: not quay_io_username or not quay_io_password
-
-- shell: >-
-    docker build
-    --build-arg http_proxy={{ http_proxy }}
-    --build-arg https_proxy={{ https_proxy }}
-    --build-arg no_proxy={{ no_proxy }}
-    --build-arg HTTP_PROXY={{ http_proxy }}
-    --build-arg HTTPS_PROXY={{ https_proxy }}
-    --build-arg NO_PROXY={{ no_proxy }}
-    --tag=quay.io/trustedanalytics/{{ item }} .
-  environment:
-    DOCKER_HOST: "{{ docker_url }}"
-  args:
-    chdir: "{{ ansible_env['HOME'] }}/{{ item }}"
-  with_items:
-    - 'jupyter-base'
-    - 'jupyter'
-    - 'trustedanalytics-mosquitto'
-  when: not quay_io_username or not quay_io_password
-
+    chdir: "{{ ansible_env['HOME'] }}/{{ item.name }}"
+  with_items: "{{ docker_images }}"
+  register: docker_images_compilation
+  when: (not quay_io_username or not quay_io_password) and docker_images_clone.changed

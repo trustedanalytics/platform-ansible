@@ -24,6 +24,7 @@
 # Usage:
 # - make sure CDH cluster state is "green"
 # - backup any mission-critical data (i.e. HDFS, docker DBMS)
+# - backup all ELK data, the upgrade process will clear all indices
 # - login to JumpBox machine and become root
 # - use any kind of terminal virtualization, i.e. tmux, screen
 # - copy this very upgrade script to /root/upgrade_to_v0.7.4.sh
@@ -88,7 +89,7 @@ elif [ ${provider} == 'openstack' ]; then
 	   && chmod +x /root/platform-ansible/openstack.py
 
   ansible-playbook -i openstack.py -s upgrade_to_${release_version}.yml \
-    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version}"
+    -e "provider=${provider} kerberos_enabled=${kerberos_enabled} kubernetes_enabled=${kubernetes_enabled} release_version=${release_version} no_proxy=${no_proxy}"
 
 fi
 

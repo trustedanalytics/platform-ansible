@@ -278,13 +278,18 @@
         dest: /etc/resolv.conf
       become: yes
 
+    - name: Wipe old dhclient hook
+      file:
+        path: /etc/dhcp/dhclient-enter-hooks.d/nodnsupdate
+        state: absent
+
     - name: Disable dhclient resolver updates
       blockinfile:
         dest: /etc/dhcp/dhclient-enter-hooks.d/nodnsupdate
         create: yes
+        marker: "#!/bin/sh"
         mode: 0755
         block: |
-          #!/bin/sh
           make_resolv_conf() {
               :
           }
@@ -368,7 +373,7 @@
 
     - name: Fetch required docker_url fact
       set_fact:
-        docker_url: "tcp://{{ docker_config.networks.0.subnets.0.static.0 }}:4243"
+        docker_url: "tcp://{{ (docker_config.networks | selectattr('subnets') | list | first).subnets.0.static.0 }}:4243"
       changed_when: False
 
     - name: Test for quay.io credentials existence
@@ -420,7 +425,8 @@
       when: bosh_stemcells.docker_broker != "3263.8" or
             deployment_failed.docker_broker or
             non_quay_images_download.changed or
-            quay_images_download.changed
+            quay_images_download.changed or
+            docker_images_compilation.changed
 
     - name: Patch BOSH director
       command: "bosh-init deploy {{ bosh_manifest }}"
@@ -525,8 +531,7 @@
  
       - name: Fetch Logsearch parameters
         set_fact:
-          logsearch_config: "{{ lookup('file', logsearch_manifest.path) | from_yaml }}"
-        when: logsearch_manifest.changed
+          logsearch_config: "{{ lookup('file', '{{ ansible_env.HOME }}/logsearch-manifest.yml') | from_yaml }}"
 
       - name: Disable index autocreation
         uri:
@@ -633,14 +638,19 @@
     - include_vars: "defaults/cloudera_parcels.yml"
     - include_vars: "defaults/cdh.yml"
 
-    - name: Add parcel mirror URL
+    - name: Add CDH parcel mirror URL
       cdh:
         action: set_config
         entity: service
         service: cm
         name: REMOTE_PARCEL_REPO_URLS
         value: '{{ cloudera_parcels | join(",") }}'
-      register: parcels_deployed
+      register: set_parcel_urls
+
+    - name: Wait for CDH parcel list to refresh
+      pause:
+        seconds: 20
+      when: set_parcel_urls.changed
 
     - name: Deploy DAAL parcel to all CDH nodes
       cdh:
@@ -661,6 +671,25 @@
         - yarn
         - yarnspark
       when: daal_deployed.changed
+
+    - name: Restart dependent CDH services
+      cdh:
+        action: service
+        service: "{{ item }}"
+        state: restarted
+      with_items:
+        - yarn
+        - yarnspark
+      when: daal_deployed.changed
+
+- hosts: cdh-worker
+  any_errors_fatal: True
+  tasks:
+    - name: Install spark-tk Python dependencies
+      pip:
+        name: numpy
+        executable: pip2.7
+      environment: "{{ hostvars.localhost.proxy_env }}"
 
 - hosts: cdh-all,nginx,jumpbox
   any_errors_fatal: True
