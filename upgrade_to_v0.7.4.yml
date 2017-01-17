@@ -126,6 +126,7 @@
         geturl_headers: Connection:keep-alive
         logsearch_boshrelease_version: "{{ logsearch_boshrelease_version }}"
         logsearch_for_cloudfoundry_version: "{{ logsearch_boshrelease_version }}"
+        logsearch_manifest: "{{ ansible_env.HOME }}/logsearch-manifest.yml"
         os_packages: "{{ os_packages }}"
         proxy_env:
           placeholder: none
@@ -275,8 +276,11 @@
     - name: Fix resolver configuration file
       template:
         src: roles/resolv_conf/templates/resolv.conf.j2
-        dest: /etc/resolv.conf
+        dest: "{{ item }}"
       become: yes
+      with_items:
+        - /etc/resolv.conf
+        - /etc/resolvconf/resolv.conf.d/base
 
     - name: Wipe old dhclient hook
       file:
@@ -290,7 +294,7 @@
         marker: "#!/bin/sh"
         mode: 0755
         block: |
-          make_resolv_conf() {
+          make_resolv_conf(){
               :
           }
         validate: "bash -n %s"
@@ -356,8 +360,8 @@
       ignore_errors: True
       register: cf_deploy
       until: cf_deploy|success
-      delay: "30"
-      retries: "40"
+      delay: "60"
+      retries: "50"
       when: bosh_stemcells.cf != "3263.8" or
             deployment_failed.cf
 
@@ -376,12 +380,17 @@
         docker_url: "tcp://{{ (docker_config.networks | selectattr('subnets') | list | first).subnets.0.static.0 }}:4243"
       changed_when: False
 
+    - name: Set docker env
+      set_fact:
+        docker_env:
+          DOCKER_HOST: "{{ docker_url }}"
+      changed_when: False
+
     - name: Test for quay.io credentials existence
       shell: "docker login -u {{ quay_io_username }} -p {{ quay_io_password }} -e test@test quay.io"
       ignore_errors: True
       register: docker_login
-      environment:
-        DOCKER_HOST: "{{ docker_url }}"
+      environment: "{{ docker_env | combine(proxy_env) }}"
       changed_when: False
       when: quay_io_username and quay_io_password
 
@@ -393,8 +402,7 @@
 
     - name: Download non-quay images when no quay username provided
       shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
-      environment:
-        DOCKER_HOST: "{{ docker_url }}"
+      environment: "{{ docker_env | combine(proxy_env) }}"
       changed_when: not non_quay_images_download.stdout | search("Image is up to date")
       with_subelements:
         - "{{ docker_config.properties.broker.services }}"
@@ -404,8 +412,7 @@
 
     - name: Download all images when quay username provided
       shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
-      environment:
-        DOCKER_HOST: "{{ docker_url }}"
+      environment: "{{ docker_env | combine(proxy_env) }}"
       changed_when: not quay_images_download.stdout | search("Image is up to date")
       with_subelements:
         - "{{ docker_config.properties.broker.services }}"
@@ -420,8 +427,8 @@
       ignore_errors: True
       register: docker_deploy
       until: docker_deploy|success
-      delay: "30"
-      retries: "40"
+      delay: "60"
+      retries: "50"
       when: bosh_stemcells.docker_broker != "3263.8" or
             deployment_failed.docker_broker or
             non_quay_images_download.changed or
@@ -525,42 +532,35 @@
       - name: Create Logsearch Manifest
         template: 
           src: roles/logsearch/templates/logsearch.yml.j2
-          dest: "{{ ansible_env.HOME }}/logsearch-manifest.yml"
+          dest: "{{ logsearch_manifest }}"
           validate: "python -c \"import yaml; yaml.load(file('%s', 'r'))\""
-        register: logsearch_manifest
+        register: logsearch_manifest_create
  
       - name: Fetch Logsearch parameters
         set_fact:
-          logsearch_config: "{{ lookup('file', '{{ ansible_env.HOME }}/logsearch-manifest.yml') | from_yaml }}"
+          logsearch_config: "{{ lookup('file', logsearch_manifest) | from_yaml }}"
 
-      - name: Disable index autocreation
-        uri:
-          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/_cluster/settings"
-          method: PUT
-          body: "{ \"transient\" : { \"action.auto_create_index\" : false } }"
-        environment: "{{ proxy_nul }}"
-        when: logsearch_manifest.changed
-
-      - name: Delete all indices
-        uri:
-          url: "http://{{ logsearch_config.properties.elasticsearch.host }}:9200/_all/"
-          method: DELETE
-        environment: "{{ proxy_nul }}"
-        when: logsearch_manifest.changed
+      - name: Delete Logsearch
+        shell: bosh -d {{ logsearch_manifest }} -n delete deployment logsearch --force
+        register: logsearch_delete
+        when: bosh_stemcells.logsearch != "3263.8" or
+              deployment_failed.logsearch or
+              logsearch_manifest_create.changed
 
       - name: Deploy Logsearch
-        shell: bosh -d {{ ansible_env.HOME }}/logsearch-manifest.yml -n deploy
+        shell: bosh -d {{ logsearch_manifest }} -n deploy
         ignore_errors: True
         register: logsearch_deploy
         until: logsearch_deploy|success
-        delay: "30"
-        retries: "40"
+        delay: "60"
+        retries: "50"
+        environment: "{{ proxy_nul }}"
         when: bosh_stemcells.logsearch != "3263.8" or
               deployment_failed.logsearch or
-              logsearch_manifest.changed
+              logsearch_manifest_create.changed
 
       - name: Deploy Kibana
-        shell: "bosh -d {{ ansible_env.HOME }}/logsearch-manifest.yml run errand push-kibana"
+        shell: "bosh -d {{ logsearch_manifest }} run errand push-kibana"
         register: kibana_deployment
         when: logsearch_deploy.changed
 
@@ -660,8 +660,8 @@
       register: daal_deployed
       ignore_errors: True
       until: daal_deployed|success
-      delay: "30"
-      retries: "40"
+      delay: "60"
+      retries: "50"
 
     - name: Deploy CDH cluster client config
       cdh:
@@ -712,7 +712,8 @@
       become: yes
       changed_when: "{{ install_kernel.stdout | search('Complete') }}"
       register: install_kernel
-      when: ansible_lsb.id == "RedHatEnterpriseServer" and
+      when: (ansible_lsb.id == "RedHatEnterpriseServer" or
+            ansible_lsb.id == "CentOS") and
             ansible_lsb.major_release | int == 6
 
 - hosts: nginx
@@ -925,3 +926,5 @@
       command: reboot
       become: yes
       when: reboot_required.stat.exists
+
+# vim:ft=ansible:
