@@ -732,15 +732,27 @@
 - hosts: cdh-all
   any_errors_fatal: True
   tasks:
+    - name: Detect newest installed kernel
+      shell: rpm -q --last kernel |head -1 |awk '{sub("kernel-","");print $1}'
+      args:
+        warn: no
+      register: installed_kernel
+      changed_when: False
+
+    - name: Detect running kernel
+      shell: uname -r
+      register: running_kernel
+      changed_when: False
+
     - name: Detect CDH nodes requiring reboot
       set_fact:
         post_patch: "need_reboot"
-      when: install_kernel.changed
+      when: installed_kernel.stdout != running_kernel.stdout
 
     - name: Detect CDH nodes not requiring reboot
       set_fact:
         post_patch: "no_reboot"
-      when: not install_kernel.changed
+      when: installed_kernel.stdout == running_kernel.stdout
 
     - name: Group CDH nodes requiring reboot
       group_by:
