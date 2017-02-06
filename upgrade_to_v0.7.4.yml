@@ -400,25 +400,15 @@
         quay_io_password: ""
       when: docker_login|failed
 
-    - name: Download non-quay images when no quay username provided
-      shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
-      environment: "{{ docker_env | combine(proxy_env) }}"
-      changed_when: not non_quay_images_download.stdout | search("Image is up to date")
-      with_subelements:
-        - "{{ docker_config.properties.broker.services }}"
-        - plans
-      register: non_quay_images_download
-      when: (not quay_io_username or not quay_io_password) and not "quay" in item.1.container.image
-
-    - name: Download all images when quay username provided
-      shell: "docker pull {{ item.1.container.image }}:{{ item.1.container.tag }}"
+    - name: Download upgraded images when quay username provided
+      shell: "docker pull {{ item.1.container.image }}:{{ release_version }}"
       environment: "{{ docker_env | combine(proxy_env) }}"
       changed_when: not quay_images_download.stdout | search("Image is up to date")
       with_subelements:
         - "{{ docker_config.properties.broker.services }}"
         - plans
       register: quay_images_download
-      when: quay_io_username and quay_io_password
+      when: quay_io_username and quay_io_password and "quay" in item.1.container.image
 
     - include: docker_images_build.yml
 
@@ -431,7 +421,6 @@
       retries: "50"
       when: bosh_stemcells.docker_broker != "3263.8" or
             deployment_failed.docker_broker or
-            non_quay_images_download.changed or
             quay_images_download.changed or
             docker_images_compilation.changed
 
@@ -439,7 +428,6 @@
       command: "bosh-init deploy {{ bosh_manifest }}"
       register: boshinit_deploy
       changed_when: "'Skipping deploy' not in boshinit_deploy.stdout"
-
 
     - block:
 
@@ -835,6 +823,38 @@
         delay: 10
         timeout: 900
       connection: local
+
+    - name: Start Consul agents
+      service:
+        name: consul
+        state: started
+      become: yes
+      delegate_to: "{{ item }}"
+      with_items: "{{ groups['cdh-master'] }}"
+
+    - name: Get Consul state
+      uri:
+        url: "http://localhost:8500/v1/status/peers"
+      delegate_to: "{{ groups['cdh-manager'].0 }}"
+      register: consul_state
+
+    - block:
+
+      - name: Prepare Consul cluster clean start
+        shell: rm -rf /var/consul/*
+        become: yes
+        delegate_to: "{{ item }}"
+        with_items: "{{ groups['cdh-master'] }}"
+
+      - name: Restart Consul cluster
+        service:
+          name: consul
+          state: restarted
+        become: yes
+        delegate_to: "{{ item }}"
+        with_items: "{{ groups['cdh-master'] }}"
+
+      when: consul_state.json | length != 3
 
     - name: Get HDFS state
       uri:
