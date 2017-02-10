@@ -24,7 +24,7 @@
         build_params:
       - name: jupyter
         tag: latest
-        commit_id: 4b04ef159a9efb2532cf14d3018d0b84328489b4
+        commit_id: b48156a53146dd92ed9e83992dff48288e14ad14
         build_params:
       - name: trustedanalytics-mosquitto
         tag: latest
