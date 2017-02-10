@@ -17,7 +17,7 @@
 
 set -e
 
-release_version=${RELEASE_VERSION:-'v0.7.4'}
+release_version=${RELEASE_VERSION:-'v0.7.4.1'}
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
 push_apps=${PUSH_APPS:-'True'}

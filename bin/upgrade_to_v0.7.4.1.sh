@@ -27,9 +27,9 @@
 # - backup all ELK data, the upgrade process will clear all indices
 # - login to JumpBox machine and become root
 # - use any kind of terminal virtualization, i.e. tmux, screen
-# - copy this very upgrade script to /root/upgrade_to_v0.7.4.sh
+# - copy this very upgrade script to /root/upgrade_to_v0.7.4.1.sh
 # - run as root:
-#          chmod +x /root/upgrade_to_v0.7.4.sh; /root/upgrade_to_v0.7.4.sh
+#          chmod +x /root/upgrade_to_v0.7.4.1.sh; /root/upgrade_to_v0.7.4.1.sh
 # - monitor the progress, if the command fails, repeat it
 # - as a result, all your nodes, including JumpBox, will be rebooted
 
@@ -37,7 +37,7 @@ set -e
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 
-release_version='v0.7.4'
+release_version='v0.7.4.1'
 platform_ansible_archive=${PLATFORM_ANSIBLE_ARCHIVE:-"https://github.com/trustedanalytics/platform-ansible/archive/${release_version}.tar.gz"}
 kerberos_enabled=${KERBEROS_ENABLED:-'False'}
 kubernetes_enabled=${KUBERNETES_ENABLED:-'False'}
